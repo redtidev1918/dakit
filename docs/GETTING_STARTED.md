@@ -4,14 +4,26 @@
 
 ## 1. 注册开发者应用
 
-在 DeviantArt 的应用管理页创建应用：
+在 DeviantArt 的应用管理页创建应用。先根据程序的部署方式选择 Client type：
 
-- Client type 选择 **Public**；
+| 部署方式 | Client type | 客户端凭据 | DAKit 接入方式 |
+| --- | --- | --- | --- |
+| Flutter Android、macOS、Windows 或其他用户设备上的应用 | **Public** | `client_id` | 使用 DAKit 内置 Authorization Code + PKCE 登录 |
+| 能安全保存凭据的自有后端 | **Confidential** | `client_id` + `client_secret` | 在后端完成认证；客户端通过自定义 `AuthTokenProvider` 接入会话 |
+
+本仓库的示例客户端直接在用户设备上登录，因此应选择 **Public**。然后填写：
+
 - OAuth2 Redirect URI Whitelist 填写 `dakit://oauth/callback`；
 - Title、Description 和 Download URL 填写你自己的客户端信息；
 - Original URLs Whitelist 仅用于 `original_url` 参数，与读取作品原文件无关，可在确有用途时填写。
 
-Public 应用只会给客户端使用 `client_id`。`client_id` 是可出现在客户端中的应用标识，不是密码；access token 与 refresh token 则始终属于用户私密凭据。如果开发者后台同时签发 `client_secret`，该注册是 Confidential 应用，不适合直接运行在 APK、桌面应用或 Flutter 客户端内。不要把 secret 写进源码或构建参数，应另建 Public 应用。
+凭据名称容易混淆：
+
+- `client_id` 是开发者应用的公开标识；
+- `client_secret` 是 Confidential 应用的长期机密，不是用户 token；
+- `access_token` 和 `refresh_token` 是用户授权完成后签发的会话凭据。
+
+如果应用管理页同时显示 `client_id` 和 `client_secret`，当前注册就是 **Confidential**。它可以保留给后端使用，但不能把 secret 编译进 APK、EXE 或 macOS 应用。要运行本仓库的示例客户端，请另外创建一个 Public 应用；Public 注册只需要把 `client_id` 传给 DAKit。
 
 回调地址必须完全一致，包括协议、主机、路径、大小写和末尾斜杠。当前示例固定使用：
 
@@ -108,7 +120,7 @@ OAuthConfig(
 
 修改 scope 后必须让用户重新授权；已有 token 不会自动获得新增权限。收藏需要 `collection`，发布评论需要 `comment.post`，关注管理需要 `user.manage`。
 
-宿主应用自行决定 UI、状态管理、缓存和数据库。需要已有账户系统时，可以向 `OfficialApiClient` 提供自定义 `AuthTokenProvider`；需要企业网络栈时，可以注入配置好的 Dio；需要不同安全存储或深链实现时，可以替换 `DAKitOAuthClient` 的对应接口。
+`dakit_core` 和 `dakit_api` 提供可组合的领域与网络能力，`dakit_flutter` 提供常用平台集成。已有账户后端可以向 `OfficialApiClient` 提供自定义 `AuthTokenProvider`；企业网络环境可以注入配置好的 Dio；安全存储、深链和后台任务也有独立替换接口。
 
 ## 4. 注册平台回调
 

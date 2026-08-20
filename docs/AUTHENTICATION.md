@@ -1,16 +1,23 @@
 # 认证与会话
 
-DAKit 只为移动端和桌面端实现 Public Client 的 Authorization Code + S256 PKCE。登录页面由系统默认浏览器打开；SDK 不接管用户名、密码、人机验证或第三方登录页面。
+DAKit 的内置设备端登录适配器实现 Authorization Code + S256 PKCE，适用于 Public Client。登录页面由系统默认浏览器打开；SDK 不接管用户名、密码、人机验证或第三方登录页面。使用 Confidential Client 的项目可以在可信后端完成 OAuth，再通过 `AuthTokenProvider` 将会话接入 API 层。
 
 官方认证说明见 [DeviantArt Authentication](https://deviantart.readme.io/docs/authentication)。
 
-## 为什么必须使用 Public Client
+## 选择 Client type
 
-安装在用户设备上的代码和构建产物都无法安全保存共享密钥。Public 应用通过 `client_id`、一次性授权码和 PKCE verifier 证明请求关联，不使用 `client_secret`。
+Client type 取决于凭据保存位置，而不是功能多少：
+
+| 类型 | 适用场景 | DeviantArt 签发的应用凭据 | DAKit 支持方式 |
+| --- | --- | --- | --- |
+| Public | 移动端、桌面端、SPA 等无法保密的程序 | `client_id` | 内置 PKCE 登录 |
+| Confidential | 有可信后端、能够保管长期密钥的服务 | `client_id` + `client_secret` | 后端认证后注入 `AuthTokenProvider` |
+
+安装在用户设备上的代码和构建产物无法安全保存共享密钥。Public 应用通过 `client_id`、一次性授权码和 PKCE verifier 关联授权请求，不使用 `client_secret`。
 
 `client_id` 是应用标识，可以出现在客户端；access token、refresh token 和 `client_secret` 都是私密凭据。Public/Confidential 描述的是开发者应用类型，不是 token 类型。
 
-如果开发者后台给出了 `client_secret`，该应用注册就是 Confidential。把它编译进 APK/EXE 没有安全意义；省略它又会在 token exchange 阶段得到 `invalid_client`。正确做法是为 DAKit 客户端另建 Public 应用，而不是降低 SDK 的安全边界。
+如果开发者后台给出了 `client_secret`，该应用注册就是 Confidential。这个注册可以继续用于后端，但不能直接交给 DAKit 的设备端登录适配器：把 secret 编译进客户端会泄露，省略它则会在 token exchange 阶段得到 `invalid_client`。直接运行 Flutter 客户端时，应另外创建 Public 注册。
 
 ## 完整生命周期
 

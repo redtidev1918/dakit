@@ -1,6 +1,6 @@
 # DAKit — DeviantArt 客户端 SDK
 
-DAKit 是面向 Dart 与 Flutter 的模块化 DeviantArt 客户端 SDK，而不是独立的下载应用。它不规定宿主应用的界面、状态管理或数据库；开发者可以按需复用 OAuth、官方 API、领域模型、诊断和后台传输能力，构建 Android、macOS 与 Windows 客户端。
+DAKit 是面向 Dart 与 Flutter 的模块化 DeviantArt 客户端 SDK，为 Android、macOS 与 Windows 应用提供认证、官方 API、领域模型、诊断和后台传输能力。它既可以支撑完整的第三方客户端，也可以只作为其中一个功能模块使用。
 
 本项目由社区独立维护，与 DeviantArt 没有隶属或背书关系。“DeviantArt”仅用于说明 SDK 所连接的服务。
 
@@ -40,7 +40,7 @@ dependencies:
       path: packages/dakit_flutter
 ```
 
-随后阅读[开始使用](docs/GETTING_STARTED.md)，创建 **Public** OAuth 应用并注册精确回调地址 `dakit://oauth/callback`。移动端和桌面端不得内置 `client_secret`。
+随后阅读[开始使用](docs/GETTING_STARTED.md)。直接在移动端或桌面端运行内置登录流程时，需要注册 **Public** OAuth 应用，并配置精确回调地址 `dakit://oauth/callback`。
 
 ## 最小示例
 
