@@ -104,6 +104,7 @@ final folderRepository = OfficialFolderRepository(api);
 final mediaRepository = OfficialMediaRepository(api);
 final commentRepository = OfficialCommentRepository(api);
 final socialRepository = OfficialSocialRepository(api);
+final messageRepository = OfficialMessageRepository(api);
 ```
 
 默认 scope 只有 `basic` 与 `browse`。需要写操作时，在首次授权前明确申请对应权限：
@@ -117,13 +118,14 @@ OAuthConfig(
     OAuthScope.browse,
     OAuthScope.collection,
     OAuthScope.commentPost,
+    OAuthScope.message,
     OAuthScope.user,
     OAuthScope.userManage,
   },
 )
 ```
 
-修改 scope 后必须让用户重新授权；已有 token 不会自动获得新增权限。收藏需要 `collection`，发布评论需要 `comment.post`，检查当前账户是否关注某用户需要 `user`，关注管理需要 `user.manage`。
+修改 scope 后必须让用户重新授权；已有 token 不会自动获得新增权限。收藏需要 `collection`，发布评论需要 `comment.post`，通知与反馈中心需要 `message`，检查当前账户是否关注某用户需要 `user`，关注管理需要 `user.manage`。
 
 `dakit_core` 和 `dakit_api` 提供可组合的领域与网络能力，`dakit_flutter` 提供常用平台集成。已有账户后端可以向 `OfficialApiClient` 提供自定义 `AuthTokenProvider`；企业网络环境可以注入配置好的 Dio；安全存储、深链和后台任务也有独立替换接口。
 

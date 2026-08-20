@@ -649,6 +649,84 @@ void main() {
     },
   );
 
+  test('loads and deletes provider message-center items', () async {
+    final artwork = await fixture('deviation.json');
+    final message = <String, Object?>{
+      'messageid': 'message-1',
+      'type': 'feedback',
+      'orphaned': false,
+      'ts': '2026-08-20T12:00:00Z',
+      'stackid': 'stack-1',
+      'stack_count': 3,
+      'is_new': true,
+      'originator': <String, Object?>{
+        'userid': 'user-2',
+        'username': 'originator',
+      },
+      'subject': <String, Object?>{'deviation': artwork},
+      'html': '<strong>New feedback</strong>',
+    };
+    Map<String, Object?> offsetPage() => <String, Object?>{
+      'results': <Object?>[message],
+      'has_more': false,
+      'next_offset': null,
+    };
+    final transport = FixtureMutationTransport(
+      getResponses: <Map<String, Object?>>[
+        <String, Object?>{
+          'results': <Object?>[message],
+          'has_more': true,
+          'cursor': 'message-cursor',
+        },
+        offsetPage(),
+        offsetPage(),
+        offsetPage(),
+        offsetPage(),
+      ],
+      postResponses: <Map<String, Object?>>[
+        <String, Object?>{'success': true},
+      ],
+    );
+    final repository = OfficialMessageRepository(transport);
+
+    final feed = await repository.feed(stacked: false);
+    await repository.feedback(
+      FeedbackType.comments,
+      const PageRequest(limit: 10),
+    );
+    await repository.mentions(const PageRequest(limit: 10));
+    await repository.feedbackStack('stack-1', const PageRequest(limit: 10));
+    await repository.mentionStack('stack-1', const PageRequest(limit: 10));
+    await repository.delete(messageId: 'message-1');
+
+    expect(feed.items.single.type, 'feedback');
+    expect(feed.items.single.isNew, isTrue);
+    expect(feed.items.single.artwork?.id, 'art-1');
+    expect(feed.nextCursor, 'message-cursor');
+    expect(transport.getRequests[0].query['stack'], isFalse);
+    expect(transport.getRequests[1].query['type'], 'comments');
+    expect(transport.getRequests[3].path, 'messages/feedback/stack-1');
+    expect(transport.getRequests[4].path, 'messages/mentions/stack-1');
+    expect(transport.postRequests.single.form['messageid'], 'message-1');
+  });
+
+  test('rejects an ambiguous message delete without a request', () async {
+    final transport = FixtureMutationTransport();
+
+    await expectLater(
+      OfficialMessageRepository(transport)
+          .delete(messageId: 'message-1', stackId: 'stack-1'),
+      throwsA(
+        isA<DAKitException>().having(
+          (error) => error.code,
+          'code',
+          'api.message.delete.invalid_target',
+        ),
+      ),
+    );
+    expect(transport.postRequests, isEmpty);
+  });
+
   test('validates comment limits before making a request', () async {
     final transport = FixtureMutationTransport();
 

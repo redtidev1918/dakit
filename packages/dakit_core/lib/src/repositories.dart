@@ -127,3 +127,37 @@ abstract interface class SocialRepository {
 
   Future<void> unwatch(String username);
 }
+
+/// Notification and feedback-center operations requiring the `message` scope.
+abstract interface class MessageRepository {
+  Future<Page<ProviderMessage>> feed({
+    String? cursor,
+    String? folderId,
+    bool stacked = true,
+  });
+
+  Future<Page<ProviderMessage>> feedback(
+    FeedbackType type,
+    PageRequest request, {
+    String? folderId,
+    bool stacked = true,
+  });
+
+  Future<Page<ProviderMessage>> mentions(
+    PageRequest request, {
+    String? folderId,
+    bool stacked = true,
+  });
+
+  Future<Page<ProviderMessage>> feedbackStack(
+    String stackId,
+    PageRequest request,
+  );
+
+  Future<Page<ProviderMessage>> mentionStack(
+    String stackId,
+    PageRequest request,
+  );
+
+  Future<void> delete({String? messageId, String? stackId, String? folderId});
+}

@@ -34,3 +34,5 @@
   content adapters; apply the same cursor/offset preservation to topic feeds.
 - Add friend and watcher pages, authenticated watch-state checks, friend search,
   and form-encoded bulk user lookup.
+- Add message feed, feedback, mentions, stack expansion, and explicit message or
+  stack deletion with typed provider subjects.

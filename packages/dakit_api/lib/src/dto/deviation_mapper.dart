@@ -224,6 +224,56 @@ final class DeviationMapper {
     );
   }
 
+  ProviderMessage message(Map<String, Object?> json) {
+    final subject = _map(json['subject']);
+
+    T? optionalObject<T>(
+      Object? value,
+      T Function(Map<String, Object?> item) parse,
+      String field,
+    ) {
+      if (value == null) return null;
+      final mapped = _map(value);
+      if (mapped == null) throw _missing(field);
+      return parse(mapped);
+    }
+
+    final rawPosted = json['ts'];
+    final posted = _dateTime(rawPosted);
+    if (rawPosted != null && posted == null) throw _missing('ts');
+    final rawStackCount = json['stack_count'];
+    final stackCount = _integer(rawStackCount);
+    if (rawStackCount != null && stackCount == null) {
+      throw _missing('stack_count');
+    }
+    return ProviderMessage(
+      id: _requiredString(json, 'messageid'),
+      type: _requiredString(json, 'type'),
+      isOrphaned: _requiredBoolean(json, 'orphaned'),
+      isNew: _requiredBoolean(json, 'is_new'),
+      postedAt: posted,
+      stackId: _emptyToNull(_string(json['stackid']) ?? ''),
+      stackCount: stackCount,
+      originator: optionalObject(json['originator'], user, 'originator'),
+      html: _string(json['html']),
+      profile: optionalObject(
+        subject?['profile'] ?? json['profile'],
+        user,
+        'profile',
+      ),
+      artwork: optionalObject(
+        subject?['deviation'] ?? json['deviation'],
+        artwork,
+        'deviation',
+      ),
+      comment: optionalObject(
+        subject?['comment'] ?? json['comment'],
+        comment,
+        'comment',
+      ),
+    );
+  }
+
   MediaAsset original(Map<String, Object?> json, String artworkId) {
     final uri = _requiredWebUri(json, 'src');
     final filename = _requiredString(json, 'filename');

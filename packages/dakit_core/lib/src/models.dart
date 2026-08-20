@@ -286,3 +286,38 @@ final class ArtworkTopic {
   final String canonicalName;
   final List<Artwork> exampleArtworks;
 }
+
+/// A notification or feedback item from the provider message center.
+///
+/// [html] is provider-authored markup. Hosts must sanitize it before rendering.
+final class ProviderMessage {
+  const ProviderMessage({
+    required this.id,
+    required this.type,
+    required this.isOrphaned,
+    required this.isNew,
+    this.postedAt,
+    this.stackId,
+    this.stackCount,
+    this.originator,
+    this.html,
+    this.profile,
+    this.artwork,
+    this.comment,
+  });
+
+  final String id;
+  final String type;
+  final bool isOrphaned;
+  final bool isNew;
+  final DateTime? postedAt;
+  final String? stackId;
+  final int? stackCount;
+  final UserProfile? originator;
+  final String? html;
+  final UserProfile? profile;
+  final Artwork? artwork;
+  final Comment? comment;
+}
+
+enum FeedbackType { comments, replies, activity }

@@ -689,6 +689,142 @@ final class OfficialSocialRepository implements SocialRepository {
   }
 }
 
+final class OfficialMessageRepository implements MessageRepository {
+  const OfficialMessageRepository(this._transport);
+
+  final OfficialApiMutationTransport _transport;
+  final DeviationMapper _mapper = const DeviationMapper();
+
+  @override
+  Future<Page<ProviderMessage>> feed({
+    String? cursor,
+    String? folderId,
+    bool stacked = true,
+  }) async {
+    final normalizedCursor = _optionalIdentifier(cursor, 'message cursor');
+    final normalizedFolder = _optionalIdentifier(folderId, 'folder id');
+    final json = await _transport.getJson(
+      'messages/feed',
+      query: <String, Object?>{
+        'folderid': ?normalizedFolder,
+        'stack': stacked,
+        'cursor': ?normalizedCursor,
+        'with_session': false,
+      },
+    );
+    final items = _parseItems(json, _mapper.message);
+    final hasMore = _requiredResponseBoolean(json, 'has_more');
+    final next = json['cursor'];
+    if (next is! String || (hasMore && next.isEmpty)) {
+      throw _missingField('cursor');
+    }
+    return Page<ProviderMessage>(
+      items: items,
+      hasMore: hasMore,
+      nextCursor: hasMore ? next : null,
+    );
+  }
+
+  @override
+  Future<Page<ProviderMessage>> feedback(
+    FeedbackType type,
+    PageRequest request, {
+    String? folderId,
+    bool stacked = true,
+  }) => _offsetMessages(
+    'messages/feedback',
+    request,
+    query: <String, Object?>{
+      'type': type.name,
+      'folderid': ?_optionalIdentifier(folderId, 'folder id'),
+      'stack': stacked,
+    },
+  );
+
+  @override
+  Future<Page<ProviderMessage>> mentions(
+    PageRequest request, {
+    String? folderId,
+    bool stacked = true,
+  }) => _offsetMessages(
+    'messages/mentions',
+    request,
+    query: <String, Object?>{
+      'folderid': ?_optionalIdentifier(folderId, 'folder id'),
+      'stack': stacked,
+    },
+  );
+
+  @override
+  Future<Page<ProviderMessage>> feedbackStack(
+    String stackId,
+    PageRequest request,
+  ) => _stack('messages/feedback', stackId, request);
+
+  @override
+  Future<Page<ProviderMessage>> mentionStack(
+    String stackId,
+    PageRequest request,
+  ) => _stack('messages/mentions', stackId, request);
+
+  Future<Page<ProviderMessage>> _stack(
+    String path,
+    String stackId,
+    PageRequest request,
+  ) {
+    _validateIdentifier(stackId, 'message stack id');
+    return _offsetMessages(
+      '$path/${Uri.encodeComponent(stackId.trim())}',
+      request,
+    );
+  }
+
+  Future<Page<ProviderMessage>> _offsetMessages(
+    String path,
+    PageRequest request, {
+    Map<String, Object?> query = const <String, Object?>{},
+  }) async {
+    _validatePageRequest(request);
+    final json = await _transport.getJson(
+      path,
+      query: <String, Object?>{
+        ...query,
+        'offset': _offset(request.cursor),
+        'limit': request.limit,
+        'with_session': false,
+      },
+    );
+    return _parsePage(json, _mapper.message);
+  }
+
+  @override
+  Future<void> delete({
+    String? messageId,
+    String? stackId,
+    String? folderId,
+  }) async {
+    final message = _optionalIdentifier(messageId, 'message id');
+    final stack = _optionalIdentifier(stackId, 'message stack id');
+    final folder = _optionalIdentifier(folderId, 'folder id');
+    if ((message == null) == (stack == null)) {
+      throw const DAKitException(
+        kind: DAKitFailureKind.configuration,
+        code: 'api.message.delete.invalid_target',
+        message: 'Exactly one message ID or stack ID must be provided.',
+      );
+    }
+    final json = await _transport.postFormJson(
+      'messages/delete',
+      form: <String, Object?>{
+        'folderid': ?folder,
+        'messageid': ?message,
+        'stackid': ?stack,
+      },
+    );
+    _requireSuccess(json, 'messages/delete');
+  }
+}
+
 MediaAvailability? _expectedMediaAvailability(DAKitException error) {
   final rawProviderCode = error.details['provider_code'];
   final providerCode = switch (rawProviderCode) {
@@ -867,6 +1003,24 @@ Map<String, Object?> _requiredItemMap(Object? value) {
     return value.map((key, item) => MapEntry(key.toString(), item));
   }
   throw _missingField('thread.item');
+}
+
+List<T> _parseItems<T>(
+  Map<String, Object?> json,
+  T Function(Map<String, Object?> item) parse,
+) {
+  final rawResults = json['results'];
+  if (rawResults is! List) throw _missingField('results');
+  return List<T>.unmodifiable(
+    rawResults.map((item) => parse(_requiredItemMap(item))),
+  );
+}
+
+String? _optionalIdentifier(String? value, String label) {
+  if (value == null) return null;
+  final normalized = value.trim();
+  _validateIdentifier(normalized, label);
+  return normalized;
 }
 
 int? _optionalInteger(Object? value) => switch (value) {

@@ -16,3 +16,5 @@
   content contracts.
 - Add user relationship, friend/watcher listing, watch-state, search, and bulk
   lookup contracts.
+- Add provider message-center models and contracts for feed, feedback, mentions,
+  stacks, and deletion.
