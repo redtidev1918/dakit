@@ -165,6 +165,97 @@ void main() {
     expect(backend.enqueued, isEmpty);
     await manager.dispose();
   });
+
+  test('rejects duplicate transfer ids before invoking the platform', () async {
+    final backend = FakeTransferBackend();
+    final manager = createBackgroundTransferManagerForTesting(backend: backend);
+    await manager.initialize();
+    final asset = MediaAsset(
+      id: 'art-1:original',
+      kind: MediaKind.image,
+      role: MediaRole.original,
+      availability: MediaAvailability.available,
+      uri: Uri(
+        scheme: 'https',
+        host: 'files.example.test',
+        path: '/download/original.png',
+      ),
+    );
+
+    await manager.enqueue(TransferRequest(id: 'task-1', asset: asset));
+
+    await expectLater(
+      manager.enqueue(TransferRequest(id: 'task-1', asset: asset)),
+      throwsA(
+        isA<DAKitException>().having(
+          (error) => error.code,
+          'code',
+          'transfer.id.duplicate',
+        ),
+      ),
+    );
+    expect(backend.enqueued, hasLength(1));
+    await manager.dispose();
+  });
+
+  test(
+    'rejects non-HTTPS transfer URLs before invoking the platform',
+    () async {
+      final backend = FakeTransferBackend();
+      final manager = createBackgroundTransferManagerForTesting(
+        backend: backend,
+      );
+      await manager.initialize();
+      final asset = MediaAsset(
+        id: 'art-1:original',
+        kind: MediaKind.image,
+        role: MediaRole.original,
+        availability: MediaAvailability.available,
+        uri: Uri(
+          scheme: 'http',
+          host: 'files.example.test',
+          path: '/download/original.png',
+        ),
+      );
+
+      await expectLater(
+        manager.enqueue(TransferRequest(id: 'task-1', asset: asset)),
+        throwsA(
+          isA<DAKitException>().having(
+            (error) => error.code,
+            'code',
+            'transfer.url.insecure',
+          ),
+        ),
+      );
+      expect(backend.enqueued, isEmpty);
+      await manager.dispose();
+    },
+  );
+
+  test(
+    'rejects invalid proxy configuration before touching the backend',
+    () async {
+      final backend = FakeTransferBackend();
+      final manager = createBackgroundTransferManagerForTesting(
+        backend: backend,
+      );
+      await manager.initialize();
+
+      await expectLater(
+        manager.configureProxy(const ProxyConfiguration(host: '', port: 0)),
+        throwsA(
+          isA<DAKitException>().having(
+            (error) => error.code,
+            'code',
+            'transfer.proxy.invalid',
+          ),
+        ),
+      );
+      expect(backend.proxies, isEmpty);
+      await manager.dispose();
+    },
+  );
 }
 
 final class FakeTransferBackend implements BackgroundTransferBackend {
