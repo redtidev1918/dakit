@@ -15,3 +15,54 @@ workspace:
 
 dev_dependencies:
   lints: ^6.0.0
+  melos: ^8.3.0
+
+melos:
+  packages:
+    - packages/*
+    - apps/*
+
+  command:
+    version:
+      workspaceChangelog: false
+      updateGitTagRefs: true
+      message: 'chore(release): publish packages'
+
+  scripts:
+    format:
+      run: dart format --output=none --set-exit-if-changed .
+      description: Check Dart formatting across the workspace.
+
+    analyze:
+      run: flutter analyze
+      description: Analyze all Dart and Flutter packages.
+
+    test:
+      run: |
+        flutter test \
+          packages/dakit_core/test \
+          packages/dakit_api/test \
+          packages/dakit_flutter/test \
+          apps/example_client/test
+      description: Run the full unit and widget test suite.
+
+    test:coverage:
+      run: |
+        flutter test \
+          packages/dakit_core/test \
+          packages/dakit_api/test \
+          packages/dakit_flutter/test \
+          apps/example_client/test \
+          --coverage
+      description: Run tests and collect coverage data.
+
+    clean:
+      run: flutter clean
+      description: Clean Flutter build artifacts.
+
+    publish:check:
+      run: |
+        dart pub publish --dry-run --directory packages/dakit_core
+        dart pub publish --dry-run --directory packages/dakit_api
+        dart pub publish --dry-run --directory packages/dakit_flutter
+      description: Dry-run publishing for the public packages.
