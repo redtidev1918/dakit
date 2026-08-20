@@ -6,3 +6,8 @@
 - Add versioned, retrying, authenticated official API transport.
 - Add account, artwork, gallery, collection, and original-media repositories.
 - Add tolerant DTO mapping and schema-derived contract fixtures.
+- Add explicit environment, direct, and HTTP-proxy profiles for OAuth and API
+  clients, including authenticated proxies and bypass suffixes.
+- Add redacted DNS, TCP, TLS, and HTTP connectivity reports.
+- Preserve OAuth transport failures as network errors instead of authentication
+  errors.

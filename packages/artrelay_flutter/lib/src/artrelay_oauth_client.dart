@@ -19,13 +19,27 @@ final class ArtRelayOAuthClient {
     ExternalUriLauncher? launcher,
     CallbackUriSource? callbacks,
     OAuthEndpoint? endpoint,
+    NetworkProfile? networkProfile,
     DiagnosticSink diagnostics = const NoopDiagnosticSink(),
     DateTime Function()? now,
     Duration timeout = const Duration(minutes: 10),
   }) {
+    if (endpoint != null && networkProfile != null) {
+      throw const ArtRelayException(
+        kind: ArtRelayFailureKind.configuration,
+        code: 'network.transport.ambiguous',
+        message:
+            'Provide either an OAuth endpoint or a network profile, not both.',
+      );
+    }
     final resolvedTokenStore = tokenStore ?? SecureTokenStore();
     final tokenClient = OAuthTokenClient(
-      endpoint: endpoint ?? DioOAuthEndpoint(),
+      endpoint:
+          endpoint ??
+          DioOAuthEndpoint(
+            networkProfile: networkProfile,
+            diagnostics: diagnostics,
+          ),
       diagnostics: diagnostics,
       now: now,
     );

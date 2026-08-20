@@ -5,3 +5,5 @@
 - Persist pending PKCE transactions for process restart recovery.
 - Add native-scheduler background transfers with persistent recovery and proxy
   configuration.
+- Allow the OAuth facade to use an explicit API network profile without coupling
+  it to media-transfer proxy settings.

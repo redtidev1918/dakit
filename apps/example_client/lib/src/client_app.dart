@@ -66,6 +66,8 @@ final class ClientHome extends StatelessWidget {
             children: <Widget>[
               _StatusCard(controller: controller),
               const SizedBox(height: 16),
+              _ConnectivityCard(controller: controller),
+              const SizedBox(height: 16),
               if (controller.phase == ClientPhase.ready)
                 _ArtworkList(artworks: controller.artworks),
               const SizedBox(height: 16),
@@ -76,6 +78,86 @@ final class ClientHome extends StatelessWidget {
       ),
     ),
   );
+}
+
+final class _ConnectivityCard extends StatelessWidget {
+  const _ConnectivityCard({required this.controller});
+
+  final ExampleClientController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final report = controller.connectivity;
+    final theme = Theme.of(context);
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                Icon(
+                  report == null
+                      ? Icons.network_check
+                      : report.reachable
+                      ? Icons.cloud_done
+                      : Icons.cloud_off,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Network path',
+                    style: theme.textTheme.titleMedium,
+                  ),
+                ),
+                if (controller.checkingConnectivity)
+                  const SizedBox.square(
+                    dimension: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                else
+                  TextButton.icon(
+                    onPressed: controller.checkConnectivity,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Run check'),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              report == null
+                  ? 'Checking DNS, TCP, TLS, and HTTP independently.'
+                  : report.reachable
+                  ? 'All four stages reached the service.'
+                  : 'Stopped at ${report.failure?.stage.name ?? 'unknown'}: '
+                        '${report.failure?.code ?? 'unknown'}',
+            ),
+            if (report != null) ...<Widget>[
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: <Widget>[
+                  for (final stage in report.stages)
+                    Chip(
+                      avatar: Icon(
+                        stage.succeeded ? Icons.check : Icons.close,
+                        size: 16,
+                      ),
+                      label: Text(
+                        '${stage.stage.name} '
+                        '${stage.elapsed.inMilliseconds} ms',
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 final class _StatusCard extends StatelessWidget {
@@ -108,8 +190,8 @@ final class _StatusCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(_message),
-            if (controller.phase ==
-                ClientPhase.configurationRequired) ...<Widget>[
+            if (controller.phase == ClientPhase.configurationRequired &&
+                controller.failure == null) ...<Widget>[
               const SizedBox(height: 12),
               const _CommandBox(
                 'flutter run -d macos '
@@ -139,21 +221,22 @@ final class _StatusCard extends StatelessWidget {
               const SizedBox(height: 12),
               Text(_failureHint(failure)),
               const SizedBox(height: 16),
-              Wrap(
-                spacing: 10,
-                children: <Widget>[
-                  FilledButton.tonalIcon(
-                    onPressed: controller.login,
-                    icon: const Icon(Icons.login),
-                    label: const Text('Start login again'),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: controller.refresh,
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Retry API'),
-                  ),
-                ],
-              ),
+              if (controller.phase != ClientPhase.configurationRequired)
+                Wrap(
+                  spacing: 10,
+                  children: <Widget>[
+                    FilledButton.tonalIcon(
+                      onPressed: controller.login,
+                      icon: const Icon(Icons.login),
+                      label: const Text('Start login again'),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: controller.refresh,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Retry API'),
+                    ),
+                  ],
+                ),
             ],
           ],
         ),
@@ -162,7 +245,10 @@ final class _StatusCard extends StatelessWidget {
   }
 
   String get _title => switch (controller.phase) {
-    ClientPhase.configurationRequired => 'Client ID is not configured',
+    ClientPhase.configurationRequired =>
+      controller.failure == null
+          ? 'Client ID is not configured'
+          : 'Network configuration is invalid',
     ClientPhase.restoring => 'Restoring secure session',
     ClientPhase.signedOut => 'Ready to authorize',
     ClientPhase.authorizing => 'Waiting for browser callback',
@@ -173,7 +259,9 @@ final class _StatusCard extends StatelessWidget {
 
   String get _message => switch (controller.phase) {
     ClientPhase.configurationRequired =>
-      'Pass the Public Client ID at build time. No client secret is used.',
+      controller.failure == null
+          ? 'Pass the Public Client ID at build time. No client secret is used.'
+          : 'Fix the proxy build defines and restart the example client.',
     ClientPhase.restoring =>
       'Checking secure storage and a possible cold-start callback.',
     ClientPhase.signedOut =>

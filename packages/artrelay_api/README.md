@@ -11,7 +11,12 @@ browse/search, galleries, favourites, and original-file metadata. Upstream DTOs 
 private: callers only receive `artrelay_core` models.
 
 ```dart
-final transport = OfficialApiClient(session: session);
+final network = NetworkProfile.environment();
+final transport = OfficialApiClient(
+  session: session,
+  networkProfile: network,
+  diagnostics: diagnostics,
+);
 final artworks = OfficialArtworkRepository(transport);
 final originals = OfficialMediaRepository(transport);
 
@@ -22,3 +27,8 @@ final original = await originals.originalFile(artwork.id);
 Preview URLs are deliberately not labeled as originals. Resolve the original only
 when `Artwork.isDownloadable` is true and handle the provider's typed authorization
 or availability failure.
+
+`NetworkProfile` supports environment proxy discovery, forced direct connections,
+and explicit HTTP proxies. `ConnectivityProbe` isolates DNS, TCP, TLS, and HTTP
+failures. Advanced hosts may inject their own Dio transport instead; the SDK never
+offers a certificate-validation bypass.

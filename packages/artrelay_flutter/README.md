@@ -13,6 +13,10 @@ For ordinary clients, `ArtRelayOAuthClient` assembles these adapters into a comp
 public-client login lifecycle. Advanced clients can replace any boundary without
 forking the SDK. See the workspace `docs/OAUTH.md` integration guide.
 
+The facade accepts the API package's `NetworkProfile`, so browser authorization can
+be followed by token exchange through an explicit route. The external browser still
+uses the operating system's own networking configuration.
+
 `BackgroundTransferManager` adapts platform schedulers into the core transfer
 contract. It recovers tracked tasks after restart and supports progress, retry,
 pause, resume, cancel, and a media-specific proxy without exposing plugin types.

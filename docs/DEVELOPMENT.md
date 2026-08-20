@@ -49,6 +49,13 @@ verification and do not combine partial archives from different URLs.
 
 Pub mirrors may not expose the official package-advisory endpoint. Release and CI
 security checks must also run against the official `https://pub.dev` service.
+Use mirror variables for a single command where practical. A mirror can become the
+hosted URL recorded in `pubspec.lock`; restore the official source through the
+proxy before committing so the shared lockfile remains portable.
+
+Runtime application proxies are a separate concern from development dependency
+downloads. See [NETWORKING.md](NETWORKING.md); no developer proxy is compiled into
+the SDK by default.
 
 ## Quality gate
 

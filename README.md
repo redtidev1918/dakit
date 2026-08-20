@@ -45,8 +45,9 @@ Run the complete local quality gate:
 ```
 
 For mainland China mirror and proxy behavior, see
-[`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md). Architecture and continuation state
-live in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and
+[`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md). Runtime proxy profiles and staged
+connectivity checks are documented in [`docs/NETWORKING.md`](docs/NETWORKING.md).
+Architecture and continuation state live in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and
 [`docs/STATUS.md`](docs/STATUS.md).
 
 OAuth application registration and client integration are documented in

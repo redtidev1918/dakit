@@ -39,6 +39,7 @@ void main() {
         loadAccount: () async => user,
         loadHome: () async =>
             Page<Artwork>(items: <Artwork>[artwork], hasMore: false),
+        runConnectivity: successfulConnectivity,
       );
       await tester.pumpWidget(ArtRelayExampleApp(controller: controller));
       await controller.initialize();
@@ -50,9 +51,29 @@ void main() {
       expect(find.text('Connected'), findsOneWidget);
       expect(find.text('@sample-user'), findsOneWidget);
       expect(find.text('Example work'), findsOneWidget);
+      expect(find.text('All four stages reached the service.'), findsOneWidget);
     },
   );
 }
+
+Future<ConnectivityReport> successfulConnectivity() async => ConnectivityReport(
+  target: Uri.parse('https://example.test'),
+  stages: <ConnectivityStageResult>[
+    for (final stage in <DiagnosticStage>[
+      DiagnosticStage.dns,
+      DiagnosticStage.connect,
+      DiagnosticStage.tls,
+      DiagnosticStage.http,
+    ])
+      ConnectivityStageResult(
+        stage: stage,
+        succeeded: true,
+        code: 'network.${stage.name}.ok',
+        message: 'Success.',
+        elapsed: Duration.zero,
+      ),
+  ],
+);
 
 final tokens = AuthTokens(
   accessToken: 'access',

@@ -5,6 +5,8 @@ import 'package:dio/dio.dart';
 
 import '../oauth/oauth_session.dart';
 import 'api_config.dart';
+import 'network_adapter.dart';
+import 'network_profile.dart';
 
 typedef Delay = Future<void> Function(Duration duration);
 
@@ -21,16 +23,29 @@ final class OfficialApiClient implements OfficialApiTransport {
   factory OfficialApiClient({
     required OAuthSession session,
     Dio? dio,
+    NetworkProfile? networkProfile,
     ApiConfig? config,
     DiagnosticSink diagnostics = const NoopDiagnosticSink(),
     Delay? delay,
   }) => OfficialApiClient._(
     session,
-    dio ?? Dio(),
+    _resolveDio(dio, networkProfile),
     config ?? ApiConfig(),
     diagnostics,
     delay ?? Future<void>.delayed,
   );
+
+  static Dio _resolveDio(Dio? dio, NetworkProfile? profile) {
+    if (dio != null && profile != null) {
+      throw const ArtRelayException(
+        kind: ArtRelayFailureKind.configuration,
+        code: 'network.transport.ambiguous',
+        message: 'Provide either a Dio client or a network profile, not both.',
+      );
+    }
+    return dio ??
+        createNetworkDio(profile: profile ?? NetworkProfile.environment());
+  }
 
   OfficialApiClient._(
     this._session,

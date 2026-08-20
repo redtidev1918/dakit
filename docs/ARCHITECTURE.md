@@ -62,10 +62,11 @@ Browser automation, clipboard polling, and embedded login WebViews are forbidden
 
 ## Networking and proxy behavior
 
-The API package exposes a transport configuration rather than reading process
-environment variables directly. Supported modes are system/default, direct,
-HTTP proxy, and host-provided transport. API and media traffic can use separate
-profiles.
+The API package exposes an explicit transport profile. Supported modes are Dart
+proxy-environment discovery, forced direct, an explicit HTTP proxy, and a
+host-provided Dio transport. The environment mode reads documented process
+variables; it does not pretend to discover every operating-system PAC setting.
+API and media traffic can use separate profiles.
 
 Diagnostics record stages such as DNS, connect, TLS, HTTP, OAuth callback, token
 exchange, parsing, and storage. Tokens, authorization codes, cookies, and query

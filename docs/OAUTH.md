@@ -23,11 +23,13 @@ cold-start callback. Supply the client ID at build or runtime; do not commit a
 developer account value.
 
 ```dart
+final network = NetworkProfile.environment();
 final oauth = ArtRelayOAuthClient(
   config: OAuthConfig(
     clientId: clientId,
     redirectUri: Uri.parse('artrelay://oauth/callback'),
   ),
+  networkProfile: network,
   diagnostics: diagnostics,
 );
 
@@ -70,3 +72,6 @@ different diagnostic stages and error codes.
 The host may replace the browser launcher, callback source, token store, pending
 transaction store, OAuth endpoint, and diagnostic sink through constructor
 arguments. This keeps the SDK usable in clients with their own platform layer.
+OAuth endpoint network failures remain network failures rather than being mislabeled
+as rejected credentials. Proxy selection and staged connectivity checks are covered
+in [NETWORKING.md](NETWORKING.md).

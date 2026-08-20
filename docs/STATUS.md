@@ -15,11 +15,10 @@ same commit as every material milestone.
 
 ## Next actions
 
-1. Add API proxy selection and staged DNS/connect/TLS/HTTP diagnostics.
-2. Add artwork detail and transfer controls to the example client.
-3. Run representative live transfers for image, video, archive, literature, and
+1. Add artwork detail and transfer controls to the example client.
+2. Run representative live transfers for image, video, archive, literature, and
    restricted cases.
-4. Add Dart, Android, macOS, and Windows CI jobs.
+3. Add Dart, Android, macOS, and Windows CI jobs.
 
 ## Decisions already made
 
@@ -37,7 +36,7 @@ same commit as every material milestone.
 - Engine `5d53178869`
 - Dart 3.13.1
 - `flutter analyze`: no issues
-- Test suites: 36 passing
+- Test suites: 53 passing
 - Local builds: Android debug APK and macOS debug application succeed
 
 ## Latest milestone
@@ -61,7 +60,7 @@ same commit as every material milestone.
   forwards a callback to the existing instance and registers the protocol through
   its MSIX manifest.
 - Verified Android APK SHA-256 on this machine:
-  `c2fc8f4ba217ea3e169bbb05b044ef136e6862d6eea96b389f9d1198aacbde9b`.
+  `1443d56e86671a8f50bf2c9179450a3666441c8d45d316cc82f34aa6e3f074eb`.
 - Startup restoration no longer waits for a callback when the app was opened
   normally, and a previous initial link cannot poison a new authorization attempt.
 - The generated counter was replaced by a responsive integration client with
@@ -74,6 +73,20 @@ same commit as every material milestone.
 - Android and macOS still build after adding the native transfer plugin. Both macOS
   entitlement files now include outbound network permission; without it, sandboxed
   OAuth, API, and media requests would fail despite a successful build.
+- OAuth and API clients now accept explicit environment, direct, or HTTP-proxy
+  profiles while advanced hosts retain full Dio injection. Supplying conflicting
+  transports is rejected rather than silently ignored.
+- OAuth connection, timeout, and TLS failures remain typed network failures instead
+  of being mislabeled as invalid authentication.
+- `ConnectivityProbe` stops at the first DNS, TCP, TLS, or HTTP failure and returns
+  a redacted report. The example runs it at startup and renders each stage with a
+  manual retry control.
+- A real network smoke test on this development machine passed all four stages via
+  both `https_proxy=http://127.0.0.1:7892` and an explicit HTTP profile. Forced
+  direct mode resolved DNS but timed out at TCP, proving route selection is not a
+  cosmetic setting. A probe socket shutdown leak found by this test was fixed.
+- The complete 53-test gate, macOS debug application, and Android debug APK all
+  pass after the network-routing integration.
 
 ## Known external requirements
 

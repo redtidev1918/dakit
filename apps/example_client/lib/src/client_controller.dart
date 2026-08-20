@@ -19,6 +19,7 @@ typedef ResumeSession = Future<AuthTokens?> Function({bool waitForCallback});
 typedef Authorize = Future<AuthTokens> Function();
 typedef ReadTokens = Future<AuthTokens> Function({bool forceRefresh});
 typedef Logout = Future<void> Function({bool revoke});
+typedef RunConnectivity = Future<ConnectivityReport> Function();
 
 final class ExampleClientController extends ChangeNotifier {
   factory ExampleClientController({
@@ -29,6 +30,7 @@ final class ExampleClientController extends ChangeNotifier {
     required Logout logout,
     required Future<UserProfile> Function() loadAccount,
     required Future<Page<Artwork>> Function() loadHome,
+    required RunConnectivity runConnectivity,
   }) => ExampleClientController._(
     diagnostics: diagnostics,
     resumeSession: resumeSession,
@@ -37,6 +39,7 @@ final class ExampleClientController extends ChangeNotifier {
     logout: logout,
     loadAccount: loadAccount,
     loadHome: loadHome,
+    runConnectivity: runConnectivity,
   );
 
   ExampleClientController._({
@@ -47,16 +50,31 @@ final class ExampleClientController extends ChangeNotifier {
     required this._logout,
     required this._loadAccount,
     required this._loadHome,
+    required this.runConnectivity,
   }) : phase = ClientPhase.restoring;
 
-  ExampleClientController.unconfigured({required this.diagnostics})
-    : _resumeSession = null,
-      _authorize = null,
-      _validTokens = null,
-      _logout = null,
-      _loadAccount = null,
-      _loadHome = null,
-      phase = ClientPhase.configurationRequired;
+  ExampleClientController.unconfigured({
+    required this.diagnostics,
+    this.runConnectivity,
+  }) : _resumeSession = null,
+       _authorize = null,
+       _validTokens = null,
+       _logout = null,
+       _loadAccount = null,
+       _loadHome = null,
+       phase = ClientPhase.configurationRequired;
+
+  ExampleClientController.configurationFailure({
+    required this.diagnostics,
+    required this.failure,
+  }) : runConnectivity = null,
+       _resumeSession = null,
+       _authorize = null,
+       _validTokens = null,
+       _logout = null,
+       _loadAccount = null,
+       _loadHome = null,
+       phase = ClientPhase.configurationRequired;
 
   final DiagnosticLog diagnostics;
   final ResumeSession? _resumeSession;
@@ -65,11 +83,14 @@ final class ExampleClientController extends ChangeNotifier {
   final Logout? _logout;
   final Future<UserProfile> Function()? _loadAccount;
   final Future<Page<Artwork>> Function()? _loadHome;
+  final RunConnectivity? runConnectivity;
 
   ClientPhase phase;
   UserProfile? user;
   List<Artwork> artworks = const <Artwork>[];
   ArtRelayException? failure;
+  ConnectivityReport? connectivity;
+  bool checkingConnectivity = false;
   bool _initialized = false;
 
   bool get busy => switch (phase) {
@@ -80,8 +101,10 @@ final class ExampleClientController extends ChangeNotifier {
   };
 
   Future<void> initialize() async {
-    if (_initialized || phase == ClientPhase.configurationRequired) return;
+    if (_initialized) return;
     _initialized = true;
+    unawaited(checkConnectivity());
+    if (phase == ClientPhase.configurationRequired) return;
     _setPhase(ClientPhase.restoring);
     try {
       await _resumeSession?.call(waitForCallback: false);
@@ -95,6 +118,19 @@ final class ExampleClientController extends ChangeNotifier {
       }
     } on Object catch (error) {
       _setFailure(_unexpected(error));
+    }
+  }
+
+  Future<void> checkConnectivity() async {
+    final operation = runConnectivity;
+    if (operation == null || checkingConnectivity) return;
+    checkingConnectivity = true;
+    notifyListeners();
+    try {
+      connectivity = await operation();
+    } finally {
+      checkingConnectivity = false;
+      notifyListeners();
     }
   }
 
