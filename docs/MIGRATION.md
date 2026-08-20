@@ -44,7 +44,7 @@ promised after the rewrite.
 - [ ] GitHub Actions quality and platform build matrix.
 - [ ] Package publication dry run.
 - [ ] Rename the remote repository only after package names and links are final.
-- [ ] Remove every obsolete Python file from main.
+- [x] Remove every obsolete Python file from main.
 
 ## Acceptance criteria
 

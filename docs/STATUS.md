@@ -11,15 +11,15 @@ same commit as every material milestone.
 - Legacy remote: `legacy-origin`
 - Target runtime: stable Flutter/Dart
 - Target platforms: Android first, then macOS and Windows
-- Workspace health: four-member Flutter workspace is green; Python removal is pending
+- Workspace health: four-member Flutter workspace is green; Python preview removed from main
 
 ## Next actions
 
-1. Commit the green Flutter skeleton and documentation.
-2. Remove the Python implementation in a separate commit.
-3. Implement token exchange, refresh coordination, redaction, and Dio transport.
-4. Add official API DTO fixtures and repository adapters.
-5. Configure the example app custom-scheme callback on all three platforms.
+1. Implement token exchange, refresh coordination, redaction, and Dio transport.
+2. Add official API DTO fixtures and repository adapters.
+3. Configure the example app custom-scheme callback on all three platforms.
+4. Replace the generated counter screen with an integration diagnostics client.
+5. Add Dart, Android, macOS, and Windows CI jobs.
 
 ## Decisions already made
 
