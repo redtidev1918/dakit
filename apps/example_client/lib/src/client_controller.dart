@@ -3,25 +3,14 @@ import 'dart:async';
 import 'package:dakit_flutter/dakit_flutter.dart';
 import 'package:flutter/foundation.dart';
 
+import 'account_controller.dart';
 import 'browse_controller.dart';
 import 'controller_types.dart';
 import 'diagnostic_log.dart';
 import 'transfer_controller.dart';
 
-enum ClientPhase {
-  configurationRequired,
-  restoring,
-  signedOut,
-  authorizing,
-  loading,
-  ready,
-  failure,
-}
+export 'controller_types.dart';
 
-typedef ResumeSession = Future<AuthTokens?> Function({bool waitForCallback});
-typedef Authorize = Future<AuthTokens> Function();
-typedef ReadTokens = Future<AuthTokens> Function({bool forceRefresh});
-typedef Logout = Future<void> Function({bool revoke});
 typedef RunConnectivity = Future<ConnectivityReport> Function();
 
 final class ExampleClientController extends ChangeNotifier {
@@ -55,18 +44,25 @@ final class ExampleClientController extends ChangeNotifier {
 
   ExampleClientController._({
     required this.diagnostics,
-    required this._resumeSession,
-    required this._authorize,
-    required this._validTokens,
-    required this._logout,
-    required this._loadAccount,
+    required ResumeSession resumeSession,
+    required Authorize authorize,
+    required ReadTokens validTokens,
+    required Logout logout,
+    required Future<UserProfile> Function() loadAccount,
     required Future<Page<Artwork>> Function() loadHome,
     required this.runConnectivity,
     required LoadArtwork loadArtwork,
     required ResolveOriginal resolveOriginal,
     required TransferManager transferManager,
     required ProxyConfiguration? initialTransferProxy,
-  }) : _browse = BrowseController(
+  }) : _account = AccountController(
+         resumeSession: resumeSession,
+         authorize: authorize,
+         validTokens: validTokens,
+         logout: logout,
+         loadAccount: loadAccount,
+       ),
+       _browse = BrowseController(
          loadHome: loadHome,
          loadArtwork: loadArtwork,
          resolveOriginal: resolveOriginal,
@@ -74,10 +70,10 @@ final class ExampleClientController extends ChangeNotifier {
        _transfers = TransferController(
          manager: transferManager,
          initialProxy: initialTransferProxy,
-       ),
-       phase = ClientPhase.restoring {
+       ) {
     _attachTransferListeners();
     _attachBrowseListeners();
+    _attachAccountListeners();
   }
 
   ExampleClientController.unconfigured({
@@ -85,7 +81,10 @@ final class ExampleClientController extends ChangeNotifier {
     required TransferManager transferManager,
     ProxyConfiguration? initialTransferProxy,
     this.runConnectivity,
-  }) : _transfers = TransferController(
+  }) : _account = AccountController(
+         initialPhase: ClientPhase.configurationRequired,
+       ),
+       _transfers = TransferController(
          manager: transferManager,
          initialProxy: initialTransferProxy,
        ),
@@ -93,23 +92,21 @@ final class ExampleClientController extends ChangeNotifier {
          loadHome: null,
          loadArtwork: null,
          resolveOriginal: null,
-       ),
-       _resumeSession = null,
-       _authorize = null,
-       _validTokens = null,
-       _logout = null,
-       _loadAccount = null,
-       phase = ClientPhase.configurationRequired {
+       ) {
     _attachTransferListeners();
     _attachBrowseListeners();
+    _attachAccountListeners();
   }
 
   ExampleClientController.configurationFailure({
     required this.diagnostics,
-    required this.failure,
+    required DAKitException failure,
     required TransferManager transferManager,
     ProxyConfiguration? initialTransferProxy,
-  }) : _transfers = TransferController(
+  }) : _account = AccountController(
+         initialPhase: ClientPhase.configurationRequired,
+       ),
+       _transfers = TransferController(
          manager: transferManager,
          initialProxy: initialTransferProxy,
        ),
@@ -118,35 +115,28 @@ final class ExampleClientController extends ChangeNotifier {
          loadArtwork: null,
          resolveOriginal: null,
        ),
-       runConnectivity = null,
-       _resumeSession = null,
-       _authorize = null,
-       _validTokens = null,
-       _logout = null,
-       _loadAccount = null,
-       phase = ClientPhase.configurationRequired {
+       runConnectivity = null {
+    _account.failure = failure;
     _attachTransferListeners();
     _attachBrowseListeners();
+    _attachAccountListeners();
   }
 
   final DiagnosticLog diagnostics;
-  final ResumeSession? _resumeSession;
-  final Authorize? _authorize;
-  final ReadTokens? _validTokens;
-  final Logout? _logout;
-  final Future<UserProfile> Function()? _loadAccount;
   final RunConnectivity? runConnectivity;
+  final AccountController _account;
   final BrowseController _browse;
   final TransferController _transfers;
 
-  ClientPhase phase;
-  UserProfile? user;
-  DAKitException? failure;
   ConnectivityReport? connectivity;
   bool checkingConnectivity = false;
   bool _initialized = false;
   bool _disposed = false;
 
+  ClientPhase get phase => _account.phase;
+  UserProfile? get user => _account.user;
+  DAKitException? get failure => _account.failure;
+  bool get busy => _account.busy;
   List<Artwork> get artworks => _browse.artworks;
   Artwork? get selectedArtwork => _browse.selectedArtwork;
   MediaAsset? get selectedOriginal => _browse.selectedOriginal;
@@ -157,33 +147,14 @@ final class ExampleClientController extends ChangeNotifier {
   bool get schedulingTransfer => _transfers.schedulingTransfer;
   bool get controllingTransfer => _transfers.controllingTransfer;
 
-  bool get busy => switch (phase) {
-    ClientPhase.restoring ||
-    ClientPhase.authorizing ||
-    ClientPhase.loading => true,
-    _ => false,
-  };
-
   Future<void> initialize() async {
     if (_initialized) return;
     _initialized = true;
     unawaited(checkConnectivity());
     await _transfers.initialize();
     if (phase == ClientPhase.configurationRequired) return;
-    _setPhase(ClientPhase.restoring);
-    try {
-      await _resumeSession?.call(waitForCallback: false);
-      await _validTokens?.call(forceRefresh: false);
-      await _loadContent();
-    } on DAKitException catch (error) {
-      if (error.code == 'oauth.session.missing') {
-        _setPhase(ClientPhase.signedOut);
-      } else {
-        _setFailure(error);
-      }
-    } on Object catch (error) {
-      _setFailure(_unexpected(error));
-    }
+    await _account.restore();
+    if (_account.phase == ClientPhase.ready) await _browse.refresh();
   }
 
   TransferSnapshot? get selectedTransfer {
@@ -236,40 +207,18 @@ final class ExampleClientController extends ChangeNotifier {
   }
 
   Future<void> login() async {
-    final authorize = _authorize;
-    if (authorize == null || busy) return;
-    failure = null;
-    _setPhase(ClientPhase.authorizing);
-    try {
-      await authorize();
-      await _loadContent();
-    } on DAKitException catch (error) {
-      _setFailure(error);
-    } on Object catch (error) {
-      _setFailure(_unexpected(error));
-    }
+    await _account.login();
+    if (_account.phase == ClientPhase.ready) await _browse.refresh();
   }
 
   Future<void> refresh() async {
-    if (busy) return;
-    failure = null;
-    await _loadContent();
+    await _account.refresh();
+    if (_account.phase == ClientPhase.ready) await _browse.refresh();
   }
 
   Future<void> signOut() async {
-    final logout = _logout;
-    if (logout == null || busy) return;
-    _setPhase(ClientPhase.loading);
-    try {
-      await logout(revoke: true);
-      user = null;
-      await _browse.clear();
-      _setPhase(ClientPhase.signedOut);
-    } on DAKitException catch (error) {
-      _setFailure(error);
-    } on Object catch (error) {
-      _setFailure(_unexpected(error));
-    }
+    await _account.signOut();
+    if (_account.phase == ClientPhase.signedOut) await _browse.clear();
   }
 
   Future<String> runConsoleCommand(String input) async {
@@ -325,39 +274,6 @@ final class ExampleClientController extends ChangeNotifier {
     }
   }
 
-  Future<void> _loadContent() async {
-    final loadAccount = _loadAccount;
-    if (loadAccount == null) return;
-    _setPhase(ClientPhase.loading);
-    try {
-      user = await loadAccount();
-      await _browse.refresh();
-      _setPhase(ClientPhase.ready);
-    } on DAKitException catch (error) {
-      _setFailure(error);
-    } on Object catch (error) {
-      _setFailure(_unexpected(error));
-    }
-  }
-
-  void _setPhase(ClientPhase value) {
-    phase = value;
-    notifyListeners();
-  }
-
-  void _setFailure(DAKitException error) {
-    failure = error;
-    phase = ClientPhase.failure;
-    notifyListeners();
-  }
-
-  static DAKitException _unexpected(Object error) => DAKitException(
-    kind: DAKitFailureKind.upstream,
-    code: 'example.unexpected',
-    message: 'The example client encountered an unexpected failure.',
-    cause: error,
-  );
-
   @override
   void notifyListeners() {
     if (!_disposed) super.notifyListeners();
@@ -379,12 +295,22 @@ final class ExampleClientController extends ChangeNotifier {
     if (!_disposed) notifyListeners();
   }
 
+  void _attachAccountListeners() {
+    _account.addListener(_handleAccountChange);
+  }
+
+  void _handleAccountChange() {
+    if (!_disposed) notifyListeners();
+  }
+
   @override
   void dispose() {
     if (_disposed) return;
     _disposed = true;
+    _account.removeListener(_handleAccountChange);
     _transfers.removeListener(_handleTransferChange);
     _browse.removeListener(_handleBrowseChange);
+    _account.dispose();
     _browse.dispose();
     _transfers.dispose();
     super.dispose();
