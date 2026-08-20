@@ -33,6 +33,10 @@ melos:
       run: dart format --output=none --set-exit-if-changed .
       description: Check Dart formatting across the workspace.
 
+    graph:
+      run: dart run melos list --graph
+      description: Print the workspace dependency graph.
+
     analyze:
       run: flutter analyze
       description: Analyze all Dart and Flutter packages.
