@@ -66,6 +66,7 @@ msix_config:
   identity_name: io.artrelay.example-client
   protocol_activation: artrelay
   capabilities: internetClient
+  install_certificate: false
 
   # To add assets to your application, add an assets section, like this:
   # assets:

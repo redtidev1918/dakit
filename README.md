@@ -59,6 +59,9 @@ The runnable host and its build commands live in
 Original-file resolution, background recovery, and proxy behavior are documented
 in [`docs/TRANSFERS.md`](docs/TRANSFERS.md).
 
+The four-platform build matrix and its signing/security boundary are documented in
+[`docs/CI.md`](docs/CI.md).
+
 ## Project rules
 
 - Core packages contain no widgets, Riverpod, Bloc, or concrete database.

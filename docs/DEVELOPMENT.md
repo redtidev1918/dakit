@@ -72,6 +72,10 @@ flutter test packages/artrelay_core/test \
 Live OAuth and API tests are opt-in because they require user interaction and must
 never receive credentials in ordinary CI.
 
+The hosted Linux, Android, macOS, and Windows jobs are described in
+[CI.md](CI.md). Keep the local `tool/verify.sh` gate equivalent to the CI quality
+job.
+
 ## Platform builds
 
 The Android example follows Flutter 3.47.1 defaults: JDK 17, compile/target SDK

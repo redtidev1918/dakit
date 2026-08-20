@@ -17,7 +17,6 @@ same commit as every material milestone.
 
 1. Run representative live transfers for image, video, archive, literature, and
    restricted cases.
-2. Add Dart, Android, macOS, and Windows CI jobs.
 
 ## Decisions already made
 
@@ -99,6 +98,9 @@ same commit as every material milestone.
 - The example UI is split into status, network, artwork, transfer, and diagnostic
   components; the executable is not a new monolithic widget or tied to a state
   management package.
+- GitHub Actions now defines a credential-free quality job plus Android, macOS, and
+  Windows/MSIX build jobs pinned to Flutter 3.47.1. Platform artifacts are smoke
+  builds, not implicitly trusted releases; provider live tests remain opt-in.
 
 ## Known external requirements
 
