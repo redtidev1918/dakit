@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:artrelay_flutter/artrelay_flutter.dart';
+import 'package:dakit_flutter/dakit_flutter.dart';
 import 'package:flutter/material.dart';
 
 import 'src/client_app.dart';
@@ -12,20 +12,20 @@ void main() {
   WidgetsFlutterBinding.ensureInitialized();
   final diagnostics = DiagnosticLog();
   final transfers = BackgroundTransferManager(diagnostics: diagnostics);
-  const clientId = String.fromEnvironment('ARTRELAY_CLIENT_ID');
+  const clientId = String.fromEnvironment('DAKIT_CLIENT_ID');
   late final NetworkProfile networkProfile;
   late final ProxyConfiguration? transferProxy;
   try {
     networkProfile = readExampleNetworkProfile();
     transferProxy = readExampleTransferProxy();
-  } on ArtRelayException catch (error) {
+  } on DAKitException catch (error) {
     final controller = ExampleClientController.configurationFailure(
       diagnostics: diagnostics,
       failure: error,
       transferManager: transfers,
       initialTransferProxy: null,
     );
-    runApp(ArtRelayExampleApp(controller: controller));
+    runApp(DAKitExampleApp(controller: controller));
     return;
   }
   final connectivity = ConnectivityProbe(
@@ -48,13 +48,13 @@ void main() {
           transfers,
           transferProxy,
         );
-  runApp(ArtRelayExampleApp(controller: controller));
+  runApp(DAKitExampleApp(controller: controller));
   unawaited(_initialize(controller));
 }
 
 Future<void> _initialize(ExampleClientController controller) async {
   await controller.initialize();
-  const autoAuthorize = bool.fromEnvironment('ARTRELAY_AUTO_AUTHORIZE');
+  const autoAuthorize = bool.fromEnvironment('DAKIT_AUTO_AUTHORIZE');
   if (autoAuthorize && controller.phase == ClientPhase.signedOut) {
     await controller.login();
   }
@@ -68,10 +68,10 @@ ExampleClientController _configuredController(
   TransferManager transfers,
   ProxyConfiguration? transferProxy,
 ) {
-  final oauth = ArtRelayOAuthClient(
+  final oauth = DAKitOAuthClient(
     config: OAuthConfig(
       clientId: clientId,
-      redirectUri: Uri.parse('artrelay://oauth/callback'),
+      redirectUri: Uri.parse('dakit://oauth/callback'),
     ),
     networkProfile: networkProfile,
     diagnostics: diagnostics,
@@ -79,7 +79,7 @@ ExampleClientController _configuredController(
   final transport = OfficialApiClient(
     session: oauth.session,
     diagnostics: diagnostics,
-    config: ApiConfig(userAgent: 'ArtRelay-Example/0.1'),
+    config: ApiConfig(userAgent: 'DAKit-Example/0.1'),
     networkProfile: networkProfile,
   );
   final artworks = OfficialArtworkRepository(transport);

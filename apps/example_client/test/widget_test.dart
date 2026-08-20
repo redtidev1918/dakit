@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:ui' show Locale, Size;
 
-import 'package:artrelay_flutter/artrelay_flutter.dart';
+import 'package:dakit_flutter/dakit_flutter.dart';
 import 'package:example_client/src/client_app.dart';
 import 'package:example_client/src/client_controller.dart';
 import 'package:example_client/src/diagnostic_log.dart';
@@ -18,10 +18,10 @@ void main() {
         initialTransferProxy: null,
       );
 
-      await tester.pumpWidget(ArtRelayExampleApp(controller: controller));
+      await tester.pumpWidget(DAKitExampleApp(controller: controller));
 
       expect(find.text('Client ID is not configured'), findsOneWidget);
-      expect(find.textContaining('ARTRELAY_CLIENT_ID'), findsOneWidget);
+      expect(find.textContaining('DAKIT_CLIENT_ID'), findsOneWidget);
       expect(find.textContaining('client secret'), findsOneWidget);
     },
   );
@@ -36,8 +36,8 @@ void main() {
         resumeSession: ({waitForCallback = false}) async => null,
         authorize: () async => tokens,
         validTokens: ({forceRefresh = false}) async {
-          throw const ArtRelayException(
-            kind: ArtRelayFailureKind.authentication,
+          throw const DAKitException(
+            kind: DAKitFailureKind.authentication,
             code: 'oauth.session.missing',
             message: 'No session.',
           );
@@ -52,7 +52,7 @@ void main() {
         transferManager: FakeTransferManager(),
         initialTransferProxy: null,
       );
-      await tester.pumpWidget(ArtRelayExampleApp(controller: controller));
+      await tester.pumpWidget(DAKitExampleApp(controller: controller));
       await controller.initialize();
       await tester.pump();
 
@@ -90,10 +90,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      ArtRelayExampleApp(
-        controller: controller,
-        locale: const Locale('zh', 'CN'),
-      ),
+      DAKitExampleApp(controller: controller, locale: const Locale('zh', 'CN')),
     );
 
     expect(find.text('尚未配置 Client ID'), findsOneWidget);

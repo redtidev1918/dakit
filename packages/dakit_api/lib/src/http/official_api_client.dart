@@ -1,0 +1,243 @@
+import 'dart:async';
+
+import 'package:dakit_core/dakit_core.dart';
+import 'package:dio/dio.dart';
+
+import 'api_config.dart';
+import 'network_adapter.dart';
+import 'network_profile.dart';
+
+typedef Delay = Future<void> Function(Duration duration);
+
+abstract interface class OfficialApiTransport {
+  Future<Map<String, Object?>> getJson(
+    String path, {
+    Map<String, Object?> query = const <String, Object?>{},
+    CancelToken? cancelToken,
+  });
+}
+
+/// Versioned, authenticated transport for idempotent official API reads.
+final class OfficialApiClient implements OfficialApiTransport {
+  factory OfficialApiClient({
+    required AuthTokenProvider session,
+    Dio? dio,
+    NetworkProfile? networkProfile,
+    ApiConfig? config,
+    DiagnosticSink diagnostics = const NoopDiagnosticSink(),
+    Delay? delay,
+  }) => OfficialApiClient._(
+    session,
+    _resolveDio(dio, networkProfile),
+    config ?? ApiConfig(),
+    diagnostics,
+    delay ?? Future<void>.delayed,
+  );
+
+  static Dio _resolveDio(Dio? dio, NetworkProfile? profile) {
+    if (dio != null && profile != null) {
+      throw const DAKitException(
+        kind: DAKitFailureKind.configuration,
+        code: 'network.transport.ambiguous',
+        message: 'Provide either a Dio client or a network profile, not both.',
+      );
+    }
+    return dio ??
+        createNetworkDio(profile: profile ?? NetworkProfile.environment());
+  }
+
+  OfficialApiClient._(
+    this._session,
+    this._dio,
+    this.config,
+    this._diagnostics,
+    this._delay,
+  ) {
+    _dio.options.connectTimeout = config.connectTimeout;
+  }
+
+  final AuthTokenProvider _session;
+  final Dio _dio;
+  final DiagnosticSink _diagnostics;
+  final Delay _delay;
+  final ApiConfig config;
+
+  @override
+  Future<Map<String, Object?>> getJson(
+    String path, {
+    Map<String, Object?> query = const <String, Object?>{},
+    CancelToken? cancelToken,
+  }) async {
+    final uri = _resolve(path);
+    var tokens = await _session.validTokens();
+    var refreshed = false;
+    var retries = 0;
+
+    while (true) {
+      final started = DateTime.now();
+      try {
+        final response = await _dio.get<Object?>(
+          uri.toString(),
+          queryParameters: query,
+          cancelToken: cancelToken,
+          options: Options(
+            headers: <String, Object?>{
+              Headers.acceptHeader: Headers.jsonContentType,
+              'Accept-Encoding': 'gzip',
+              'User-Agent': config.userAgent,
+              'Authorization': '${tokens.tokenType} ${tokens.accessToken}',
+              'dA-minor-version': config.minorVersion.toString(),
+            },
+            responseType: ResponseType.json,
+            sendTimeout: config.connectTimeout,
+            receiveTimeout: config.receiveTimeout,
+            validateStatus: (_) => true,
+          ),
+        );
+        final status = response.statusCode ?? 0;
+        _record(
+          status < 400 ? DiagnosticLevel.info : DiagnosticLevel.warning,
+          'api.response',
+          path,
+          started,
+          status: status,
+          retry: retries,
+        );
+
+        if (status == 401 && !refreshed) {
+          tokens = await _session.validTokens(forceRefresh: true);
+          refreshed = true;
+          continue;
+        }
+        if (_retryableStatus(status) &&
+            retries < config.retryPolicy.maxRetries) {
+          retries += 1;
+          await _delay(config.retryPolicy.delayFor(retries));
+          continue;
+        }
+        if (status >= 400) throw _responseFailure(response);
+
+        final data = response.data;
+        if (data is! Map<String, Object?>) {
+          throw const DAKitException(
+            kind: DAKitFailureKind.parsing,
+            code: 'api.response.invalid_json',
+            message: 'The official API returned an unexpected response body.',
+          );
+        }
+        return data;
+      } on DAKitException {
+        rethrow;
+      } on DioException catch (error) {
+        final failure = _dioFailure(error);
+        _record(DiagnosticLevel.error, failure.code, path, started);
+        throw failure;
+      }
+    }
+  }
+
+  Uri _resolve(String path) {
+    final candidate = Uri.parse(path);
+    if (candidate.hasScheme || candidate.hasAuthority || path.startsWith('/')) {
+      throw const DAKitException(
+        kind: DAKitFailureKind.configuration,
+        code: 'api.path.invalid',
+        message: 'API paths must be relative to the configured base URI.',
+      );
+    }
+    return config.baseUri.resolve(path);
+  }
+
+  static bool _retryableStatus(int status) =>
+      status == 429 || status == 500 || status == 503;
+
+  DAKitException _responseFailure(Response<Object?> response) {
+    final status = response.statusCode ?? 0;
+    final data = response.data;
+    if (status == 403 && data is String && data.trimLeft().startsWith('<')) {
+      return const DAKitException(
+        kind: DAKitFailureKind.upstream,
+        code: 'api.response.html_403',
+        message: 'The service rejected the HTTP client before API processing.',
+      );
+    }
+    final body = data is Map<String, Object?>
+        ? data
+        : const <String, Object?>{};
+    final providerCode = body['error'] as String?;
+    final description = body['error_description'] as String?;
+    final kind = switch (status) {
+      401 => DAKitFailureKind.authentication,
+      403 => DAKitFailureKind.authorization,
+      404 => DAKitFailureKind.notFound,
+      429 => DAKitFailureKind.rateLimit,
+      >= 500 => DAKitFailureKind.upstream,
+      _ => DAKitFailureKind.upstream,
+    };
+    return DAKitException(
+      kind: kind,
+      code: providerCode == null
+          ? 'api.http.$status'
+          : 'api.provider.$providerCode',
+      message: description ?? 'The official API request failed.',
+      retryable: _retryableStatus(status),
+      details: <String, Object?>{
+        'status': status,
+        if (body['error_code'] case final Object code) 'provider_code': code,
+      },
+    );
+  }
+
+  static DAKitException _dioFailure(DioException error) {
+    if (error.type == DioExceptionType.cancel) {
+      return DAKitException(
+        kind: DAKitFailureKind.cancelled,
+        code: 'api.request.cancelled',
+        message: 'The API request was cancelled.',
+        cause: error,
+      );
+    }
+    return DAKitException(
+      kind: DAKitFailureKind.network,
+      code: switch (error.type) {
+        DioExceptionType.connectionTimeout => 'network.connect_timeout',
+        DioExceptionType.sendTimeout => 'network.send_timeout',
+        DioExceptionType.receiveTimeout => 'network.receive_timeout',
+        DioExceptionType.badCertificate => 'network.tls_certificate',
+        DioExceptionType.connectionError => 'network.connection',
+        _ => 'network.request_failed',
+      },
+      message: 'The API request could not reach the service.',
+      retryable: error.type != DioExceptionType.badCertificate,
+      cause: error,
+    );
+  }
+
+  void _record(
+    DiagnosticLevel level,
+    String code,
+    String path,
+    DateTime started, {
+    int? status,
+    int? retry,
+  }) {
+    _diagnostics.add(
+      DiagnosticEvent(
+        stage: DiagnosticStage.http,
+        level: level,
+        code: code,
+        message: 'Official API request event.',
+        elapsed: DateTime.now().difference(started),
+        attributes: <String, Object?>{
+          'path': path,
+          ...status == null
+              ? const <String, Object?>{}
+              : <String, Object?>{'status': status},
+          ...retry == null
+              ? const <String, Object?>{}
+              : <String, Object?>{'retry': retry},
+        },
+      ),
+    );
+  }
+}

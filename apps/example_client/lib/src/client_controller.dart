@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:artrelay_flutter/artrelay_flutter.dart';
+import 'package:dakit_flutter/dakit_flutter.dart';
 import 'package:flutter/foundation.dart';
 
 import 'diagnostic_log.dart';
@@ -121,13 +121,13 @@ final class ExampleClientController extends ChangeNotifier {
   ClientPhase phase;
   UserProfile? user;
   List<Artwork> artworks = const <Artwork>[];
-  ArtRelayException? failure;
+  DAKitException? failure;
   ConnectivityReport? connectivity;
   bool checkingConnectivity = false;
   Artwork? selectedArtwork;
   MediaAsset? selectedOriginal;
-  ArtRelayException? artworkFailure;
-  ArtRelayException? transferFailure;
+  DAKitException? artworkFailure;
+  DAKitException? transferFailure;
   bool loadingArtwork = false;
   bool schedulingTransfer = false;
   bool controllingTransfer = false;
@@ -154,7 +154,7 @@ final class ExampleClientController extends ChangeNotifier {
       await _resumeSession?.call(waitForCallback: false);
       await _validTokens?.call(forceRefresh: false);
       await _loadContent();
-    } on ArtRelayException catch (error) {
+    } on DAKitException catch (error) {
       if (error.code == 'oauth.session.missing') {
         _setPhase(ClientPhase.signedOut);
       } else {
@@ -197,7 +197,7 @@ final class ExampleClientController extends ChangeNotifier {
         if (generation != _detailGeneration) return;
         selectedOriginal = resolved;
       }
-    } on ArtRelayException catch (error) {
+    } on DAKitException catch (error) {
       if (generation == _detailGeneration) artworkFailure = error;
     } on Object catch (error) {
       if (generation == _detailGeneration) artworkFailure = _unexpected(error);
@@ -234,7 +234,7 @@ final class ExampleClientController extends ChangeNotifier {
         ),
       );
       _onTransferUpdate(snapshot);
-    } on ArtRelayException catch (error) {
+    } on DAKitException catch (error) {
       transferFailure = error;
     } on Object catch (error) {
       transferFailure = _unexpected(error);
@@ -260,7 +260,7 @@ final class ExampleClientController extends ChangeNotifier {
     notifyListeners();
     try {
       await operation(snapshot.id);
-    } on ArtRelayException catch (error) {
+    } on DAKitException catch (error) {
       transferFailure = error;
     } on Object catch (error) {
       transferFailure = _unexpected(error);
@@ -278,7 +278,7 @@ final class ExampleClientController extends ChangeNotifier {
         transfers[snapshot.id] = snapshot;
       }
       notifyListeners();
-    } on ArtRelayException catch (error) {
+    } on DAKitException catch (error) {
       transferFailure = error;
       notifyListeners();
     } on Object catch (error) {
@@ -323,7 +323,7 @@ final class ExampleClientController extends ChangeNotifier {
     try {
       await authorize();
       await _loadContent();
-    } on ArtRelayException catch (error) {
+    } on DAKitException catch (error) {
       _setFailure(error);
     } on Object catch (error) {
       _setFailure(_unexpected(error));
@@ -346,7 +346,7 @@ final class ExampleClientController extends ChangeNotifier {
       user = null;
       artworks = const <Artwork>[];
       _setPhase(ClientPhase.signedOut);
-    } on ArtRelayException catch (error) {
+    } on DAKitException catch (error) {
       _setFailure(error);
     } on Object catch (error) {
       _setFailure(_unexpected(error));
@@ -366,7 +366,7 @@ final class ExampleClientController extends ChangeNotifier {
       user = values[0] as UserProfile;
       artworks = List<Artwork>.unmodifiable((values[1] as Page<Artwork>).items);
       _setPhase(ClientPhase.ready);
-    } on ArtRelayException catch (error) {
+    } on DAKitException catch (error) {
       _setFailure(error);
     } on Object catch (error) {
       _setFailure(_unexpected(error));
@@ -378,14 +378,14 @@ final class ExampleClientController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _setFailure(ArtRelayException error) {
+  void _setFailure(DAKitException error) {
     failure = error;
     phase = ClientPhase.failure;
     notifyListeners();
   }
 
-  static ArtRelayException _unexpected(Object error) => ArtRelayException(
-    kind: ArtRelayFailureKind.upstream,
+  static DAKitException _unexpected(Object error) => DAKitException(
+    kind: DAKitFailureKind.upstream,
     code: 'example.unexpected',
     message: 'The example client encountered an unexpected failure.',
     cause: error,

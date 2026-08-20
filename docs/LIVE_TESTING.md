@@ -24,20 +24,20 @@ refresh token, authorization code, client secret, or signed media URL in an
 argument, source file, report, issue, or ordinary CI secret.
 
 ```shell
-read -s ARTRELAY_ACCESS_TOKEN
-export ARTRELAY_ACCESS_TOKEN
+read -s DAKIT_ACCESS_TOKEN
+export DAKIT_ACCESS_TOKEN
 export http_proxy=http://127.0.0.1:7892
 export https_proxy=http://127.0.0.1:7892
-export ARTRELAY_LIVE_OUTPUT=/absolute/safe/path/live-output
+export DAKIT_LIVE_OUTPUT=/absolute/safe/path/live-output
 
-dart run packages/artrelay_api/example/live_contract.dart \
+dart run packages/dakit_api/example/live_contract.dart \
   image=IMAGE_UUID \
   video=VIDEO_UUID \
   archive=ARCHIVE_UUID \
   literature=LITERATURE_UUID \
   restricted=RESTRICTED_UUID
 
-unset ARTRELAY_ACCESS_TOKEN
+unset DAKIT_ACCESS_TOKEN
 ```
 
 The proxy variables are optional. Dart does not reliably substitute `all_proxy`

@@ -1,5 +1,5 @@
-name: artrelay_workspace
-description: Workspace for the ArtRelay reusable client SDK.
+name: dakit_workspace
+description: Workspace for the DAKit DeviantArt client SDK.
 publish_to: none
 version: 0.1.0-dev.1
 
@@ -7,9 +7,9 @@ environment:
   sdk: ^3.13.1
 
 workspace:
-  - packages/artrelay_core
-  - packages/artrelay_api
-  - packages/artrelay_flutter
+  - packages/dakit_core
+  - packages/dakit_api
+  - packages/dakit_flutter
   - apps/example_client
 
 dev_dependencies:

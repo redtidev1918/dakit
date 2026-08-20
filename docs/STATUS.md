@@ -35,7 +35,7 @@ same commit as every material milestone.
 - Engine `5d53178869`
 - Dart 3.13.1
 - `flutter analyze`: no issues
-- Test suites: 68 passing
+- Test suites: 69 passing
 - Local builds: Android debug APK and macOS debug application succeed
 
 ## Latest milestone
@@ -53,13 +53,13 @@ same commit as every material milestone.
 - OAuth authorization now subscribes before browser launch, coalesces concurrent
   attempts, persists PKCE state, restores cold-start callbacks, and emits separate
   launch/callback/token/storage diagnostics.
-- `ArtRelayOAuthClient` wires mature browser, deep-link, secure-storage, and HTTP
+- `DAKitOAuthClient` wires mature browser, deep-link, secure-storage, and HTTP
   adapters while preserving replaceable boundaries for advanced clients.
-- The example registers `artrelay://oauth/callback` on Android and macOS. Windows
+- The example registers `dakit://oauth/callback` on Android and macOS. Windows
   forwards a callback to the existing instance and registers the protocol through
   its MSIX manifest.
-- Verified Android APK SHA-256 on this machine:
-  `5ab1049ecc6d2193cbd757400f01abf293c5e775fab00cb1cfaa6317a0e1dc27`.
+- Verified renamed Android APK SHA-256 on this machine:
+  `eb34fee98cbf359d7bfa01e6e77a40d8e3b77526e9b50f3f493e4370b7edda96`.
 - Startup restoration no longer waits for a callback when the app was opened
   normally, and a previous initial link cannot poison a new authorization attempt.
 - The generated counter was replaced by a responsive integration client with
@@ -141,6 +141,20 @@ same commit as every material milestone.
   proxy, passed DNS/TCP/TLS/HTTP stages, classified the API response as
   `api.provider.invalid_token`, wrote a redacted report, and exposed no token or
   signed URL. This proves diagnostics and credential handling, not the media matrix.
+- Product, package, public API, callback scheme, environment variables, native
+  identifiers, User-Agent values, tests, and documentation are now consistently
+  named `DAKit — DeviantArt Client SDK`, `dakit_*`, and `dakit://`. No `ArtRelay`
+  identifier remains in the working tree.
+- A real macOS authorization run with client `75380` passed secure pending-state
+  persistence, system-browser launch, operating-system callback delivery, and all
+  four connectivity stages. It then failed at the provider token exchange with
+  `oauth.provider.invalid_client`, not storage. The supplied credentials included a
+  client secret, which according to current provider documentation identifies a
+  Confidential registration; the example intentionally requires a Public client
+  and never embeds that secret.
+- All three packages now carry consistent MIT license files. Publication dry-runs
+  build valid archives; before this rename commit they report only the expected
+  dirty-worktree warning, which must be rerun from the clean commit.
 
 ## Known external requirements
 

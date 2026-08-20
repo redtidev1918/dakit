@@ -1,6 +1,6 @@
 # Networking, proxies, and connectivity diagnostics
 
-ArtRelay makes the route for OAuth and official API traffic explicit. It never
+DAKit makes the route for OAuth and official API traffic explicit. It never
 silently disables TLS validation and never assumes that a desktop operating-system
 proxy is visible to Dart.
 
@@ -14,7 +14,7 @@ final network = NetworkProfile.httpProxy(
   bypassHosts: const <String>{'localhost'},
 );
 
-final oauth = ArtRelayOAuthClient(
+final oauth = DAKitOAuthClient(
   config: oauthConfig,
   networkProfile: network,
   diagnostics: diagnostics,
@@ -70,9 +70,9 @@ passwords, tokens, OAuth codes, cookies, or exception messages.
 Run the standalone probe from the workspace:
 
 ```shell
-dart run packages/artrelay_api/example/connectivity.dart environment
-dart run packages/artrelay_api/example/connectivity.dart direct
-dart run packages/artrelay_api/example/connectivity.dart http 127.0.0.1 7892
+dart run packages/dakit_api/example/connectivity.dart environment
+dart run packages/dakit_api/example/connectivity.dart direct
+dart run packages/dakit_api/example/connectivity.dart http 127.0.0.1 7892
 ```
 
 ## Example-client build defines
@@ -81,18 +81,18 @@ The example defaults to `environment`. Explicit direct mode:
 
 ```shell
 flutter run -d macos \
-  --dart-define=ARTRELAY_CLIENT_ID=YOUR_PUBLIC_CLIENT_ID \
-  --dart-define=ARTRELAY_PROXY_MODE=direct
+  --dart-define=DAKIT_CLIENT_ID=YOUR_PUBLIC_CLIENT_ID \
+  --dart-define=DAKIT_PROXY_MODE=direct
 ```
 
 Explicit local HTTP proxy:
 
 ```shell
 flutter run -d macos \
-  --dart-define=ARTRELAY_CLIENT_ID=YOUR_PUBLIC_CLIENT_ID \
-  --dart-define=ARTRELAY_PROXY_MODE=http \
-  --dart-define=ARTRELAY_PROXY_HOST=127.0.0.1 \
-  --dart-define=ARTRELAY_PROXY_PORT=7892
+  --dart-define=DAKIT_CLIENT_ID=YOUR_PUBLIC_CLIENT_ID \
+  --dart-define=DAKIT_PROXY_MODE=http \
+  --dart-define=DAKIT_PROXY_HOST=127.0.0.1 \
+  --dart-define=DAKIT_PROXY_PORT=7892
 ```
 
 `127.0.0.1` on Android is the Android device, not the development computer. Use
@@ -102,8 +102,8 @@ physical device. Do not embed authenticated proxy passwords in `--dart-define`.
 Media transfer defines are deliberately separate:
 
 ```shell
---dart-define=ARTRELAY_TRANSFER_PROXY_HOST=127.0.0.1 \
---dart-define=ARTRELAY_TRANSFER_PROXY_PORT=7892
+--dart-define=DAKIT_TRANSFER_PROXY_HOST=127.0.0.1 \
+--dart-define=DAKIT_TRANSFER_PROXY_PORT=7892
 ```
 
 When these are absent, the example explicitly clears any native transfer proxy

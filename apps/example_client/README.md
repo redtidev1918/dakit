@@ -1,15 +1,18 @@
-# ArtRelay example client
+# DAKit example client
 
 This application is an integration and diagnostics client, not a production UI.
 It proves that a host can consume the public Flutter facade without accessing
 private DTOs or platform implementation details.
 
-Register `artrelay://oauth/callback` exactly on a Public OAuth application, then
+Its user interface follows the operating-system language and currently includes
+complete English and Simplified Chinese strings.
+
+Register `dakit://oauth/callback` exactly on a Public OAuth application, then
 run without committing the client ID:
 
 ```shell
 flutter run -d macos \
-  --dart-define=ARTRELAY_CLIENT_ID=YOUR_PUBLIC_CLIENT_ID
+  --dart-define=DAKIT_CLIENT_ID=YOUR_PUBLIC_CLIENT_ID
 ```
 
 The same define can be supplied to `flutter build apk` or `flutter build windows`.
@@ -22,8 +25,8 @@ after session restoration without a UI click:
 
 ```shell
 flutter run -d macos \
-  --dart-define=ARTRELAY_CLIENT_ID=YOUR_PUBLIC_CLIENT_ID \
-  --dart-define=ARTRELAY_AUTO_AUTHORIZE=true
+  --dart-define=DAKIT_CLIENT_ID=YOUR_PUBLIC_CLIENT_ID \
+  --dart-define=DAKIT_AUTO_AUTHORIZE=true
 ```
 
 This build-time switch belongs to the diagnostic example only. SDK hosts and
@@ -34,13 +37,13 @@ HTTP proxy explicitly:
 
 ```shell
 flutter run -d macos \
-  --dart-define=ARTRELAY_CLIENT_ID=YOUR_PUBLIC_CLIENT_ID \
-  --dart-define=ARTRELAY_PROXY_MODE=http \
-  --dart-define=ARTRELAY_PROXY_HOST=127.0.0.1 \
-  --dart-define=ARTRELAY_PROXY_PORT=7892
+  --dart-define=DAKIT_CLIENT_ID=YOUR_PUBLIC_CLIENT_ID \
+  --dart-define=DAKIT_PROXY_MODE=http \
+  --dart-define=DAKIT_PROXY_HOST=127.0.0.1 \
+  --dart-define=DAKIT_PROXY_PORT=7892
 ```
 
-Use `ARTRELAY_PROXY_MODE=direct` to prove direct behavior. Android emulators use
+Use `DAKIT_PROXY_MODE=direct` to prove direct behavior. Android emulators use
 `10.0.2.2`, not `127.0.0.1`, to reach a proxy on the development computer. Full
 profile and diagnostic semantics are in `docs/NETWORKING.md`.
 
@@ -49,12 +52,12 @@ explicitly when media traffic also needs the local proxy:
 
 ```shell
 flutter run -d macos \
-  --dart-define=ARTRELAY_CLIENT_ID=YOUR_PUBLIC_CLIENT_ID \
-  --dart-define=ARTRELAY_PROXY_MODE=http \
-  --dart-define=ARTRELAY_PROXY_HOST=127.0.0.1 \
-  --dart-define=ARTRELAY_PROXY_PORT=7892 \
-  --dart-define=ARTRELAY_TRANSFER_PROXY_HOST=127.0.0.1 \
-  --dart-define=ARTRELAY_TRANSFER_PROXY_PORT=7892
+  --dart-define=DAKIT_CLIENT_ID=YOUR_PUBLIC_CLIENT_ID \
+  --dart-define=DAKIT_PROXY_MODE=http \
+  --dart-define=DAKIT_PROXY_HOST=127.0.0.1 \
+  --dart-define=DAKIT_PROXY_PORT=7892 \
+  --dart-define=DAKIT_TRANSFER_PROXY_HOST=127.0.0.1 \
+  --dart-define=DAKIT_TRANSFER_PROXY_PORT=7892
 ```
 
 After authorization, select a home item to load its official detail. The client

@@ -12,7 +12,7 @@ requests, and manual dispatches.
 - **macOS debug app** compiles the native application on a macOS runner and
   uploads the `.app` smoke-test artifact.
 - **Windows app and MSIX** compiles the release runner, packages the registered
-  `artrelay` callback protocol, and uploads both unpackaged files and a development
+  `dakit` callback protocol, and uploads both unpackaged files and a development
   MSIX.
 
 The platform builds depend on the quality job, so broken contracts do not consume

@@ -1,6 +1,6 @@
 # Media transfers
 
-ArtRelay separates media discovery from file transfer:
+DAKit separates media discovery from file transfer:
 
 1. `ArtworkRepository` returns metadata and preview variants.
 2. `MediaRepository.originalFile` resolves the provider-authorized original.
@@ -12,7 +12,7 @@ download. There is no fixed 16 KiB body or chunk limit in the SDK.
 ## Flutter adapter
 
 `BackgroundTransferManager` uses the maintained `background_downloader` plugin.
-It maps native task schedulers into stable ArtRelay snapshots on Android, macOS,
+It maps native task schedulers into stable DAKit snapshots on Android, macOS,
 Windows, and Linux. The adapter supports persisted task recovery, progress,
 expected byte count, network rate, remaining time, retry state, pause, resume,
 cancel, and an independently configurable transfer proxy.
@@ -59,7 +59,7 @@ await transfers.configureProxy(null);
 ```
 
 The proxy belongs to the host application's settings. It is never hardcoded by
-the SDK. TLS certificate validation cannot be disabled through the ArtRelay API.
+the SDK. TLS certificate validation cannot be disabled through the DAKit API.
 
 ## Format support
 

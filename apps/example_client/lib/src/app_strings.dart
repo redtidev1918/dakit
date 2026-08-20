@@ -1,4 +1,4 @@
-import 'package:artrelay_flutter/artrelay_flutter.dart';
+import 'package:dakit_flutter/dakit_flutter.dart';
 import 'package:flutter/widgets.dart';
 
 import 'client_controller.dart';
@@ -123,80 +123,88 @@ final class AppStrings {
     ),
   };
 
-  String failureMessage(ArtRelayException failure) => switch (failure.kind) {
-    ArtRelayFailureKind.configuration => t(
-      'The client configuration is invalid.',
-      '客户端配置无效。',
+  String failureMessage(DAKitException failure) => switch (failure.code) {
+    'oauth.provider.invalid_client' => t(
+      'The provider did not recognize this developer application.',
+      'DeviantArt 未识别此开发者应用。',
     ),
-    ArtRelayFailureKind.authentication => t(
-      'Authentication could not be completed.',
-      '登录认证未能完成。',
-    ),
-    ArtRelayFailureKind.authorization => t(
-      'The account did not grant the required access.',
-      '账户未授予所需权限。',
-    ),
-    ArtRelayFailureKind.network => t(
-      'The network request could not be completed.',
-      '网络请求未能完成。',
-    ),
-    ArtRelayFailureKind.storage => t(
-      'Secure credential storage could not be accessed.',
-      '无法访问系统安全凭据存储。',
-    ),
-    ArtRelayFailureKind.parsing => t(
-      'The service response format was not recognized.',
-      '无法识别服务端响应格式。',
-    ),
-    ArtRelayFailureKind.rateLimit => t(
-      'Too many requests. Try again later.',
-      '请求过于频繁，请稍后重试。',
-    ),
-    ArtRelayFailureKind.notFound => t(
-      'The requested resource was not found.',
-      '没有找到请求的资源。',
-    ),
-    ArtRelayFailureKind.restricted => t(
-      'The requested resource is restricted.',
-      '请求的资源受到访问限制。',
-    ),
-    ArtRelayFailureKind.transfer => t('The file transfer failed.', '文件传输失败。'),
-    ArtRelayFailureKind.cancelled => t(
-      'The operation was cancelled.',
-      '操作已取消。',
-    ),
-    ArtRelayFailureKind.upstream => t(
-      'An unexpected service error occurred.',
-      '服务发生意外错误。',
-    ),
+    _ => switch (failure.kind) {
+      DAKitFailureKind.configuration => t(
+        'The client configuration is invalid.',
+        '客户端配置无效。',
+      ),
+      DAKitFailureKind.authentication => t(
+        'Authentication could not be completed.',
+        '登录认证未能完成。',
+      ),
+      DAKitFailureKind.authorization => t(
+        'The account did not grant the required access.',
+        '账户未授予所需权限。',
+      ),
+      DAKitFailureKind.network => t(
+        'The network request could not be completed.',
+        '网络请求未能完成。',
+      ),
+      DAKitFailureKind.storage => t(
+        'Secure credential storage could not be accessed.',
+        '无法访问系统安全凭据存储。',
+      ),
+      DAKitFailureKind.parsing => t(
+        'The service response format was not recognized.',
+        '无法识别服务端响应格式。',
+      ),
+      DAKitFailureKind.rateLimit => t(
+        'Too many requests. Try again later.',
+        '请求过于频繁，请稍后重试。',
+      ),
+      DAKitFailureKind.notFound => t(
+        'The requested resource was not found.',
+        '没有找到请求的资源。',
+      ),
+      DAKitFailureKind.restricted => t(
+        'The requested resource is restricted.',
+        '请求的资源受到访问限制。',
+      ),
+      DAKitFailureKind.transfer => t('The file transfer failed.', '文件传输失败。'),
+      DAKitFailureKind.cancelled => t('The operation was cancelled.', '操作已取消。'),
+      DAKitFailureKind.upstream => t(
+        'An unexpected service error occurred.',
+        '服务发生意外错误。',
+      ),
+    },
   };
 
-  String failureHint(ArtRelayException failure) => switch (failure.kind) {
-    ArtRelayFailureKind.configuration => t(
-      'Check the client ID and exact redirect whitelist.',
-      '请检查 Client ID，以及完全匹配的重定向 URI 白名单。',
+  String failureHint(DAKitException failure) => switch (failure.code) {
+    'oauth.provider.invalid_client' => t(
+      'Verify that the application is active, is a Public client, uses the displayed Client ID, and whitelists dakit://oauth/callback exactly.',
+      '请确认开发者应用已启用、类型为 Public、Client ID 正确，并且白名单中完全一致地包含 dakit://oauth/callback。',
     ),
-    ArtRelayFailureKind.authentication ||
-    ArtRelayFailureKind.authorization => t(
-      'Check browser completion, callback delivery, state, and provider access.',
-      '请检查浏览器授权是否完成、系统是否送达回调、state 是否匹配及账户授权状态。',
-    ),
-    ArtRelayFailureKind.network => t(
-      'Check DNS, TLS, proxy selection, and whether the service is reachable.',
-      '请检查 DNS、TLS、代理选择以及服务是否可访问。',
-    ),
-    ArtRelayFailureKind.storage => t(
-      'Check Keychain, Keystore, or Windows credential storage access.',
-      '请检查 macOS Keychain、Android Keystore 或 Windows 凭据存储权限。',
-    ),
-    ArtRelayFailureKind.parsing => t(
-      'The upstream response no longer satisfies a required SDK contract.',
-      '上游响应可能已发生变化，不再满足 SDK 所需的数据契约。',
-    ),
-    _ => t(
-      'Use the diagnostic event codes below to locate the failing stage.',
-      '请根据下方诊断事件代码定位失败阶段。',
-    ),
+    _ => switch (failure.kind) {
+      DAKitFailureKind.configuration => t(
+        'Check the client ID and exact redirect whitelist.',
+        '请检查 Client ID，以及完全匹配的重定向 URI 白名单。',
+      ),
+      DAKitFailureKind.authentication || DAKitFailureKind.authorization => t(
+        'Check browser completion, callback delivery, state, and provider access.',
+        '请检查浏览器授权是否完成、系统是否送达回调、state 是否匹配及账户授权状态。',
+      ),
+      DAKitFailureKind.network => t(
+        'Check DNS, TLS, proxy selection, and whether the service is reachable.',
+        '请检查 DNS、TLS、代理选择以及服务是否可访问。',
+      ),
+      DAKitFailureKind.storage => t(
+        'Check Keychain, Keystore, or Windows credential storage access.',
+        '请检查 macOS Keychain、Android Keystore 或 Windows 凭据存储权限。',
+      ),
+      DAKitFailureKind.parsing => t(
+        'The upstream response no longer satisfies a required SDK contract.',
+        '上游响应可能已发生变化，不再满足 SDK 所需的数据契约。',
+      ),
+      _ => t(
+        'Use the diagnostic event codes below to locate the failing stage.',
+        '请根据下方诊断事件代码定位失败阶段。',
+      ),
+    },
   };
 
   String availabilityLabel(MediaAvailability value) => switch (value) {

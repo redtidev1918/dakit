@@ -1,4 +1,4 @@
-import 'package:artrelay_flutter/artrelay_flutter.dart';
+import 'package:dakit_flutter/dakit_flutter.dart';
 import 'package:flutter/foundation.dart';
 
 final class DiagnosticLog extends ChangeNotifier implements DiagnosticSink {

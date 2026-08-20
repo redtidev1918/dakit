@@ -9,17 +9,17 @@ import 'widgets/diagnostics_panel.dart';
 import 'widgets/status_card.dart';
 import 'widgets/transfers_overview.dart';
 
-final class ArtRelayExampleApp extends StatefulWidget {
-  const ArtRelayExampleApp({required this.controller, this.locale, super.key});
+final class DAKitExampleApp extends StatefulWidget {
+  const DAKitExampleApp({required this.controller, this.locale, super.key});
 
   final ExampleClientController controller;
   final Locale? locale;
 
   @override
-  State<ArtRelayExampleApp> createState() => _ArtRelayExampleAppState();
+  State<DAKitExampleApp> createState() => _DAKitExampleAppState();
 }
 
-final class _ArtRelayExampleAppState extends State<ArtRelayExampleApp> {
+final class _DAKitExampleAppState extends State<DAKitExampleApp> {
   @override
   void dispose() {
     widget.controller.dispose();

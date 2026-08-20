@@ -1,5 +1,5 @@
 name: example_client
-description: Integration and platform smoke-test client for ArtRelay.
+description: Integration and platform smoke-test client for the DAKit DeviantArt SDK.
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -29,7 +29,7 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
-  artrelay_flutter: ^0.1.0-dev.1
+  dakit_flutter: ^0.1.0-dev.1
   flutter:
     sdk: flutter
   flutter_localizations:
@@ -63,10 +63,10 @@ flutter:
   uses-material-design: true
 
 msix_config:
-  display_name: ArtRelay Example
-  publisher_display_name: ArtRelay
-  identity_name: io.artrelay.example-client
-  protocol_activation: artrelay
+  display_name: DAKit Example
+  publisher_display_name: DAKit
+  identity_name: io.github.redtidev1918.dakit.example-client
+  protocol_activation: dakit
   capabilities: internetClient
   install_certificate: false
 

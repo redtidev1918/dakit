@@ -1,8 +1,8 @@
-# ArtRelay architecture
+# DAKit architecture
 
-ArtRelay is a reusable client SDK, not a downloader application. Its primary
-consumer is a Flutter application, while the domain and HTTP packages remain
-usable from standalone Dart programs.
+DAKit is a reusable DeviantArt client SDK, not a downloader application. Its
+primary consumer is a Flutter application, while the domain and HTTP packages
+remain usable from standalone Dart programs.
 
 ## Goals
 
@@ -26,9 +26,9 @@ usable from standalone Dart programs.
 
 ```text
 packages/
-  artrelay_core/       Domain models, errors, repositories, pagination, diagnostics
-  artrelay_api/        OAuth token exchange and official API adapter
-  artrelay_flutter/    Browser, deep-link, secure-storage, and transfer integrations
+  dakit_core/       Domain models, errors, repositories, pagination, diagnostics
+  dakit_api/        OAuth token exchange and official API adapter
+  dakit_flutter/    Browser, deep-link, secure-storage, and transfer integrations
 apps/
   example_client/      Executable integration and platform smoke tests
 ```
@@ -36,11 +36,11 @@ apps/
 Dependency direction:
 
 ```text
-example_client -> artrelay_flutter -> artrelay_api -> artrelay_core
-                              \---------------------> artrelay_core
+example_client -> dakit_flutter -> dakit_api -> dakit_core
+                              \---------------------> dakit_core
 ```
 
-`artrelay_core` must not import Flutter. `artrelay_api` may depend on Dart-only
+`dakit_core` must not import Flutter. `dakit_api` may depend on Dart-only
 packages such as Dio and crypto, but not on platform plugins. Platform behavior
 is supplied through interfaces owned by the core or API layer.
 
@@ -104,7 +104,7 @@ task metadata needed by the platform scheduler.
 - Treat authentication or schema drift as typed failures with actionable diagnostics.
 
 `OfficialApiClient` depends on the core `AuthTokenProvider` contract rather than a
-concrete OAuth session. A host may therefore reuse the transport with ArtRelay's
+concrete OAuth session. A host may therefore reuse the transport with DAKit's
 secure OAuth lifecycle, an existing account subsystem, or an ephemeral live-test
 token without importing persistence or browser behavior.
 

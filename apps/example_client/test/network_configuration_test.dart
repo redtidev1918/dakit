@@ -1,4 +1,4 @@
-import 'package:artrelay_flutter/artrelay_flutter.dart';
+import 'package:dakit_flutter/dakit_flutter.dart';
 import 'package:example_client/src/network_configuration.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -27,7 +27,7 @@ void main() {
     expect(
       () => parseExampleNetworkProfile(mode: 'automatic'),
       throwsA(
-        isA<ArtRelayException>().having(
+        isA<DAKitException>().having(
           (error) => error.code,
           'code',
           'example.proxy.mode_invalid',
@@ -48,7 +48,7 @@ void main() {
     expect(
       () => parseExampleTransferProxy(host: '127.0.0.1'),
       throwsA(
-        isA<ArtRelayException>().having(
+        isA<DAKitException>().having(
           (error) => error.code,
           'code',
           'example.transfer_proxy.incomplete',

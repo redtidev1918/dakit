@@ -22,10 +22,10 @@
 	<array>
 		<dict>
 			<key>CFBundleURLName</key>
-			<string>io.artrelay.oauth</string>
+			<string>io.github.redtidev1918.dakit.oauth</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>artrelay</string>
+				<string>dakit</string>
 			</array>
 		</dict>
 	</array>

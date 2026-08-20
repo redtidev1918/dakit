@@ -63,9 +63,9 @@ the SDK by default.
 flutter pub get
 dart format --output=none --set-exit-if-changed .
 flutter analyze
-flutter test packages/artrelay_core/test \
-  packages/artrelay_api/test \
-  packages/artrelay_flutter/test \
+flutter test packages/dakit_core/test \
+  packages/dakit_api/test \
+  packages/dakit_flutter/test \
   apps/example_client/test
 ```
 
@@ -98,5 +98,5 @@ dart run msix:create
 ```
 
 An unpackaged Windows debug executable cannot own a system URL protocol without
-writing per-user registry state. ArtRelay deliberately leaves that state untouched;
+writing per-user registry state. DAKit deliberately leaves that state untouched;
 use an MSIX smoke test in CI or install the generated package locally.

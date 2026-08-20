@@ -1,4 +1,4 @@
-import 'package:artrelay_flutter/artrelay_flutter.dart';
+import 'package:dakit_flutter/dakit_flutter.dart';
 import 'package:flutter/material.dart' hide DiagnosticLevel;
 
 import '../app_strings.dart';

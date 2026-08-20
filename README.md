@@ -1,9 +1,12 @@
-# ArtRelay
+# DAKit — DeviantArt Client SDK
 
-ArtRelay is a modular Dart and Flutter foundation for third-party art community
-clients. It provides domain contracts, official API integration, OAuth PKCE, secure
-session storage, deep-link callbacks, diagnostics, and transfer abstractions without
+DAKit is a modular Dart and Flutter foundation for third-party DeviantArt clients.
+It provides domain contracts, official API integration, OAuth PKCE, secure session
+storage, deep-link callbacks, diagnostics, and transfer abstractions without
 dictating an application's UI or state-management framework.
+
+DAKit is a community project and is not affiliated with or endorsed by DeviantArt.
+“DeviantArt” is used only to identify the service with which the SDK interoperates.
 
 > Status: active rewrite. The former Python preview is preserved at the Git tag
 > `python-preview-1.0.0a1`; it is not the architecture of the next release.
@@ -12,21 +15,28 @@ dictating an application's UI or state-management framework.
 
 | Package | Purpose | Flutter dependency |
 | --- | --- | --- |
-| `artrelay_core` | Stable models, failures, repositories, pagination, diagnostics | No |
-| `artrelay_api` | OAuth PKCE and official HTTP API adapter | No |
-| `artrelay_flutter` | Browser, deep links, secure storage, background transfers | Yes |
+| `dakit_core` | Stable models, failures, repositories, pagination, diagnostics | No |
+| `dakit_api` | OAuth PKCE and official HTTP API adapter | No |
+| `dakit_flutter` | Browser, deep links, secure storage, background transfers | Yes |
 | `example_client` | Android, macOS, and Windows integration smoke tests | App |
 
-An application depends on `artrelay_flutter` for a complete Flutter integration, or
-uses `artrelay_core` and `artrelay_api` directly in a Dart host.
+An application depends on `dakit_flutter` for a complete Flutter integration, or
+uses `dakit_core` and `dakit_api` directly in a Dart host.
+
+Until the first pub.dev release, depend on the required package directly from this
+repository:
 
 ```yaml
 dependencies:
-  artrelay_flutter: ^0.1.0-dev.1
+  dakit_flutter:
+    git:
+      url: https://github.com/redtidev1918/dakit.git
+      path: packages/dakit_flutter
 ```
 
-Public clients supply their own OAuth client ID and exact redirect URI. ArtRelay
-does not contain a shared client secret and never automates a login browser.
+Public clients supply their own OAuth client ID and exact redirect URI. DAKit
+does not contain a shared client secret and never automates credentials, human
+verification, or an embedded login WebView.
 
 ## Development
 

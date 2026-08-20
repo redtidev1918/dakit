@@ -43,8 +43,8 @@ promised after the rewrite.
 
 - [x] API documentation and integration guides.
 - [x] GitHub Actions quality and platform build matrix.
-- [ ] Package publication dry run.
-- [ ] Rename the remote repository only after package names and links are final.
+- [ ] Package publication dry run from a clean commit.
+- [x] Finalize the remote and package names as DAKit / `dakit_*`.
 - [x] Remove every obsolete Python file from main.
 
 ## Acceptance criteria

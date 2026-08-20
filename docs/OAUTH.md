@@ -1,6 +1,6 @@
 # OAuth integration
 
-ArtRelay uses the public-client Authorization Code flow with an S256 PKCE
+DAKit uses the public-client Authorization Code flow with an S256 PKCE
 challenge. A Flutter, Android, macOS, or Windows client must never contain a
 client secret.
 
@@ -9,12 +9,18 @@ client secret.
 Register the application as a **Public** client and add the exact redirect URI:
 
 ```text
-artrelay://oauth/callback
+dakit://oauth/callback
 ```
+
+A correctly registered Public client receives only a `client_id`. If the
+application page also gives you a `client_secret`, it was registered as
+Confidential; do not put that secret in a desktop, mobile, or APK build. Create or
+convert the application to Public instead. A Confidential client used without its
+secret will reach the token exchange and fail as `oauth.provider.invalid_client`.
 
 Scheme, host, path, case, and trailing slash must match. The example application
 registers this URI on Android and macOS; its Windows MSIX manifest registers the
-`artrelay` scheme.
+`dakit` scheme.
 
 ## Flutter setup
 
@@ -24,10 +30,10 @@ developer account value.
 
 ```dart
 final network = NetworkProfile.environment();
-final oauth = ArtRelayOAuthClient(
+final oauth = DAKitOAuthClient(
   config: OAuthConfig(
     clientId: clientId,
-    redirectUri: Uri.parse('artrelay://oauth/callback'),
+    redirectUri: Uri.parse('dakit://oauth/callback'),
   ),
   networkProfile: network,
   diagnostics: diagnostics,
@@ -43,7 +49,7 @@ Start an interactive authorization only from an explicit user action:
 final tokens = await oauth.authorize();
 ```
 
-The example application's opt-in `ARTRELAY_AUTO_AUTHORIZE=true` build define is an
+The example application's opt-in `DAKIT_AUTO_AUTHORIZE=true` build define is an
 integration-test trigger and is never enabled by default. It does not change the
 SDK's host-controlled authorization lifecycle.
 

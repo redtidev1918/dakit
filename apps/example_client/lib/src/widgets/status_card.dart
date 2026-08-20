@@ -51,7 +51,7 @@ final class ClientStatusCard extends StatelessWidget {
               const SizedBox(height: 12),
               const _CommandBox(
                 'flutter run -d macos '
-                '--dart-define=ARTRELAY_CLIENT_ID=YOUR_PUBLIC_CLIENT_ID',
+                '--dart-define=DAKIT_CLIENT_ID=YOUR_PUBLIC_CLIENT_ID',
               ),
             ],
             if (controller.phase == ClientPhase.signedOut) ...<Widget>[

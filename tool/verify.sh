@@ -9,7 +9,7 @@ fi
 dart format --output=none --set-exit-if-changed .
 flutter analyze
 flutter test \
-  packages/artrelay_core/test \
-  packages/artrelay_api/test \
-  packages/artrelay_flutter/test \
+  packages/dakit_core/test \
+  packages/dakit_api/test \
+  packages/dakit_flutter/test \
   apps/example_client/test

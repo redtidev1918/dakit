@@ -9,7 +9,7 @@
 int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
                       _In_ wchar_t *command_line, _In_ int show_command) {
   // Forward OAuth callbacks to the running client instead of opening a second
-  // window. Registration of the artrelay scheme is owned by the MSIX manifest.
+  // window. Registration of the dakit scheme is owned by the MSIX manifest.
   if (SendAppLinkToInstance()) {
     return EXIT_SUCCESS;
   }
