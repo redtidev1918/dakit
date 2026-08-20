@@ -1,102 +1,94 @@
-# Development and network setup
+# 开发、构建与发布
 
-## Pinned toolchain
+## 固定工具链
 
-The initial rewrite baseline was verified with:
+当前基线：
 
 ```text
-Flutter 3.47.1 stable, framework 6655482ec0
+Flutter 3.47.1 stable (framework 6655482ec0)
 Engine 5d53178869
 Dart 3.13.1
 ```
 
-CI must use the same Flutter release. Local developers may install it through the
-official archive or a trusted SDK manager.
+GitHub Actions 使用同一 Flutter 版本。升级工具链时，应在一个独立提交中更新 CI、`.metadata`、原生工程和本文，并重新验证三个平台。
 
-## Mainland China
-
-Different tools read different proxy variables. `curl` commonly accepts
-`all_proxy`; Dart `HttpClient`, Flutter tooling, Gradle, and platform build tools may
-not. Set only what the current command needs and do not commit a developer's proxy.
-
-Example for a local HTTP proxy:
-
-```shell
-export all_proxy=http://127.0.0.1:7892
-export http_proxy=http://127.0.0.1:7892
-export https_proxy=http://127.0.0.1:7892
-```
-
-Clear all three variables when testing direct or system-proxy behavior.
-
-Tsinghua TUNA currently documents these Flutter and Pub settings:
-
-```shell
-export FLUTTER_STORAGE_BASE_URL=https://mirrors.tuna.tsinghua.edu.cn/flutter
-export PUB_HOSTED_URL=https://mirrors.tuna.tsinghua.edu.cn/dart-pub
-```
-
-The Git mirror is:
+## 仓库结构
 
 ```text
-https://mirrors.tuna.tsinghua.edu.cn/git/flutter-sdk.git
+packages/dakit_core/       平台无关领域包
+packages/dakit_api/        Dart OAuth/HTTP 包
+packages/dakit_flutter/    Flutter 平台适配包
+apps/example_client/       三平台集成客户端
+tool/verify.sh             本地与 CI 共用质量门
 ```
 
-Mirror synchronization can lag a newly released Flutter engine. If an artifact URL
-returns a tiny HTML response instead of a ZIP, unset `FLUTTER_STORAGE_BASE_URL` and
-retry the official storage through `http_proxy`/`https_proxy`. Do not disable TLS
-verification and do not combine partial archives from different URLs.
+根 `pubspec.yaml` 管理 Dart workspace 和唯一锁文件。库包必须保留 README、CHANGELOG、LICENSE、pubspec 与示例，以满足发布检查。Flutter 原生 runner 和 `.metadata` 是构建/迁移输入，不是无用模板。
 
-Pub mirrors may not expose the official package-advisory endpoint. Release and CI
-security checks must also run against the official `https://pub.dev` service.
-Use mirror variables for a single command where practical. A mirror can become the
-hosted URL recorded in `pubspec.lock`; restore the official source through the
-proxy before committing so the shared lockfile remains portable.
-
-Runtime application proxies are a separate concern from development dependency
-downloads. See [NETWORKING.md](NETWORKING.md); no developer proxy is compiled into
-the SDK by default.
-
-## Quality gate
+## 日常验证
 
 ```shell
 flutter pub get
-dart format --output=none --set-exit-if-changed .
-flutter analyze
-flutter test packages/dakit_core/test \
-  packages/dakit_api/test \
-  packages/dakit_flutter/test \
-  apps/example_client/test
+./tool/verify.sh
 ```
 
-Live OAuth and API tests are opt-in because they require user interaction and must
-never receive credentials in ordinary CI.
+脚本依次检查格式、静态分析，并运行 core、api、flutter 与示例应用测试。当前基线为 69 个测试。
 
-The hosted Linux, Android, macOS, and Windows jobs are described in
-[CI.md](CI.md). Keep the local `tool/verify.sh` gate equivalent to the CI quality
-job.
+真实 OAuth/API 测试不进入普通 CI，因为它需要用户授权并受 provider 内容影响。测试方法见 [LIVE_TESTING.md](LIVE_TESTING.md)。
 
-## Platform builds
+## 平台构建
 
-The Android example follows Flutter 3.47.1 defaults: JDK 17, compile/target SDK
-36, and NDK `28.2.13676358`. Verify the installed toolchain with `flutter doctor
--v`; local paths belong in Flutter configuration or `local.properties`, never in
-tracked source.
+Android 需要 JDK 17、Android API/Build Tools 36 和 NDK `28.2.13676358`：
 
 ```shell
 cd apps/example_client
 flutter build apk --debug
+```
+
+macOS 需要 Xcode：
+
+```shell
+cd apps/example_client
 flutter build macos --debug
 ```
 
-The Windows callback scheme is registered by the MSIX package:
+Windows 需要对应 Flutter/Visual Studio 工具链。MSIX 才会注册 OAuth scheme：
 
 ```powershell
 cd apps/example_client
-flutter build windows
-dart run msix:create
+flutter build windows --release
+dart run msix:create --build-windows false --install-certificate false
 ```
 
-An unpackaged Windows debug executable cannot own a system URL protocol without
-writing per-user registry state. DAKit deliberately leaves that state untouched;
-use an MSIX smoke test in CI or install the generated package locally.
+这些都是集成 smoke build，不是商店发布包。正式发行由宿主应用提供自己的 bundle/package identity、签名、图标、隐私说明和商店元数据。
+
+## CI
+
+`.github/workflows/ci.yml` 在 push、pull request 和手动触发时执行：
+
+- Ubuntu：格式、分析、69 个测试；
+- Ubuntu/Android：debug APK；
+- macOS：debug `.app`；
+- Windows：release runner 与带 `dakit` 协议的开发 MSIX；
+- 每个平台上传 smoke artifact。
+
+平台 job 依赖质量 job，同一分支的新运行会取消旧运行。普通流水线不保存 client ID、secret、token、代理密码或签名凭据。
+
+## 包发布检查
+
+从干净提交执行：
+
+```shell
+dart pub publish --dry-run --directory packages/dakit_core
+dart pub publish --dry-run --directory packages/dakit_api
+flutter pub publish --dry-run --directory packages/dakit_flutter
+```
+
+发布顺序为 core → api → flutter。正式发布前还需确认 pub.dev 上的包名可用、repository 链接、版本依赖和 changelog 一致。当前 README 使用 Git dependency，是因为尚未宣称已经发布到 pub.dev。
+
+## 提交纪律
+
+- 每个里程碑保持可构建并同步更新 [STATUS.md](STATUS.md)；
+- 不提交 `.dart_tool`、`build`、IDE 状态、代理配置、token 或真实服务报告；
+- 不手改生成的 plugin registrant；升级插件后通过 Flutter 工具重新生成并验证；
+- 公共 API 变更必须增加测试和 changelog；
+- 新 endpoint 先定义 core 契约，再实现 api 映射，不让 DTO 进入 UI。

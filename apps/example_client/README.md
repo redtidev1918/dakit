@@ -1,74 +1,41 @@
-# DAKit example client
+# DAKit 集成客户端
 
-This application is an integration and diagnostics client, not a production UI.
-It proves that a host can consume the public Flutter facade without accessing
-private DTOs or platform implementation details.
+此应用用于验证 SDK 在 Android、macOS 和 Windows 上的真实集成，不是产品 UI 模板。它覆盖系统浏览器登录、深链回调、网络诊断、账户与首页、作品详情、原文件解析、后台任务恢复和中英文错误展示。
 
-Its user interface follows the operating-system language and currently includes
-complete English and Simplified Chinese strings.
+## 运行
 
-Register `dakit://oauth/callback` exactly on a Public OAuth application, then
-run without committing the client ID:
+先创建 DeviantArt **Public** OAuth 应用，并将 `dakit://oauth/callback` 原样加入 redirect whitelist：
 
 ```shell
 flutter run -d macos \
-  --dart-define=DAKIT_CLIENT_ID=YOUR_PUBLIC_CLIENT_ID
+  --dart-define=DAKIT_CLIENT_ID=你的_PUBLIC_CLIENT_ID
 ```
 
-The same define can be supplied to `flutter build apk` or `flutter build windows`.
-The app displays distinct configuration, session restore, browser callback, API,
-parsing, storage, and unexpected failure states. Its diagnostic list contains no
-tokens, authorization codes, cookies, or PKCE secrets.
-
-For an explicitly launched integration run, the example can begin authorization
-after session restoration without a UI click:
+为了自动开始一次人工可见的集成登录，可额外传入：
 
 ```shell
-flutter run -d macos \
-  --dart-define=DAKIT_CLIENT_ID=YOUR_PUBLIC_CLIENT_ID \
-  --dart-define=DAKIT_AUTO_AUTHORIZE=true
+--dart-define=DAKIT_AUTO_AUTHORIZE=true
 ```
 
-This build-time switch belongs to the diagnostic example only. SDK hosts and
-ordinary builds still start interactive authorization from a user action.
+该开关只用于此诊断应用，普通 SDK 不会自行发起登录。
 
-It also runs a DNS, TCP, TLS, and HTTP check at startup. To use a local desktop
-HTTP proxy explicitly:
+## 代理
+
+显式配置 OAuth/API 代理：
 
 ```shell
-flutter run -d macos \
-  --dart-define=DAKIT_CLIENT_ID=YOUR_PUBLIC_CLIENT_ID \
-  --dart-define=DAKIT_PROXY_MODE=http \
-  --dart-define=DAKIT_PROXY_HOST=127.0.0.1 \
-  --dart-define=DAKIT_PROXY_PORT=7892
+--dart-define=DAKIT_PROXY_MODE=http \
+--dart-define=DAKIT_PROXY_HOST=127.0.0.1 \
+--dart-define=DAKIT_PROXY_PORT=7892
 ```
 
-Use `DAKIT_PROXY_MODE=direct` to prove direct behavior. Android emulators use
-`10.0.2.2`, not `127.0.0.1`, to reach a proxy on the development computer. Full
-profile and diagnostic semantics are in `docs/NETWORKING.md`.
+`DAKIT_PROXY_MODE` 也可设为 `environment` 或 `direct`。后台媒体任务另用 `DAKIT_TRANSFER_PROXY_HOST` 与 `DAKIT_TRANSFER_PROXY_PORT`；两者缺一会显示配置错误。Android 模拟器访问电脑代理时通常把 `127.0.0.1` 换成 `10.0.2.2`。
 
-Native background transfers have a separate persisted proxy setting. Configure it
-explicitly when media traffic also needs the local proxy:
+## 构建
 
 ```shell
-flutter run -d macos \
-  --dart-define=DAKIT_CLIENT_ID=YOUR_PUBLIC_CLIENT_ID \
-  --dart-define=DAKIT_PROXY_MODE=http \
-  --dart-define=DAKIT_PROXY_HOST=127.0.0.1 \
-  --dart-define=DAKIT_PROXY_PORT=7892 \
-  --dart-define=DAKIT_TRANSFER_PROXY_HOST=127.0.0.1 \
-  --dart-define=DAKIT_TRANSFER_PROXY_PORT=7892
-```
-
-After authorization, select a home item to load its official detail. The client
-only calls the original-file endpoint when the detail says it is downloadable.
-It shows filename, media kind, full byte size, availability, native progress,
-speed, remaining time, persisted tasks, and pause/resume/cancel controls. A preview
-is never substituted when original metadata is unavailable.
-
-Build-only smoke tests do not require an OAuth application:
-
-```shell
-flutter build macos --debug
 flutter build apk --debug
+flutter build macos --debug
 ```
+
+Windows 需要 `flutter build windows --release` 后创建并安装 MSIX，系统才会注册 OAuth 协议。完整步骤见[开发文档](../../docs/DEVELOPMENT.md)，登录排错见[认证文档](../../docs/AUTHENTICATION.md)。

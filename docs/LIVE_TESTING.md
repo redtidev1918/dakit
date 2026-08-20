@@ -1,34 +1,35 @@
-# Live provider verification
+# 真实服务验收
 
-Fixture tests prove mapping behavior; they cannot prove that a real account,
-provider policy, signed media URL, or native network route still behaves the same.
-The opt-in verifier exercises those boundaries without storing a credential in the
-repository.
+fixture 测试只能证明本地映射逻辑，不能证明真实账户权限、provider 策略、临时媒体地址和设备网络仍然有效。完整验收必须由用户授权，并使用有权访问的代表性作品。
 
-## Inputs
+## 安全要求
 
-Prepare one provider UUID for each required case:
+- 只使用自己的 Public OAuth 应用与账户；
+- access token 通过隐藏的环境输入提供；
+- 不把 access/refresh token、授权码、client secret 或签名媒体 URL 放入命令参数、源码、报告、issue 或普通 CI；
+- 输出目录必须是本机安全的绝对路径，完成后按需删除；
+- 测试受限/付费内容只验证“正确拒绝”，不尝试绕过权限。
 
-- downloadable image;
-- downloadable video;
-- downloadable archive;
-- literature or journal;
-- restricted, paid, blocked, or otherwise non-downloadable work.
+## 测试矩阵
 
-The example client displays artwork UUIDs in its home cards and detail view. Use
-content you are authorized to access. Do not treat a page slug or numeric number in
-a website URL as an API UUID.
+准备以下 DeviantArt API UUID，而不是网页 URL 中的 slug 或数字编号：
 
-Supply a current user access token through the environment. Never put the token,
-refresh token, authorization code, client secret, or signed media URL in an
-argument, source file, report, issue, or ordinary CI secret.
+1. 可下载图片；
+2. 可下载视频；
+3. 可下载压缩包或附件；
+4. 文学或日志；
+5. 受限、付费、被屏蔽或不可下载作品。
+
+示例客户端会在作品卡片和详情中显示 UUID。使用你有权访问和保存的内容。
+
+## 运行
 
 ```shell
 read -s DAKIT_ACCESS_TOKEN
 export DAKIT_ACCESS_TOKEN
 export http_proxy=http://127.0.0.1:7892
 export https_proxy=http://127.0.0.1:7892
-export DAKIT_LIVE_OUTPUT=/absolute/safe/path/live-output
+export DAKIT_LIVE_OUTPUT=/绝对路径/dakit-live-output
 
 dart run packages/dakit_api/example/live_contract.dart \
   image=IMAGE_UUID \
@@ -40,24 +41,24 @@ dart run packages/dakit_api/example/live_contract.dart \
 unset DAKIT_ACCESS_TOKEN
 ```
 
-The proxy variables are optional. Dart does not reliably substitute `all_proxy`
-for `http_proxy` and `https_proxy`, so set the latter two when a local HTTP proxy is
-required.
+代理变量可省略。Dart 不保证用 `all_proxy` 替代 `http_proxy`/`https_proxy`，需要本地 HTTP 代理时显式设置后两者。
 
-## Evidence produced
+## 验收证据
 
-The verifier performs a DNS → TCP → TLS → HTTP probe, calls `user/whoami`, fetches
-each detail, expands full text, resolves original metadata where allowed, and
-downloads every transferable case completely. It records actual bytes, expected
-bytes, SHA-256, media kind, access state, HTTP status, and redacted diagnostic stage
-codes in `report.json`. It never writes bearer tokens or signed source URLs.
+脚本依次执行 DNS → TCP → TLS → HTTP、`user/whoami`、作品详情、正文和原文件解析。所有允许传输的案例都会完整流式读取，并记录实际/预期字节数、SHA-256、媒体类型、可用性、HTTP 状态和脱敏诊断码到 `report.json`。
 
-Literature is validated through the official content endpoint. If it also has a
-downloadable text file, that file is transferred; otherwise successful rendered
-content is the acceptance evidence. A restricted case passes only when metadata or
-the original endpoint denies transfer. A preview URL is never accepted.
+通过条件：
 
-Use `--metadata-only` for preparation and `--allow-partial` while collecting case
-UUIDs. Neither option satisfies the complete acceptance matrix. Live verification
-is intentionally excluded from ordinary CI because it requires a real user session
-and provider-controlled content.
+- 图片、视频、压缩包的实际字节数完整，SHA-256 计算完成；
+- 文学至少通过官方 content endpoint 取得正文；若另有可下载附件，也必须完整传输；
+- 受限案例返回不可传输状态；
+- 任一案例都不能以 preview URL 代替 original；
+- 报告中不存在 token、Cookie、授权码或签名源 URL。
+
+`--metadata-only` 可用于收集测试数据，`--allow-partial` 可用于逐步准备矩阵；二者都不能算完整验收。
+
+## 当前结果
+
+已用无效 token 完成安全冒烟：真实网络经过环境代理通过四阶段探针，API 正确返回 `api.provider.invalid_token`，报告未泄漏凭据。这只证明路由、错误分类与脱敏，不证明完整媒体矩阵。
+
+完整矩阵仍待有效 Public OAuth 会话和五类代表性 UUID。完成后必须更新 [STATUS.md](STATUS.md)，但不要提交原始报告或凭据。

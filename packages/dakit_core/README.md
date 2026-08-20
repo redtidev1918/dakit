@@ -1,16 +1,22 @@
 # dakit_core
 
-Platform-neutral contracts for DAKit clients. This package exports stable domain
-models, typed failures, repository interfaces, pagination, authentication storage
-boundaries, and structured diagnostics. It has no Flutter dependency.
+Platform-neutral domain contracts for DAKit clients. This package has no Flutter, HTTP, plugin, UI, state-management, cache, or database dependency.
 
-Host applications implement or obtain the repository interfaces and remain free to
-choose their own UI, state management, cache, and database.
+It exports:
 
-`MediaRepository` resolves protected original-file metadata independently from
-`ArtworkRepository`. A transfer engine therefore consumes a `MediaAsset` without
-knowing provider endpoints, OAuth details, or UI state.
+- account, artwork, content, media, pagination, and transfer models;
+- repository interfaces for account, browse/search, galleries, favourites, content, and original media;
+- OAuth token-provider and persistence boundaries;
+- structured diagnostics and typed `DAKitException` failures;
+- a platform-neutral `TransferManager` contract.
 
-`ArtworkContentRepository` exposes full literature/journal content separately from
-metadata. Embedded markup, rendered HTML, and CSS remain inert strings so each host
-can apply its own sanitization and rendering policy.
+```dart
+Future<Artwork> loadArtwork(
+  ArtworkRepository repository,
+  String id,
+) => repository.getById(id);
+```
+
+Applications may wrap these interfaces with their own cache or offline policy. Provider DTOs and platform plugin types are intentionally absent from the public API.
+
+DAKit is a community project and is not affiliated with or endorsed by DeviantArt.

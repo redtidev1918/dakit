@@ -1,114 +1,93 @@
-# DAKit architecture
+# 架构与扩展边界
 
-DAKit is a reusable DeviantArt client SDK, not a downloader application. Its
-primary consumer is a Flutter application, while the domain and HTTP packages
-remain usable from standalone Dart programs.
+DAKit 的目标是成为第三方 Flutter 客户端的底层 SDK，而不是把一个固定界面的应用拆成库。公共层只描述稳定的领域能力；登录、HTTP、平台插件和示例 UI 都可以独立替换。
 
-## Goals
-
-- Build Android, macOS, and Windows clients from one maintained codebase.
-- Let host applications own their UI, navigation, state management, and database.
-- Implement OAuth 2.1 Authorization Code with PKCE for public clients.
-- Expose browsing, account, gallery, collection, publishing, and media workflows.
-- Support foreground streaming and platform-managed background transfers.
-- Produce structured, redacted diagnostics for network and authentication failures.
-- Isolate upstream API changes behind adapters and contract tests.
-
-## Non-goals
-
-- Automating a browser or bypassing human verification.
-- Storing a client secret in a mobile or desktop application.
-- Silently disabling TLS verification.
-- Promising that website scraping will survive arbitrary website changes.
-- Coupling the SDK to Riverpod, Bloc, a widget library, or a concrete database.
-
-## Package boundaries
+## 依赖结构
 
 ```text
-packages/
-  dakit_core/       Domain models, errors, repositories, pagination, diagnostics
-  dakit_api/        OAuth token exchange and official API adapter
-  dakit_flutter/    Browser, deep-link, secure-storage, and transfer integrations
-apps/
-  example_client/      Executable integration and platform smoke tests
+宿主应用 / example_client
+          │
+          ├─────────────── 自定义 UI、状态、缓存、数据库
+          │
+          ▼
+    dakit_flutter ─────── 系统浏览器、深链、安全存储、后台任务
+          │
+          ▼
+      dakit_api ───────── OAuth、网络策略、官方 API 适配器
+          │
+          ▼
+     dakit_core ───────── 模型、错误、仓库、诊断、传输契约
 ```
 
-Dependency direction:
+`dakit_core` 不依赖 Flutter 或网络库；`dakit_api` 只使用 Dart 能力；`dakit_flutter` 才依赖平台插件。依赖只能向下，领域层永远不引用实现层。
 
-```text
-example_client -> dakit_flutter -> dakit_api -> dakit_core
-                              \---------------------> dakit_core
-```
+## 每层职责
 
-`dakit_core` must not import Flutter. `dakit_api` may depend on Dart-only
-packages such as Dio and crypto, but not on platform plugins. Platform behavior
-is supplied through interfaces owned by the core or API layer.
+### `dakit_core`
 
-## Authentication
+- 稳定领域模型与分页值；
+- `AccountRepository`、`ArtworkRepository`、`ArtworkContentRepository`、`GalleryRepository`、`MediaRepository`；
+- `AuthTokenProvider`、token/pending store 接口；
+- `TransferManager` 与任务快照；
+- `DAKitException`、故障分类和脱敏诊断事件。
 
-The SDK uses an external system browser and a registered custom URI callback.
-The public client identifier and redirect URI are supplied by the host app.
+这一层适合领域测试、离线缓存包装器和非 Flutter Dart 客户端。
 
-1. Generate a cryptographically random state and PKCE verifier.
-2. Persist the pending transaction until the callback or timeout.
-3. Launch the authorization URL in the system browser.
-4. Receive the custom-scheme callback from the operating system.
-5. Validate scheme, path, state, error parameters, and transaction age.
-6. Exchange the code with the original verifier, without a client secret.
-7. Store tokens through the host-provided secure token store.
-8. Refresh once under a mutex so concurrent 401 responses do not race.
+### `dakit_api`
 
-Browser automation, clipboard polling, and embedded login WebViews are forbidden.
+- PKCE 事务、回调验证、token exchange/refresh/revoke；
+- 可替换的 OAuth endpoint 与官方 API transport；
+- 环境、直连、显式 HTTP 代理和 Dio 注入；
+- 当前已实现的账户、作品、正文、浏览、画廊、收藏和原文件仓库；
+- 上游 JSON 到稳定领域模型的私有映射。
 
-## Networking and proxy behavior
+DTO 不从顶层库导出。官方响应新增未知字段不应破坏解析；必需字段消失时必须抛出明确 parsing failure。
 
-The API package exposes an explicit transport profile. Supported modes are Dart
-proxy-environment discovery, forced direct, an explicit HTTP proxy, and a
-host-provided Dio transport. The environment mode reads documented process
-variables; it does not pretend to discover every operating-system PAC setting.
-API and media traffic can use separate profiles.
+### `dakit_flutter`
 
-Diagnostics record stages such as DNS, connect, TLS, HTTP, OAuth callback, token
-exchange, parsing, and storage. Tokens, authorization codes, cookies, and query
-parameters known to contain credentials are always redacted.
+- `DAKitOAuthClient` 组合常用登录生命周期；
+- 系统浏览器、`app_links`、`flutter_secure_storage` 适配器；
+- `BackgroundTransferManager` 平台后台传输实现。
 
-## Media transfers
+它不提供页面、主题或状态管理依赖。宿主可以替换每个接口而无需 fork。
 
-The core represents a media asset independently from the way it is transferred.
-Flutter hosts use a native-scheduler-backed implementation with persisted recovery,
-progress, retry, pause, resume, and cancellation. No fixed chunk size is part of
-the public API.
+### `example_client`
 
-The SDK distinguishes preview, original, downloadable attachment, video, archive,
-document, literature, login-required, purchase-required, restricted, unavailable,
-and missing assets. It never reports a preview as the original file. Expected
-provider denials resolve to non-transferable media values; transport and schema
-failures remain observable exceptions.
+这是可运行的集成探针：验证平台回调、网络诊断、账户/浏览、原文件解析和任务恢复。它不是 SDK 公共 API，也不是推荐的产品架构。
 
-Structured text on deviation detail and rendered literature from
-`deviation/content` are separate from byte transfers. HTML, CSS, and original
-markup are modeled as inert data; the SDK does not create an embedded browser or
-silently execute provider content.
+## 解耦方式
 
-Transfer task headers do not contain access tokens. The official media repository
-resolves an HTTPS original URL first, then the transfer adapter persists only the
-task metadata needed by the platform scheduler.
+| 宿主需求 | 扩展点 |
+| --- | --- |
+| 已有账户系统 | 实现 `AuthTokenProvider`，直接构造 `OfficialApiClient` |
+| 自定义 Keychain/Keystore | 实现 `TokenStore`、`PendingAuthorizationStore` |
+| 企业 PAC、VPN、证书固定 | 注入已配置的 Dio，不再传 `NetworkProfile` |
+| 自定义浏览器或 HTTPS 回调 | 实现 `ExternalUriLauncher`、`CallbackUriSource` |
+| 本地缓存/离线优先 | 包装 repository 接口，保持领域模型不变 |
+| 不同后台任务框架 | 实现 `TransferManager` |
+| Riverpod/Bloc/Redux | 只在宿主层绑定 repository，不进入 SDK |
 
-## Upstream compatibility
+## 上游变化策略
 
-- Send the documented API minor-version header from one central interceptor.
-- Map upstream DTOs into stable domain models.
-- Accept unknown JSON fields and model documented optional fields as nullable.
-- Keep website-derived metadata in an optional adapter, separate from official API DTOs.
-- Run fixture tests and opt-in live contract tests against representative endpoints.
-- Treat authentication or schema drift as typed failures with actionable diagnostics.
+“自动适应网站所有更新”不是可验证承诺。稳定做法是缩小变化面：
 
-`OfficialApiClient` depends on the core `AuthTokenProvider` contract rather than a
-concrete OAuth session. A host may therefore reuse the transport with DAKit's
-secure OAuth lifecycle, an existing account subsystem, or an ephemeral live-test
-token without importing persistence or browser behavior.
+1. 优先使用有版本的官方 API；
+2. API 版本 header、base URI 和重试策略集中配置；
+3. 上游 DTO 保持私有，映射到 SDK 模型；
+4. 接受新增字段，对缺失必需字段给出可诊断失败；
+5. 用官方 schema 派生的 fixture 做契约测试；
+6. 用可选真实服务测试发现授权、策略和 schema 漂移；
+7. 若未来加入网页兼容层，必须作为独立可选适配器，不能污染官方 API 包。
 
-## Versioning
+## 安全边界
 
-Packages use semantic versioning. Public API removals require a major release.
-Generated or upstream DTOs are not exported from the top-level core library.
+- 只在外部系统浏览器登录，不自动填写凭据或绕过验证；
+- Public Client 不接收、不保存 `client_secret`；
+- TLS 验证不可通过 DAKit 公共 API 关闭；
+- provider HTML/Markdown/CSS 是惰性数据，宿主渲染前自行清理；
+- 诊断只记录安全字段，传输任务不携带 bearer token；
+- 普通 CI 无账户凭据、代理密码或签名密钥。
+
+## 版本与新增功能
+
+三个包按语义化版本独立发布。新增评论、关注、通知、提交作品等能力时，先在 core 增加最小领域契约，再在 api 实现官方适配器，最后由 Flutter/example 验证平台交互。不要直接从页面组件调用未封装 endpoint。

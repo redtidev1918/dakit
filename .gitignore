@@ -9,26 +9,43 @@ build/
 coverage/
 doc/api/
 pubspec_overrides.yaml
+packages/*/pubspec.lock
 
 # Generated platform files
 **/android/.gradle/
+**/android/.cxx/
 **/android/local.properties
+**/android/key.properties
+**/android/*.keystore
+**/android/*.jks
 **/ios/Flutter/ephemeral/
+**/ios/Flutter/.last_build_id
 **/macos/Flutter/ephemeral/
+**/macos/Pods/
+**/macos/**/xcuserdata/
+**/.swiftpm/
 **/windows/flutter/ephemeral/
 **/windows/flutter/generated_plugin_registrant.*
 **/windows/flutter/generated_plugins.cmake
+**/windows/x64/
+**/windows/x86/
 
 # Editors and operating systems
 .idea/
 .vscode/
+.history/
 *.iml
+*.ipr
+*.iws
 *.code-workspace
 *.swp
 *.swo
 *~
 .DS_Store
 Thumbs.db
+.widget_preview/
+*.symbols
+*.map.json
 
 # Secrets and local state
 .env
