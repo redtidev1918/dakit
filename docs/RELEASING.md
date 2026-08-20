@@ -56,9 +56,53 @@ dart pub publish --dry-run --directory packages/dakit_api
 flutter pub publish --dry-run --directory packages/dakit_flutter
 ```
 
-## 正式发布
+## 通过 GitHub Actions 自动发布（推荐）
 
-确认包名可用且 dry-run 通过后，再执行正式发布。发布顺序必须是：
+仓库已配置 `.github/workflows/publish.yml`，使用 pub.dev 的 **GitHub Actions
+OIDC** 认证：由 GitHub 签发临时身份令牌，**无需保存长期 token / secret**。
+发布由推送 git tag 触发，按依赖顺序分别打 tag：
+
+```text
+dakit_core-v0.2.0   ->   dakit_api-v0.2.0   ->   dakit_flutter-v0.2.0
+```
+
+### 一次性配置
+
+对每个公开包，在 pub.dev 的 Admin 页开启自动发布（需是该包的 uploader，或
+publisher 的 admin）：
+
+1. 打开 `https://pub.dev/packages/<package>/admin`；
+2. 在 **Automated publishing** 区域点击 **Enable publishing from GitHub
+   Actions**；
+3. 填写：
+   - repository：`redtidev1918/dakit`
+   - tag pattern：`<package>-v{{version}}`（例如
+     `dakit_core-v{{version}}`、`dakit_api-v{{version}}`、
+     `dakit_flutter-v{{version}}`）。
+
+> 自动发布只适用于**已发布过的包**；首次发布仍须用 `dart pub publish` 手动完成。
+
+### 每次发布
+
+1. 用 `melos version`（或手动）更新要发布包的 `pubspec.yaml` `version`，并更新
+   其 `CHANGELOG.md`；
+2. 确认 dry-run 通过（见上）；
+3. 按依赖顺序推送 tag：
+
+   ```shell
+   git tag dakit_core-v0.2.0    && git push origin dakit_core-v0.2.0
+   git tag dakit_api-v0.2.0     && git push origin dakit_api-v0.2.0
+   git tag dakit_flutter-v0.2.0 && git push origin dakit_flutter-v0.2.0
+   ```
+
+4. 在 Actions 页观察对应的 publish job 完成。
+
+注意：tag 里的版本号必须与对应包 `pubspec.yaml` 的 `version` 完全一致；pub.dev
+上的版本**不可变**，同一个版本只能发布一次，重复打 tag 会失败。
+
+## 手动发布（备用）
+
+当无法启用 OIDC 自动发布时，可在本地完成认证后手动发布。发布顺序必须是：
 
 ```text
 dakit_core -> dakit_api -> dakit_flutter
