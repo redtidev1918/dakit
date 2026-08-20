@@ -26,6 +26,10 @@ final rendered = await content.get(artwork.id);
 final original = await originals.originalFile(artwork.id);
 ```
 
+`session` may be the built-in `OAuthSession` or any host implementation of the
+platform-neutral `AuthTokenProvider`; API transport is not coupled to secure
+storage or browser login.
+
 Preview URLs are deliberately not labeled as originals. Resolve the original only
 when `Artwork.downloadAvailability` is `available`. Expected login, access,
 not-downloadable, and missing-file responses become non-transferable `MediaAsset`

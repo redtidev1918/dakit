@@ -15,3 +15,5 @@
   HTTP wire representation.
 - Add structured deviation text, rendered content, and honest original-file
   availability mapping.
+- Depend on a replaceable core token provider and add an opt-in, redacted live
+  contract/media verifier.

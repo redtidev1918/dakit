@@ -103,6 +103,11 @@ task metadata needed by the platform scheduler.
 - Run fixture tests and opt-in live contract tests against representative endpoints.
 - Treat authentication or schema drift as typed failures with actionable diagnostics.
 
+`OfficialApiClient` depends on the core `AuthTokenProvider` contract rather than a
+concrete OAuth session. A host may therefore reuse the transport with ArtRelay's
+secure OAuth lifecycle, an existing account subsystem, or an ephemeral live-test
+token without importing persistence or browser behavior.
+
 ## Versioning
 
 Packages use semantic versioning. Public API removals require a major release.

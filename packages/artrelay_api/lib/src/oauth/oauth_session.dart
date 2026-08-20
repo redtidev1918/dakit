@@ -6,7 +6,7 @@ import 'oauth_config.dart';
 import 'oauth_token_client.dart';
 
 /// Owns persisted tokens and coalesces concurrent refresh requests.
-final class OAuthSession {
+final class OAuthSession implements AuthTokenProvider {
   factory OAuthSession({
     required OAuthConfig config,
     required TokenStore store,
@@ -22,6 +22,7 @@ final class OAuthSession {
   final DateTime Function() _now;
   Future<AuthTokens>? _activeRefresh;
 
+  @override
   Future<AuthTokens> validTokens({bool forceRefresh = false}) async {
     final current = await _store.read();
     if (current == null) {

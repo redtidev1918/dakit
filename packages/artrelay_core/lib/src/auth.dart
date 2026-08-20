@@ -20,6 +20,14 @@ final class AuthTokens {
   }) => !expiresAt.isAfter(now.add(leeway));
 }
 
+/// Supplies a valid bearer session to an authenticated API transport.
+///
+/// Hosts may use the built-in OAuth session or adapt an existing account/token
+/// system without depending on ArtRelay's persistence implementation.
+abstract interface class AuthTokenProvider {
+  Future<AuthTokens> validTokens({bool forceRefresh = false});
+}
+
 abstract interface class TokenStore {
   Future<AuthTokens?> read();
 

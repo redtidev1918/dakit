@@ -56,6 +56,9 @@ OAuth application registration and client integration are documented in
 The runnable host and its build commands live in
 [`apps/example_client`](apps/example_client/README.md).
 
+Credential-free CI and opt-in real-account acceptance are separate. See
+[`docs/LIVE_TESTING.md`](docs/LIVE_TESTING.md) for the redacted full-media matrix.
+
 Original-file resolution, background recovery, and proxy behavior are documented
 in [`docs/TRANSFERS.md`](docs/TRANSFERS.md).
 

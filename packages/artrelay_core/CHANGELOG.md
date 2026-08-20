@@ -7,3 +7,4 @@
   contracts.
 - Add structured artwork text/rendered-content models and distinguish unavailable
   media from restricted or missing media.
+- Add the authentication-implementation-neutral `AuthTokenProvider` contract.

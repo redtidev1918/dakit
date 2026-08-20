@@ -28,6 +28,37 @@ void main() {
     expect(request.uri.path, '/api/v1/oauth2/placebo');
   });
 
+  test('accepts a host token provider without an OAuth session', () async {
+    final provider = StaticTokenProvider(
+      AuthTokens(
+        accessToken: 'host-access',
+        tokenType: 'Bearer',
+        expiresAt: now.add(const Duration(hours: 1)),
+      ),
+    );
+    late RequestOptions request;
+    final dio = Dio()
+      ..interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (options, handler) {
+            request = options;
+            handler.resolve(
+              Response<Object?>(
+                requestOptions: options,
+                statusCode: 200,
+                data: <String, Object?>{'status': 'success'},
+              ),
+            );
+          },
+        ),
+      );
+
+    await OfficialApiClient(session: provider, dio: dio).getJson('placebo');
+
+    expect(request.headers['Authorization'], 'Bearer host-access');
+    expect(provider.calls, 1);
+  });
+
   test('refreshes once after 401 and replays with the new token', () async {
     final harness = ApiHarness(
       now: now,
@@ -187,5 +218,18 @@ final class QueueOAuthEndpoint implements OAuthEndpoint {
   ) async {
     forms.add(form);
     return responses.removeAt(0);
+  }
+}
+
+final class StaticTokenProvider implements AuthTokenProvider {
+  StaticTokenProvider(this.tokens);
+
+  final AuthTokens tokens;
+  int calls = 0;
+
+  @override
+  Future<AuthTokens> validTokens({bool forceRefresh = false}) async {
+    calls += 1;
+    return tokens;
   }
 }

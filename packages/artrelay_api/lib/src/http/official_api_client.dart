@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:artrelay_core/artrelay_core.dart';
 import 'package:dio/dio.dart';
 
-import '../oauth/oauth_session.dart';
 import 'api_config.dart';
 import 'network_adapter.dart';
 import 'network_profile.dart';
@@ -21,7 +20,7 @@ abstract interface class OfficialApiTransport {
 /// Versioned, authenticated transport for idempotent official API reads.
 final class OfficialApiClient implements OfficialApiTransport {
   factory OfficialApiClient({
-    required OAuthSession session,
+    required AuthTokenProvider session,
     Dio? dio,
     NetworkProfile? networkProfile,
     ApiConfig? config,
@@ -57,7 +56,7 @@ final class OfficialApiClient implements OfficialApiTransport {
     _dio.options.connectTimeout = config.connectTimeout;
   }
 
-  final OAuthSession _session;
+  final AuthTokenProvider _session;
   final Dio _dio;
   final DiagnosticSink _diagnostics;
   final Delay _delay;

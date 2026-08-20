@@ -16,7 +16,8 @@ same commit as every material milestone.
 ## Next actions
 
 1. Run representative live transfers for image, video, archive, literature, and
-   restricted cases.
+   restricted cases with `docs/LIVE_TESTING.md`; do not commit the access token or
+   signed media URLs.
 
 ## Decisions already made
 
@@ -34,7 +35,7 @@ same commit as every material milestone.
 - Engine `5d53178869`
 - Dart 3.13.1
 - `flutter analyze`: no issues
-- Test suites: 65 passing
+- Test suites: 66 passing
 - Local builds: Android debug APK and macOS debug application succeed
 
 ## Latest milestone
@@ -119,6 +120,18 @@ same commit as every material milestone.
   restricted, unavailable, and missing states. Expected provider denials never
   invent a preview URL, while network, throttling, and parsing failures still throw
   typed exceptions.
+- API transport now consumes the platform-neutral `AuthTokenProvider` contract
+  instead of a concrete OAuth session, removing authentication/persistence coupling
+  for embedding hosts.
+- The opt-in live verifier requires the complete image/video/archive/literature/
+  restricted matrix by default, performs staged connectivity and account checks,
+  streams full allowed files, verifies byte counts and SHA-256, and writes a
+  redacted JSON report. It is documented but has not yet been run with a real token
+  and representative UUIDs.
+- A safe invalid-token smoke run reached the real service through the environment
+  proxy, passed DNS/TCP/TLS/HTTP stages, classified the API response as
+  `api.provider.invalid_token`, wrote a redacted report, and exposed no token or
+  signed URL. This proves diagnostics and credential handling, not the media matrix.
 
 ## Known external requirements
 
