@@ -1,145 +1,57 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
+# Dart and Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
 build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-pip-log.txt
-pip-delete-this-directory.txt
+coverage/
+doc/api/
+pubspec_overrides.yaml
 
-# Testing
-.pytest_cache/
-.coverage
-htmlcov/
-.tox/
-.nox/
+# Generated platform files
+**/android/.gradle/
+**/android/local.properties
+**/ios/Flutter/ephemeral/
+**/macos/Flutter/ephemeral/
+**/windows/flutter/ephemeral/
+**/windows/flutter/generated_plugin_registrant.*
+**/windows/flutter/generated_plugins.cmake
 
-# Temporary test/debug scripts (root only, not in tests/)
-/test_*.py
-/debug_*.py
-/*_test.py
-/*_debug.py
-
-# Virtual Environment
-venv/
-ENV/
-env/
-.venv/
-
-# IDE
-.vscode/
+# Editors and operating systems
 .idea/
+.vscode/
+*.iml
+*.code-workspace
 *.swp
 *.swo
 *~
-*.code-workspace
-
-# OS
 .DS_Store
 Thumbs.db
-desktop.ini
 
-# Project specific - 敏感数据
-cookies.txt
-config.yaml
-downloads.db
-Downloads/
-*.log
-
-# 环境变量和密钥 - Environment & Secrets
+# Secrets and local state
 .env
 .env.*
 !.env.example
 *.key
 *.pem
 *.p12
+*.log
+*.session
+auth_tokens/
 secrets/
 private/
-
-# 会话和认证 - Session & Auth
 session.json
 **/session.json
-.deviantart_dl/
-auth_tokens/
-*.cookie
-*.session
 
-# 下载内容 - Downloaded Content
+# Runtime output
+Downloads/
 downloads/
 output/
 media/
-images/
-artworks/
-
-# 备份文件 - Backups
-*.backup
-*.bak
-*.old
-*.orig
-*.save
-*.swp
-*~
-
-# 临时文件 - Temporary
-tmp/
-temp/
-*.tmp
-*.cache
-
-# 数据库 - Databases
+logs/
 *.db
 *.sqlite
 *.sqlite3
-*.db-journal
-
-# 日志文件 - Logs
-logs/
-*.log
-*.log.*
-
-# 配置文件 - Config (keep examples)
-config.yml
-settings.yaml
-local_settings.py
-instance/
-
-# 用户特定 - User Specific
-user_config/
-my_*/
-
-# Selenium驱动 - Selenium Drivers
-chromedriver
-geckodriver
-edgedriver
-*.exe
-
-# Mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
-
-# Ruff
-.ruff_cache/
-
-# Pytest
-.pytest_cache/
-
-# 保留示例文件 - Keep examples
-!cookies.txt.example
-!config.example.yaml
-!.env.example
+*.tmp

@@ -5,21 +5,21 @@ same commit as every material milestone.
 
 ## Current state
 
-- Phase: M0 — recoverable baseline
+- Phase: M1 — core and official API
 - Branch: `main`
 - Last stable legacy tag: `python-preview-1.0.0a1`
 - Legacy remote: `legacy-origin`
 - Target runtime: stable Flutter/Dart
 - Target platforms: Android first, then macOS and Windows
-- Workspace health: Python preview remains runnable until the Flutter skeleton is green
+- Workspace health: four-member Flutter workspace is green; Python removal is pending
 
 ## Next actions
 
-1. Install Flutter stable and record exact `flutter --version` output.
-2. Create the three packages and example app without deleting the Python files.
-3. Add workspace-wide analysis and test commands.
-4. Commit the green skeleton.
-5. Only then remove the Python implementation in a separate commit.
+1. Commit the green Flutter skeleton and documentation.
+2. Remove the Python implementation in a separate commit.
+3. Implement token exchange, refresh coordination, redaction, and Dio transport.
+4. Add official API DTO fixtures and repository adapters.
+5. Configure the example app custom-scheme callback on all three platforms.
 
 ## Decisions already made
 
@@ -30,6 +30,14 @@ same commit as every material milestone.
 - Host applications supply client ID, redirect URI, scopes, storage, and optional transport overrides.
 - The SDK is independent of Riverpod/Bloc and concrete databases.
 - Official API and optional website compatibility code must remain separate.
+
+## Verified baseline
+
+- Flutter 3.47.1 stable (`6655482ec0`)
+- Engine `5d53178869`
+- Dart 3.13.1
+- `flutter analyze`: no issues
+- Test suites: 8 passing
 
 ## Known external requirements
 
@@ -48,4 +56,3 @@ dart test
 ```
 
 If Flutter packages already exist, read this file and `docs/MIGRATION.md` before editing.
-

@@ -1,0 +1,17 @@
+name: artrelay_api
+description: Official HTTP and OAuth adapter for the ArtRelay client SDK.
+version: 0.1.0-dev.1
+repository: https://github.com/redtidev1918/dakit/tree/main/packages/artrelay_api
+resolution: workspace
+
+environment:
+  sdk: ^3.13.1
+
+dependencies:
+  artrelay_core: ^0.1.0-dev.1
+  crypto: ^3.0.7
+  dio: ^5.11.0
+
+dev_dependencies:
+  lints: ^6.0.0
+  test: ^1.25.6

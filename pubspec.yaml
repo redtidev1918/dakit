@@ -1,0 +1,16 @@
+name: artrelay_workspace
+description: Workspace for the ArtRelay reusable client SDK.
+publish_to: none
+version: 0.1.0-dev.1
+
+environment:
+  sdk: ^3.13.1
+
+workspace:
+  - packages/artrelay_core
+  - packages/artrelay_api
+  - packages/artrelay_flutter
+  - apps/example_client
+
+dev_dependencies:
+  lints: ^6.0.0

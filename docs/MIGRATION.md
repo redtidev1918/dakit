@@ -11,8 +11,8 @@ promised after the rewrite.
 - [x] Verify a clean worktree and remote.
 - [x] Tag and push the Python preview.
 - [x] Record architecture, boundaries, risks, and continuation instructions.
-- [ ] Install and pin the Flutter stable toolchain.
-- [ ] Create the workspace and first green test suite.
+- [x] Install and pin Flutter 3.47.1 / Dart 3.13.1.
+- [x] Create the workspace and first green test suite.
 
 ### M1 — core and official API
 
@@ -66,4 +66,3 @@ The rewrite is complete only when:
 - Never add UI or state-management dependencies to the SDK packages.
 - Do not add a website workaround to the official API adapter.
 - Do not delete the archived Git tag.
-
