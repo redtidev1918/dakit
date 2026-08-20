@@ -30,6 +30,7 @@ class Media:
     width: int | None = None
     height: int | None = None
     original: bool = False
+    restricted: bool = False
 
 
 @dataclass(frozen=True, slots=True)

@@ -117,6 +117,7 @@ def _artwork(value: Mapping[str, Any]) -> Artwork:
                         media_kind,
                         width=_integer(item.get("w")),
                         height=_integer(item.get("h")),
+                        restricted="blur_" in asset,
                     )
                 )
     artwork_kind = (

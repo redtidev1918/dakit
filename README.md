@@ -98,7 +98,7 @@ print(kit.content.last_adapter)
 print(kit.content.last_failures)
 ```
 
-领域对象只有 `Artwork`、`User`、`Media`、`Page[T]` 等稳定值，不暴露远端原始 JSON。媒体数据通过 `Artwork.media` 返回；宿主可使用注入的 `Transport.stream(media.url)` 写入缓存、数据库、对象存储或移动端沙箱。
+领域对象只有 `Artwork`、`User`、`Media`、`Page[T]` 等稳定值，不暴露远端原始 JSON。媒体数据通过 `Artwork.media` 返回；宿主应先检查 `media.restricted`，它为真时代表网站只返回了模糊占位图，需要登录权限，不能当作原文件。可用媒体可通过注入的 `Transport.stream(media.url)` 写入缓存、数据库、对象存储或移动端沙箱。
 
 ## 自定义适配器
 

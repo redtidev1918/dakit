@@ -156,3 +156,10 @@ def test_logout_clears_host_store() -> None:
     )
     kit.auth.logout()
     assert store.value is None
+
+
+def test_restricted_media_is_explicit() -> None:
+    from dakit import Media, MediaKind
+
+    media = Media("https://example/blur_30/image.jpg", MediaKind.IMAGE, restricted=True)
+    assert media.restricted is True
