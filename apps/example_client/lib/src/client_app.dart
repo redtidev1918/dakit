@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'app_strings.dart';
 import 'client_controller.dart';
 import 'widgets/artwork_browser.dart';
 import 'widgets/connectivity_card.dart';
@@ -8,9 +10,10 @@ import 'widgets/status_card.dart';
 import 'widgets/transfers_overview.dart';
 
 final class ArtRelayExampleApp extends StatefulWidget {
-  const ArtRelayExampleApp({required this.controller, super.key});
+  const ArtRelayExampleApp({required this.controller, this.locale, super.key});
 
   final ExampleClientController controller;
+  final Locale? locale;
 
   @override
   State<ArtRelayExampleApp> createState() => _ArtRelayExampleAppState();
@@ -25,7 +28,10 @@ final class _ArtRelayExampleAppState extends State<ArtRelayExampleApp> {
 
   @override
   Widget build(BuildContext context) => MaterialApp(
-    title: 'ArtRelay Example',
+    onGenerateTitle: (context) => AppStrings.of(context).applicationTitle,
+    locale: widget.locale,
+    supportedLocales: const <Locale>[Locale('en'), Locale('zh', 'CN')],
+    localizationsDelegates: GlobalMaterialLocalizations.delegates,
     debugShowCheckedModeBanner: false,
     theme: ThemeData(
       colorScheme: ColorScheme.fromSeed(
@@ -58,17 +64,17 @@ final class ClientHome extends StatelessWidget {
     ]),
     builder: (context, _) => Scaffold(
       appBar: AppBar(
-        title: const Text('ArtRelay integration client'),
+        title: Text(AppStrings.of(context).clientTitle),
         actions: <Widget>[
           if (controller.phase == ClientPhase.ready)
             IconButton(
-              tooltip: 'Refresh account and home',
+              tooltip: AppStrings.of(context).refreshAccount,
               onPressed: controller.busy ? null : controller.refresh,
               icon: const Icon(Icons.refresh),
             ),
           if (controller.phase == ClientPhase.ready)
             IconButton(
-              tooltip: 'Revoke session and sign out',
+              tooltip: AppStrings.of(context).signOut,
               onPressed: controller.busy ? null : controller.signOut,
               icon: const Icon(Icons.logout),
             ),

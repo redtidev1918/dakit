@@ -316,6 +316,7 @@ final class OAuthAuthorizationCoordinator {
       elapsed: elapsed,
       attributes: <String, Object?>{
         'failure_code': error is ArtRelayException ? error.code : 'unexpected',
+        if (error is ArtRelayException) ...error.details,
       },
     );
   }

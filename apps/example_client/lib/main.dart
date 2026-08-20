@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:artrelay_flutter/artrelay_flutter.dart';
 import 'package:flutter/material.dart';
 
@@ -47,7 +49,15 @@ void main() {
           transferProxy,
         );
   runApp(ArtRelayExampleApp(controller: controller));
-  controller.initialize();
+  unawaited(_initialize(controller));
+}
+
+Future<void> _initialize(ExampleClientController controller) async {
+  await controller.initialize();
+  const autoAuthorize = bool.fromEnvironment('ARTRELAY_AUTO_AUTHORIZE');
+  if (autoAuthorize && controller.phase == ClientPhase.signedOut) {
+    await controller.login();
+  }
 }
 
 ExampleClientController _configuredController(

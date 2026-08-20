@@ -2,6 +2,7 @@ import 'package:artrelay_flutter/artrelay_flutter.dart';
 import 'package:flutter/material.dart';
 
 import '../client_controller.dart';
+import '../app_strings.dart';
 
 final class TransfersOverview extends StatelessWidget {
   const TransfersOverview({required this.controller, super.key});
@@ -13,13 +14,12 @@ final class TransfersOverview extends StatelessWidget {
     final records = controller.transfers.values.toList(growable: false)
       ..sort((left, right) => right.id.compareTo(left.id));
     final theme = Theme.of(context);
+    final strings = AppStrings.of(context);
     return Card(
       child: ExpansionTile(
         initiallyExpanded: controller.transferFailure != null,
-        title: Text('Background transfers (${records.length})'),
-        subtitle: const Text(
-          'Persisted and restored by the platform scheduler.',
-        ),
+        title: Text('${strings.backgroundTransfers} (${records.length})'),
+        subtitle: Text(strings.transferPersistence),
         children: <Widget>[
           if (controller.transferFailure case final failure?)
             ListTile(
@@ -28,7 +28,7 @@ final class TransfersOverview extends StatelessWidget {
                 color: theme.colorScheme.error,
               ),
               title: Text(failure.code),
-              subtitle: Text(failure.message),
+              subtitle: Text(strings.failureMessage(failure)),
             ),
           for (final snapshot in records.take(10))
             ListTile(

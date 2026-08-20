@@ -35,7 +35,7 @@ same commit as every material milestone.
 - Engine `5d53178869`
 - Dart 3.13.1
 - `flutter analyze`: no issues
-- Test suites: 66 passing
+- Test suites: 68 passing
 - Local builds: Android debug APK and macOS debug application succeed
 
 ## Latest milestone
@@ -72,6 +72,15 @@ same commit as every material milestone.
 - Android and macOS still build after adding the native transfer plugin. Both macOS
   entitlement files now include outbound network permission; without it, sandboxed
   OAuth, API, and media requests would fail despite a successful build.
+- Secure OAuth state and tokens use macOS Keychain without opting into the Data
+  Protection Keychain. This fixes the pre-browser storage failure without adding
+  the Keychain Sharing entitlement, which would require an Apple provisioning
+  profile and break unsigned local and CI builds. Hosts may still inject a custom
+  secure-storage policy.
+- The example follows the host system language for English and Simplified Chinese.
+  User-facing failures use localized explanations and retain stable diagnostic
+  codes; safe native storage status fields are visible while secret-bearing fields
+  remain filtered.
 - OAuth and API clients now accept explicit environment, direct, or HTTP-proxy
   profiles while advanced hosts retain full Dio injection. Supplying conflicting
   transports is rejected rather than silently ignored.

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../client_controller.dart';
+import '../app_strings.dart';
 
 final class ConnectivityCard extends StatelessWidget {
   const ConnectivityCard({required this.controller, super.key});
@@ -11,6 +12,7 @@ final class ConnectivityCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final report = controller.connectivity;
     final theme = Theme.of(context);
+    final strings = AppStrings.of(context);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -29,7 +31,7 @@ final class ConnectivityCard extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Network path',
+                    strings.networkPath,
                     style: theme.textTheme.titleMedium,
                   ),
                 ),
@@ -42,18 +44,26 @@ final class ConnectivityCard extends StatelessWidget {
                   TextButton.icon(
                     onPressed: controller.checkConnectivity,
                     icon: const Icon(Icons.refresh),
-                    label: const Text('Run check'),
+                    label: Text(strings.runCheck),
                   ),
               ],
             ),
             const SizedBox(height: 8),
             Text(
               report == null
-                  ? 'Checking DNS, TCP, TLS, and HTTP independently.'
+                  ? strings.t(
+                      'Checking DNS, TCP, TLS, and HTTP independently.',
+                      '正在分别检测 DNS、TCP、TLS 和 HTTP。',
+                    )
                   : report.reachable
-                  ? 'All four stages reached the service.'
-                  : 'Stopped at ${report.failure?.stage.name ?? 'unknown'}: '
-                        '${report.failure?.code ?? 'unknown'}',
+                  ? strings.t(
+                      'All four stages reached the service.',
+                      '四个网络阶段均已成功连接服务。',
+                    )
+                  : strings.t(
+                      'Stopped at ${report.failure?.stage.name ?? 'unknown'}: ${report.failure?.code ?? 'unknown'}',
+                      '检测停止于 ${report.failure?.stage.name ?? '未知'}：${report.failure?.code ?? '未知'}',
+                    ),
             ),
             if (report != null) ...<Widget>[
               const SizedBox(height: 12),

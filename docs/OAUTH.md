@@ -43,6 +43,10 @@ Start an interactive authorization only from an explicit user action:
 final tokens = await oauth.authorize();
 ```
 
+The example application's opt-in `ARTRELAY_AUTO_AUTHORIZE=true` build define is an
+integration-test trigger and is never enabled by default. It does not change the
+SDK's host-controlled authorization lifecycle.
+
 The coordinator performs these steps in order:
 
 1. Generate state, verifier, and S256 challenge.

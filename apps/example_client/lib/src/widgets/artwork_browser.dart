@@ -2,6 +2,7 @@ import 'package:artrelay_flutter/artrelay_flutter.dart';
 import 'package:flutter/material.dart';
 
 import '../client_controller.dart';
+import '../app_strings.dart';
 
 final class ArtworkBrowser extends StatelessWidget {
   const ArtworkBrowser({required this.controller, super.key});
@@ -10,18 +11,19 @@ final class ArtworkBrowser extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final strings = AppStrings.of(context);
     if (controller.artworks.isEmpty) {
-      return const Card(
+      return Card(
         child: Padding(
-          padding: EdgeInsets.all(20),
-          child: Text('The home endpoint returned no artwork.'),
+          padding: const EdgeInsets.all(20),
+          child: Text(strings.noArtwork),
         ),
       );
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Text('Home', style: Theme.of(context).textTheme.titleLarge),
+        Text(strings.home, style: Theme.of(context).textTheme.titleLarge),
         const SizedBox(height: 8),
         for (final artwork in controller.artworks) ...<Widget>[
           Card(
@@ -56,6 +58,7 @@ final class _ArtworkDetail extends StatelessWidget {
     final original = controller.selectedOriginal;
     final transfer = controller.selectedTransfer;
     final theme = Theme.of(context);
+    final strings = AppStrings.of(context);
     return Card(
       key: const Key('artwork-detail'),
       child: Padding(
@@ -67,12 +70,12 @@ final class _ArtworkDetail extends StatelessWidget {
               children: <Widget>[
                 Expanded(
                   child: Text(
-                    artwork?.title ?? 'Artwork detail',
+                    artwork?.title ?? strings.artworkDetail,
                     style: theme.textTheme.titleLarge,
                   ),
                 ),
                 IconButton(
-                  tooltip: 'Close detail',
+                  tooltip: strings.closeDetail,
                   onPressed: controller.closeArtwork,
                   icon: const Icon(Icons.close),
                 ),
@@ -81,7 +84,7 @@ final class _ArtworkDetail extends StatelessWidget {
             if (controller.loadingArtwork) ...<Widget>[
               const LinearProgressIndicator(),
               const SizedBox(height: 12),
-              const Text('Loading detail and original-file metadata…'),
+              Text(strings.loadingDetail),
             ],
             if (artwork != null) ...<Widget>[
               Text('@${artwork.author.username} · ${artwork.id}'),
@@ -96,11 +99,11 @@ final class _ArtworkDetail extends StatelessWidget {
                 children: <Widget>[
                   Chip(
                     label: Text(
-                      _availabilityLabel(artwork.downloadAvailability),
+                      strings.availabilityLabel(artwork.downloadAvailability),
                     ),
                   ),
                   if (artwork.isMature)
-                    const Chip(label: Text('Mature content')),
+                    Chip(label: Text(strings.matureContent)),
                   for (final asset in artwork.media)
                     Chip(label: Text('${asset.kind.name} ${asset.role.name}')),
                 ],
@@ -109,7 +112,7 @@ final class _ArtworkDetail extends StatelessWidget {
             if (controller.artworkFailure case final failure?) ...<Widget>[
               const SizedBox(height: 12),
               Text(
-                '${failure.code}: ${failure.message}',
+                '${failure.code}: ${strings.failureMessage(failure)}',
                 style: TextStyle(color: theme.colorScheme.error),
               ),
             ],
@@ -118,20 +121,21 @@ final class _ArtworkDetail extends StatelessWidget {
                 artwork.downloadAvailability !=
                     MediaAvailability.available) ...<Widget>[
               const SizedBox(height: 12),
-              const Text(
-                'The official metadata does not provide a transferable '
-                'original. Preview assets are never substituted.',
-              ),
+              Text(strings.noOriginal),
             ],
             if (original != null) ...<Widget>[
               const Divider(height: 32),
-              Text('Original file', style: theme.textTheme.titleMedium),
+              Text(strings.originalFile, style: theme.textTheme.titleMedium),
               const SizedBox(height: 8),
               Text(
-                '${original.filename ?? 'Unnamed file'} · '
-                '${original.kind.name} · ${_formatBytes(original.byteLength)}',
+                '${original.filename ?? strings.unnamedFile} · '
+                '${original.kind.name} · '
+                '${_formatBytes(original.byteLength, strings)}',
               ),
-              Text('Availability: ${original.availability.name}'),
+              Text(
+                '${strings.availability}: '
+                '${strings.availabilityLabel(original.availability)}',
+              ),
               const SizedBox(height: 12),
               if (transfer == null || transfer.isFinal)
                 FilledButton.icon(
@@ -143,16 +147,16 @@ final class _ArtworkDetail extends StatelessWidget {
                   icon: const Icon(Icons.download),
                   label: Text(
                     controller.schedulingTransfer
-                        ? 'Scheduling…'
+                        ? strings.scheduling
                         : transfer?.state == TransferState.completed
-                        ? 'Download again'
-                        : 'Download original',
+                        ? strings.downloadAgain
+                        : strings.downloadOriginal,
                   ),
                 ),
             ],
             if (transfer != null) ...<Widget>[
               const Divider(height: 32),
-              Text('Transfer', style: theme.textTheme.titleMedium),
+              Text(strings.transfer, style: theme.textTheme.titleMedium),
               const SizedBox(height: 8),
               Text(
                 '${transfer.state.name} · ${transfer.filename ?? transfer.id}',
@@ -160,7 +164,7 @@ final class _ArtworkDetail extends StatelessWidget {
               const SizedBox(height: 8),
               LinearProgressIndicator(value: transfer.progress.clamp(0, 1)),
               const SizedBox(height: 8),
-              Text(_transferSummary(transfer)),
+              Text(_transferSummary(transfer, strings)),
               if (transfer.localPath case final path?) SelectableText(path),
               const SizedBox(height: 12),
               Wrap(
@@ -176,7 +180,7 @@ final class _ArtworkDetail extends StatelessWidget {
                           ? null
                           : controller.pauseTransfer,
                       icon: const Icon(Icons.pause),
-                      label: const Text('Pause'),
+                      label: Text(strings.pause),
                     ),
                   if (transfer.state == TransferState.paused)
                     FilledButton.tonalIcon(
@@ -184,7 +188,7 @@ final class _ArtworkDetail extends StatelessWidget {
                           ? null
                           : controller.resumeTransfer,
                       icon: const Icon(Icons.play_arrow),
-                      label: const Text('Resume'),
+                      label: Text(strings.resume),
                     ),
                   if (!transfer.isFinal)
                     TextButton.icon(
@@ -192,7 +196,7 @@ final class _ArtworkDetail extends StatelessWidget {
                           ? null
                           : controller.cancelTransfer,
                       icon: const Icon(Icons.cancel_outlined),
-                      label: const Text('Cancel'),
+                      label: Text(strings.cancel),
                     ),
                 ],
               ),
@@ -200,7 +204,7 @@ final class _ArtworkDetail extends StatelessWidget {
             if (controller.transferFailure case final failure?) ...<Widget>[
               const SizedBox(height: 12),
               Text(
-                '${failure.code}: ${failure.message}',
+                '${failure.code}: ${strings.failureMessage(failure)}',
                 style: TextStyle(color: theme.colorScheme.error),
               ),
             ],
@@ -210,31 +214,25 @@ final class _ArtworkDetail extends StatelessWidget {
     );
   }
 
-  static String _transferSummary(TransferSnapshot snapshot) {
+  static String _transferSummary(
+    TransferSnapshot snapshot,
+    AppStrings strings,
+  ) {
     final values = <String>[
       '${(snapshot.progress * 100).clamp(0, 100).toStringAsFixed(1)}%',
-      if (snapshot.expectedBytes != null) _formatBytes(snapshot.expectedBytes),
+      if (snapshot.expectedBytes != null)
+        _formatBytes(snapshot.expectedBytes, strings),
       if (snapshot.networkBytesPerSecond != null)
-        '${_formatBytes(snapshot.networkBytesPerSecond)}/s',
+        '${_formatBytes(snapshot.networkBytesPerSecond, strings)}/s',
       if (snapshot.timeRemaining != null)
-        '${snapshot.timeRemaining!.inSeconds}s remaining',
+        '${snapshot.timeRemaining!.inSeconds}s ${strings.remaining}',
       if (snapshot.failureCode != null) snapshot.failureCode!,
     ];
     return values.join(' · ');
   }
 
-  static String _availabilityLabel(MediaAvailability availability) =>
-      switch (availability) {
-        MediaAvailability.available => 'Original allowed',
-        MediaAvailability.loginRequired => 'Login required',
-        MediaAvailability.purchaseRequired => 'Purchase required',
-        MediaAvailability.restricted => 'Restricted',
-        MediaAvailability.unavailable => 'Preview only',
-        MediaAvailability.missing => 'Original missing',
-      };
-
-  static String _formatBytes(int? bytes) {
-    if (bytes == null || bytes < 0) return 'size unknown';
+  static String _formatBytes(int? bytes, AppStrings strings) {
+    if (bytes == null || bytes < 0) return strings.sizeUnknown;
     const units = <String>['B', 'KiB', 'MiB', 'GiB', 'TiB'];
     var value = bytes.toDouble();
     var unit = 0;

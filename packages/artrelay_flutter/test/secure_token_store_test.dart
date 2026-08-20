@@ -1,4 +1,5 @@
 import 'package:artrelay_flutter/artrelay_flutter.dart';
+import 'package:artrelay_flutter/src/storage_failure.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -26,5 +27,16 @@ void main() {
     expect(restored?.refreshToken, tokens.refreshToken);
     expect(restored?.scopes, tokens.scopes);
     expect(restored?.expiresAt, tokens.expiresAt);
+  });
+
+  test('macOS defaults do not require a provisioning profile', () {
+    final options = defaultClientSecureStorage.mOptions as MacOsOptions;
+
+    expect(options.usesDataProtectionKeychain, isFalse);
+    expect(
+      options.accessibility,
+      KeychainAccessibility.first_unlock_this_device,
+    );
+    expect(options.groupId, isNull);
   });
 }

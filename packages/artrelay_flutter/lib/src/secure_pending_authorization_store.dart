@@ -4,13 +4,15 @@ import 'package:artrelay_api/artrelay_api.dart';
 import 'package:artrelay_core/artrelay_core.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import 'storage_failure.dart';
+
 /// Persists PKCE state so a callback can survive application termination.
 final class SecurePendingAuthorizationStore
     implements PendingAuthorizationStore {
   SecurePendingAuthorizationStore({
     FlutterSecureStorage? storage,
     this.key = 'artrelay.oauth.pending.v1',
-  }) : _storage = storage ?? const FlutterSecureStorage();
+  }) : _storage = storage ?? defaultClientSecureStorage;
 
   final FlutterSecureStorage _storage;
   final String key;
@@ -70,10 +72,9 @@ final class SecurePendingAuthorizationStore
   }
 
   static ArtRelayException _failure(String suffix, Object error) =>
-      ArtRelayException(
-        kind: ArtRelayFailureKind.storage,
+      secureStorageFailure(
         code: 'pending_authorization_store.$suffix',
         message: 'Unable to access the pending OAuth transaction securely.',
-        cause: error,
+        error: error,
       );
 }

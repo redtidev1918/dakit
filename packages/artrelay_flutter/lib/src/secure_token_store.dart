@@ -3,11 +3,13 @@ import 'dart:convert';
 import 'package:artrelay_core/artrelay_core.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import 'storage_failure.dart';
+
 final class SecureTokenStore implements TokenStore {
   SecureTokenStore({
     FlutterSecureStorage? storage,
     this.key = 'artrelay.oauth.tokens.v1',
-  }) : _storage = storage ?? const FlutterSecureStorage();
+  }) : _storage = storage ?? defaultClientSecureStorage;
 
   final FlutterSecureStorage _storage;
   final String key;
@@ -17,11 +19,10 @@ final class SecureTokenStore implements TokenStore {
     try {
       await _storage.delete(key: key);
     } on Object catch (error) {
-      throw ArtRelayException(
-        kind: ArtRelayFailureKind.storage,
+      throw secureStorageFailure(
         code: 'token_store.clear_failed',
         message: 'Unable to clear the OAuth session from secure storage.',
-        cause: error,
+        error: error,
       );
     }
   }
@@ -43,11 +44,10 @@ final class SecureTokenStore implements TokenStore {
     } on ArtRelayException {
       rethrow;
     } on Object catch (error) {
-      throw ArtRelayException(
-        kind: ArtRelayFailureKind.storage,
+      throw secureStorageFailure(
         code: 'token_store.read_failed',
         message: 'Unable to read or decode the OAuth session.',
-        cause: error,
+        error: error,
       );
     }
   }
@@ -64,11 +64,10 @@ final class SecureTokenStore implements TokenStore {
     try {
       await _storage.write(key: key, value: jsonEncode(value));
     } on Object catch (error) {
-      throw ArtRelayException(
-        kind: ArtRelayFailureKind.storage,
+      throw secureStorageFailure(
         code: 'token_store.write_failed',
         message: 'Unable to persist the OAuth session securely.',
-        cause: error,
+        error: error,
       );
     }
   }

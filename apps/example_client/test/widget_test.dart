@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:ui' show Size;
+import 'dart:ui' show Locale, Size;
 
 import 'package:artrelay_flutter/artrelay_flutter.dart';
 import 'package:example_client/src/client_app.dart';
@@ -79,6 +79,27 @@ void main() {
       expect(find.textContaining('queued · original.zip'), findsOneWidget);
     },
   );
+
+  testWidgets('uses Simplified Chinese when requested by the host', (
+    tester,
+  ) async {
+    final controller = ExampleClientController.unconfigured(
+      diagnostics: DiagnosticLog(),
+      transferManager: FakeTransferManager(),
+      initialTransferProxy: null,
+    );
+
+    await tester.pumpWidget(
+      ArtRelayExampleApp(
+        controller: controller,
+        locale: const Locale('zh', 'CN'),
+      ),
+    );
+
+    expect(find.text('尚未配置 Client ID'), findsOneWidget);
+    expect(find.text('网络链路'), findsOneWidget);
+    expect(find.textContaining('诊断信息'), findsOneWidget);
+  });
 }
 
 Future<ConnectivityReport> successfulConnectivity() async => ConnectivityReport(

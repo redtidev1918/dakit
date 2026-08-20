@@ -17,6 +17,18 @@ The app displays distinct configuration, session restore, browser callback, API,
 parsing, storage, and unexpected failure states. Its diagnostic list contains no
 tokens, authorization codes, cookies, or PKCE secrets.
 
+For an explicitly launched integration run, the example can begin authorization
+after session restoration without a UI click:
+
+```shell
+flutter run -d macos \
+  --dart-define=ARTRELAY_CLIENT_ID=YOUR_PUBLIC_CLIENT_ID \
+  --dart-define=ARTRELAY_AUTO_AUTHORIZE=true
+```
+
+This build-time switch belongs to the diagnostic example only. SDK hosts and
+ordinary builds still start interactive authorization from a user action.
+
 It also runs a DNS, TCP, TLS, and HTTP check at startup. To use a local desktop
 HTTP proxy explicitly:
 
