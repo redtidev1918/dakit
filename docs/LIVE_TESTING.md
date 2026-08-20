@@ -25,7 +25,7 @@ fixture 测试只能证明本地映射逻辑，不能证明真实账户权限、
 ## 运行
 
 ```shell
-read -s DAKIT_ACCESS_TOKEN
+read -r -s DAKIT_ACCESS_TOKEN
 export DAKIT_ACCESS_TOKEN
 export http_proxy=http://127.0.0.1:7892
 export https_proxy=http://127.0.0.1:7892

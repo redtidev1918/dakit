@@ -28,14 +28,24 @@ DAKit 是面向 Dart 与 Flutter 的模块化 DeviantArt 客户端 SDK，为 And
 | `dakit_flutter` | 系统浏览器、深链、安全存储、后台传输 | 有 |
 | `example_client` | Android/macOS/Windows 集成与故障诊断客户端 | 应用 |
 
-依赖方向固定为 `dakit_flutter → dakit_api → dakit_core`。业务应用只依赖所需层；使用完整 Flutter 集成时直接依赖 `dakit_flutter` 即可。
+依赖方向固定为 `dakit_flutter → dakit_api → dakit_core`。业务应用只依赖所需层；使用完整 Flutter 集成时依赖 `dakit_flutter` 即可。
 
 ## 安装
 
-首次发布到 pub.dev 前，从 Git 仓库引用：
+首次发布到 pub.dev 前，从 Git 仓库引用。由于三个包尚未发布，需要把
+`dakit_flutter` 依赖的 `dakit_core` 与 `dakit_api` 一并显式声明，否则
+`pub` 无法解析传递依赖：
 
 ```yaml
 dependencies:
+  dakit_core:
+    git:
+      url: https://github.com/redtidev1918/dakit.git
+      path: packages/dakit_core
+  dakit_api:
+    git:
+      url: https://github.com/redtidev1918/dakit.git
+      path: packages/dakit_api
   dakit_flutter:
     git:
       url: https://github.com/redtidev1918/dakit.git

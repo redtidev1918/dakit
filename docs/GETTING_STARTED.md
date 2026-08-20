@@ -61,7 +61,26 @@ Windows 需要安装 MSIX 才能由系统注册 `dakit` 协议；未打包的 EX
 
 ## 3. 嵌入 Flutter 应用
 
-从仓库依赖 `dakit_flutter` 后，在 `runApp` 前创建 OAuth 客户端：
+首次发布到 pub.dev 前，需要从 Git 仓库显式声明三个包；否则
+`dakit_flutter` 尚未发布的传递依赖 `dakit_core` / `dakit_api` 无法解析：
+
+```yaml
+dependencies:
+  dakit_core:
+    git:
+      url: https://github.com/redtidev1918/dakit.git
+      path: packages/dakit_core
+  dakit_api:
+    git:
+      url: https://github.com/redtidev1918/dakit.git
+      path: packages/dakit_api
+  dakit_flutter:
+    git:
+      url: https://github.com/redtidev1918/dakit.git
+      path: packages/dakit_flutter
+```
+
+随后在 `runApp` 前创建 OAuth 客户端：
 
 ```dart
 final oauth = DAKitOAuthClient(
