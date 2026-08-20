@@ -8,6 +8,18 @@ abstract interface class AccountRepository {
 
 abstract interface class UserRepository {
   Future<UserProfileDetails> profile(String username);
+
+  Future<Page<UserRelationship>> friends(String username, PageRequest request);
+
+  Future<Page<UserRelationship>> watchers(String username, PageRequest request);
+
+  Future<bool> isWatching(String username);
+
+  Future<List<UserProfile>> searchFriends(String query, {String? username});
+}
+
+abstract interface class UserLookupRepository {
+  Future<List<UserProfile>> lookup(Iterable<String> usernames);
 }
 
 abstract interface class ArtworkRepository {

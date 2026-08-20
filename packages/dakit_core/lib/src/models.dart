@@ -66,6 +66,23 @@ final class UserProfileDetails {
   final Uri? coverPhotoUri;
 }
 
+/// Relationship data attached to a friend or watcher list entry.
+final class UserRelationship {
+  const UserRelationship({
+    required this.user,
+    required this.isWatching,
+    required this.watchOptions,
+    this.watchesYou,
+    this.lastVisitedAt,
+  });
+
+  final UserProfile user;
+  final bool isWatching;
+  final bool? watchesYou;
+  final DateTime? lastVisitedAt;
+  final WatchOptions watchOptions;
+}
+
 final class Artwork {
   const Artwork({
     required this.id,

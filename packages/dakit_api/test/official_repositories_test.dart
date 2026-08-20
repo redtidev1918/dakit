@@ -182,6 +182,78 @@ void main() {
     );
   });
 
+  test('loads user relationships, watch state, and friend search', () async {
+    final friend = relationshipJson('friend-1', watchesYou: true);
+    final watcher = relationshipJson('watcher-1');
+    final transport = FixtureTransport(<Map<String, Object?>>[
+      <String, Object?>{
+        'results': <Object?>[friend],
+        'has_more': true,
+        'next_offset': 10,
+      },
+      <String, Object?>{
+        'results': <Object?>[watcher],
+        'has_more': false,
+        'next_offset': null,
+      },
+      <String, Object?>{'watching': true},
+      <String, Object?>{
+        'results': <Object?>[
+          <String, Object?>{'userid': 'match-1', 'username': 'matching-user'},
+        ],
+      },
+    ]);
+    final repository = OfficialUserRepository(transport);
+
+    final friends = await repository.friends(
+      'sample-user',
+      const PageRequest(limit: 10),
+    );
+    final watchers = await repository.watchers(
+      'sample-user',
+      const PageRequest(limit: 10),
+    );
+    final watching = await repository.isWatching('friend-1');
+    final matches = await repository.searchFriends(
+      'matching',
+      username: 'sample-user',
+    );
+
+    expect(friends.items.single.watchesYou, isTrue);
+    expect(friends.items.single.watchOptions.deviations, isTrue);
+    expect(friends.nextCursor, '10');
+    expect(watchers.items.single.watchesYou, isNull);
+    expect(watching, isTrue);
+    expect(matches.single.username, 'matching-user');
+    expect(transport.requests[0].path, 'user/friends/sample-user');
+    expect(transport.requests[1].path, 'user/watchers/sample-user');
+    expect(transport.requests[2].path, 'user/friends/watching/friend-1');
+    expect(transport.requests[3].query['query'], 'matching');
+  });
+
+  test('looks up multiple users with one encoded mutation', () async {
+    final transport = FixtureMutationTransport(
+      postResponses: <Map<String, Object?>>[
+        <String, Object?>{
+          'results': <Object?>[
+            <String, Object?>{'userid': 'user-1', 'username': 'First'},
+            <String, Object?>{'userid': 'user-2', 'username': 'Second'},
+          ],
+        },
+      ],
+    );
+
+    final users = await OfficialUserLookupRepository(transport)
+        .lookup(const <String>['First', 'first', 'Second']);
+
+    expect(users.map((user) => user.username), <String>['First', 'Second']);
+    expect(transport.postRequests.single.path, 'user/whois');
+    expect(transport.postRequests.single.form['usernames'], <String>[
+      'First',
+      'Second',
+    ]);
+  });
+
   test('loads daily, watched, and cursor-based tag discovery feeds', () async {
     final artwork = await fixture('deviation.json');
     final transport = FixtureTransport(<Map<String, Object?>>[
@@ -607,6 +679,24 @@ Map<String, Object?> commentJson(String id, String body, {String? parentId}) =>
       'is_featured': false,
       'likes': 2,
       'user': <String, Object?>{'userid': 'user-1', 'username': 'sample-user'},
+    };
+
+Map<String, Object?> relationshipJson(String username, {bool? watchesYou}) =>
+    <String, Object?>{
+      'user': <String, Object?>{'userid': '$username-id', 'username': username},
+      'is_watching': true,
+      'watches_you': ?watchesYou,
+      'lastvisit': '2026-08-20T12:00:00Z',
+      'watch': <String, Object?>{
+        'friend': true,
+        'deviations': true,
+        'journals': true,
+        'forum_threads': false,
+        'critiques': true,
+        'scraps': true,
+        'activity': true,
+        'collections': true,
+      },
     };
 
 Future<Map<String, Object?>> fixture(String name) async {

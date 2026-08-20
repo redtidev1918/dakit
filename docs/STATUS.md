@@ -9,7 +9,7 @@
 - 版本阶段：`0.1.0-dev.1`，尚未发布 pub.dev；
 - 运行时：Flutter 3.47.1 / Dart 3.13.1；
 - 平台：Android、macOS、Windows/MSIX；
-- 测试：格式与分析通过，88 个测试通过；
+- 测试：格式与分析通过，90 个测试通过；
 - 本机构建：Android debug APK、macOS debug app 通过；
 - CI：Linux 质量门及 Android/macOS/Windows 四个 job 通过；
 - 包发布检查：`dakit_core`、`dakit_api`、`dakit_flutter` dry-run 均为 0 warning；
@@ -22,7 +22,8 @@
 - 分层领域模型、仓库、分页、错误、诊断和传输契约；
 - Public Client Authorization Code + S256 PKCE；
 - pending transaction/token 安全存储、冷启动回调、并发授权合并与串行 refresh；
-- 账户、完整用户资料与统计、作品详情/正文、首页/搜索、每日精选、关注动态、标签补全与浏览、主题导航；
+- 账户、完整用户资料与统计、好友/关注者列表、关注状态、好友搜索与批量用户查询；
+- 作品详情/正文、首页/搜索、每日精选、关注动态、标签补全与浏览、主题导航；
 - 画廊与收藏夹目录及目录内容、可选目录作品预载、原文件元数据；
 - 作品评论读取/发布、收藏/取消收藏、关注/取消关注，以及集中维护的 OAuth scope 常量；
 - 统一的 authenticated form mutation transport；POST 仅在 401 后刷新重放，不会对 429/5xx 自动重复非幂等操作；

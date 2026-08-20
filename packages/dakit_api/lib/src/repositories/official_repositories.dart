@@ -39,6 +39,110 @@ final class OfficialUserRepository implements UserRepository {
     );
     return _mapper.profile(json);
   }
+
+  @override
+  Future<Page<UserRelationship>> friends(
+    String username,
+    PageRequest request,
+  ) => _relationships('user/friends', username, request);
+
+  @override
+  Future<Page<UserRelationship>> watchers(
+    String username,
+    PageRequest request,
+  ) => _relationships('user/watchers', username, request);
+
+  Future<Page<UserRelationship>> _relationships(
+    String path,
+    String username,
+    PageRequest request,
+  ) async {
+    _validateIdentifier(username, 'username');
+    _validatePageRequest(request);
+    final json = await _transport.getJson(
+      '$path/${Uri.encodeComponent(username.trim())}',
+      query: <String, Object?>{
+        'offset': _offset(request.cursor),
+        'limit': request.limit,
+        'expand': 'user.details,user.geo,user.profile,user.stats',
+      },
+    );
+    return _parsePage(json, _mapper.relationship);
+  }
+
+  @override
+  Future<bool> isWatching(String username) async {
+    _validateIdentifier(username, 'username');
+    final json = await _transport.getJson(
+      'user/friends/watching/${Uri.encodeComponent(username.trim())}',
+    );
+    return _requiredResponseBoolean(json, 'watching');
+  }
+
+  @override
+  Future<List<UserProfile>> searchFriends(
+    String query, {
+    String? username,
+  }) async {
+    final normalizedQuery = query.trim();
+    if (normalizedQuery.isEmpty) {
+      throw const DAKitException(
+        kind: DAKitFailureKind.configuration,
+        code: 'api.user.search.empty',
+        message: 'A user search query must not be empty.',
+      );
+    }
+    final normalizedUsername = username?.trim();
+    if (normalizedUsername != null && normalizedUsername.isEmpty) {
+      _validateIdentifier('', 'username');
+    }
+    final json = await _transport.getJson(
+      'user/friends/search',
+      query: <String, Object?>{
+        'username': ?normalizedUsername,
+        'query': normalizedQuery,
+      },
+    );
+    final rawResults = json['results'];
+    if (rawResults is! List) throw _missingField('results');
+    return List<UserProfile>.unmodifiable(
+      rawResults.map((item) => _mapper.user(_requiredItemMap(item))),
+    );
+  }
+}
+
+final class OfficialUserLookupRepository implements UserLookupRepository {
+  const OfficialUserLookupRepository(this._transport);
+
+  final OfficialApiMutationTransport _transport;
+  final DeviationMapper _mapper = const DeviationMapper();
+
+  @override
+  Future<List<UserProfile>> lookup(Iterable<String> usernames) async {
+    final normalized = <String>[];
+    final seen = <String>{};
+    for (final username in usernames) {
+      final value = username.trim();
+      _validateIdentifier(value, 'username');
+      if (seen.add(value.toLowerCase())) normalized.add(value);
+    }
+    if (normalized.isEmpty) {
+      throw const DAKitException(
+        kind: DAKitFailureKind.configuration,
+        code: 'api.user.lookup.empty',
+        message: 'At least one username is required.',
+      );
+    }
+    final json = await _transport.postFormJson(
+      'user/whois',
+      form: <String, Object?>{'usernames': normalized},
+    );
+    final rawResults = json['results'];
+    if (rawResults is! List) throw _missingField('results');
+    return List<UserProfile>.unmodifiable(
+      rawResults.map((item) => _mapper.user(_requiredItemMap(item))),
+    );
+  }
 }
 
 final class OfficialArtworkRepository implements ArtworkRepository {

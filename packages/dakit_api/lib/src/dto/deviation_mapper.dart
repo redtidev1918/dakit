@@ -127,6 +127,34 @@ final class DeviationMapper {
     );
   }
 
+  UserRelationship relationship(Map<String, Object?> json) {
+    final watch = _requiredMap(json, 'watch');
+    if (!json.containsKey('lastvisit')) throw _missing('lastvisit');
+    final rawLastVisit = json['lastvisit'];
+    final lastVisit = _dateTime(rawLastVisit);
+    if (rawLastVisit != null && lastVisit == null) throw _missing('lastvisit');
+    final rawWatchesYou = json['watches_you'];
+    if (rawWatchesYou != null && rawWatchesYou is! bool) {
+      throw _missing('watches_you');
+    }
+    return UserRelationship(
+      user: user(_requiredMap(json, 'user')),
+      isWatching: _requiredBoolean(json, 'is_watching'),
+      watchesYou: rawWatchesYou as bool?,
+      lastVisitedAt: lastVisit,
+      watchOptions: WatchOptions(
+        friend: _requiredBoolean(watch, 'friend'),
+        deviations: _requiredBoolean(watch, 'deviations'),
+        journals: _requiredBoolean(watch, 'journals'),
+        forumThreads: _requiredBoolean(watch, 'forum_threads'),
+        critiques: _requiredBoolean(watch, 'critiques'),
+        scraps: _requiredBoolean(watch, 'scraps'),
+        activity: _requiredBoolean(watch, 'activity'),
+        collections: _requiredBoolean(watch, 'collections'),
+      ),
+    );
+  }
+
   ArtworkFolder folder(Map<String, Object?> json, FolderKind kind) {
     final rawThumbnail = _nullableRequiredMap(json, 'thumb');
     final rawPreloaded = json['deviations'];

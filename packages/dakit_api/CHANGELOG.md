@@ -32,3 +32,5 @@
   continuation mode can be resumed correctly.
 - Add tag autocomplete, topic/top-topic browsing, and gallery/collection folder
   content adapters; apply the same cursor/offset preservation to topic feeds.
+- Add friend and watcher pages, authenticated watch-state checks, friend search,
+  and form-encoded bulk user lookup.

@@ -14,3 +14,5 @@
   models and repository contracts without introducing provider DTOs.
 - Add provider-curated topic models, tag suggestions, topic navigation, and folder
   content contracts.
+- Add user relationship, friend/watcher listing, watch-state, search, and bulk
+  lookup contracts.
