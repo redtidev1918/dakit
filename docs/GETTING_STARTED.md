@@ -88,6 +88,14 @@ dart run packages/dakit_cli/bin/dakit.dart download 作品UUID --output download
 
 CLI 登录使用 loopback 回调 `http://127.0.0.1:8765/callback`，需要在 Public 应用白名单中精确加入该地址。`download` 需要先完成一次登录，并传入作品 UUID。凭据会保存到本机 `~/.config/dakit/credentials.json`（Windows 为 `%APPDATA%/dakit/credentials.json`），下载完成后 CLI 会输出保存路径、字节数、SHA-256 和媒体类型。运行 `dakit --help` 可以查看完整检查清单。
 
+所有 CLI 命令都支持 `--verbose` / `-v`，会把脱敏诊断事件输出到 `stderr`：
+
+```shell
+dart run packages/dakit_cli/bin/dakit.dart status --proxy 127.0.0.1:7892 --verbose
+```
+
+Flutter 示例客户端登录后，在页面底部有内置 Debug console，可输入 `help`、`account`、`status`、`open UUID`、`download UUID`、`clear`。
+
 ## 3. 嵌入 Flutter 应用
 
 首次发布到 pub.dev 前，需要从 Git 仓库显式声明三个包；否则

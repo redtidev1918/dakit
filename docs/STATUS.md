@@ -34,6 +34,7 @@
 - Flutter 后台任务恢复、进度、重试、暂停/继续/取消及独立代理；
 - 中英文示例客户端和脱敏诊断面板；
 - 纯 Dart `dakit_cli`：loopback OAuth 登录、账户查询、单作品原文件下载与连通性诊断；
+- CLI `--verbose` 脱敏诊断输出，以及示例客户端内置 Debug console；
 - Android 自定义 scheme、macOS URL type、Windows MSIX 协议激活；
 - 三包 MIT 许可证、package README/changelog 与可发布归档。
 - refresh/logout/token exchange 具备 generation guard，迟到操作不能在退出后恢复会话；主动取消登录会立即结束回调等待。

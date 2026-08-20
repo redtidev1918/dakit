@@ -353,6 +353,59 @@ final class ExampleClientController extends ChangeNotifier {
     }
   }
 
+  Future<String> runConsoleCommand(String input) async {
+    final normalized = input.trim();
+    if (normalized.isEmpty) return '';
+    final parts = normalized.split(RegExp(r'\s+'));
+    final command = parts.first.toLowerCase();
+    switch (command) {
+      case 'help':
+        return 'Commands: help, phase, account, status, open UUID, '
+            'download UUID, clear';
+      case 'phase':
+        return phase.name;
+      case 'account':
+        final account = user;
+        return account == null
+            ? 'No account loaded.'
+            : '${account.username} (${account.id})';
+      case 'status':
+        await checkConnectivity();
+        final report = connectivity;
+        if (report == null) return 'Connectivity unavailable.';
+        final stages = report.stages
+            .map(
+              (stage) =>
+                  '${stage.stage.name}=${stage.succeeded ? 'ok' : stage.code}',
+            )
+            .join(', ');
+        return 'reachable=${report.reachable} $stages';
+      case 'open':
+        if (parts.length < 2) return 'usage: open UUID';
+        await openArtwork(parts[1]);
+        final artwork = selectedArtwork;
+        return artwork == null
+            ? 'Artwork not loaded.'
+            : '${artwork.title} (${artwork.id})';
+      case 'download':
+        if (parts.length < 2) return 'usage: download UUID';
+        await openArtwork(parts[1]);
+        if (selectedOriginal == null) {
+          return 'Original is not transferable.';
+        }
+        await downloadOriginal();
+        final snapshot = selectedTransfer;
+        return snapshot == null
+            ? 'Transfer scheduled.'
+            : 'transfer=${snapshot.id} state=${snapshot.state.name}';
+      case 'clear':
+        diagnostics.clear();
+        return 'Diagnostics cleared.';
+      default:
+        return 'Unknown command: $command';
+    }
+  }
+
   Future<void> _loadContent() async {
     final loadAccount = _loadAccount;
     final loadHome = _loadHome;

@@ -5,6 +5,7 @@ import 'app_strings.dart';
 import 'client_controller.dart';
 import 'widgets/artwork_browser.dart';
 import 'widgets/connectivity_card.dart';
+import 'widgets/debug_console.dart';
 import 'widgets/diagnostics_panel.dart';
 import 'widgets/status_card.dart';
 import 'widgets/transfers_overview.dart';
@@ -98,6 +99,8 @@ final class ClientHome extends StatelessWidget {
                 ArtworkBrowser(controller: controller),
               const SizedBox(height: 16),
               DiagnosticsPanel(events: controller.diagnostics.events),
+              const SizedBox(height: 16),
+              DebugConsole(controller: controller),
             ],
           ),
         ),

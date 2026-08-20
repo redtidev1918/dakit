@@ -84,6 +84,14 @@ dart run packages/dakit_cli/bin/dakit.dart download 作品UUID --output download
 
 `login` 会在本机 `8765` 端口起临时回调服务并打开系统浏览器，凭据保存到 `~/.config/dakit/credentials.json`（Windows 在 `%APPDATA%`）。`download` 需要先完成一次登录，并传入作品 UUID。代理参数可省略，CLI 会遵循 `http_proxy` / `https_proxy` 环境变量；也可以运行 `dakit --help` 查看完整使用说明。
 
+所有 CLI 命令都支持 `--verbose` / `-v`，会把脱敏后的 DNS/TCP/TLS/HTTP 诊断事件输出到 `stderr`：
+
+```shell
+dart run packages/dakit_cli/bin/dakit.dart status --proxy 127.0.0.1:7892 --verbose
+```
+
+Flutter 示例客户端内置了一个 Debug console，登录后在页面底部可输入 `help`、`account`、`status`、`open UUID`、`download UUID`、`clear`。
+
 ## 最小示例
 
 ```dart

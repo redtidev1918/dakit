@@ -84,6 +84,7 @@ Future<void> main(List<String> arguments) async {
 ArgParser _loginParser() {
   final parser = ArgParser()
     ..addFlag('help', abbr: 'h', negatable: false)
+    ..addFlag('verbose', abbr: 'v', negatable: false)
     ..addOption('client-id', abbr: 'c', help: 'Public OAuth client ID.')
     ..addOption(
       'scopes',
@@ -98,6 +99,7 @@ ArgParser _loginParser() {
 ArgParser _downloadParser() {
   final parser = ArgParser()
     ..addFlag('help', abbr: 'h', negatable: false)
+    ..addFlag('verbose', abbr: 'v', negatable: false)
     ..addOption('proxy', help: 'HTTP proxy as HOST:PORT.')
     ..addOption('output', defaultsTo: 'downloads', help: 'Output directory.');
   return parser;
@@ -106,6 +108,7 @@ ArgParser _downloadParser() {
 ArgParser _proxyParser() {
   return ArgParser()
     ..addFlag('help', abbr: 'h', negatable: false)
+    ..addFlag('verbose', abbr: 'v', negatable: false)
     ..addOption('proxy', help: 'HTTP proxy as HOST:PORT.');
 }
 
@@ -148,9 +151,16 @@ Future<int> _login(ArgResults arguments) async {
     scopes: scopes,
   );
   final profile = _profile(arguments['proxy'] as String?);
+  final diagnostics = _diagnostics(arguments);
   final tokenStore = FileTokenStore();
-  final endpoint = DioOAuthEndpoint(networkProfile: profile);
-  final tokenClient = OAuthTokenClient(endpoint: endpoint);
+  final endpoint = DioOAuthEndpoint(
+    networkProfile: profile,
+    diagnostics: diagnostics,
+  );
+  final tokenClient = OAuthTokenClient(
+    endpoint: endpoint,
+    diagnostics: diagnostics,
+  );
   final session = OAuthSession(
     config: config,
     store: tokenStore,
@@ -163,13 +173,18 @@ Future<int> _login(ArgResults arguments) async {
     pendingStore: MemoryPendingAuthorizationStore(),
     tokenClient: tokenClient,
     session: session,
+    diagnostics: diagnostics,
   );
 
   stdout.writeln('Opening your browser. Complete login to continue.');
   try {
     final tokens = await coordinator.authorize();
     stdout.writeln('Credentials saved to ${tokenStore.path}');
-    final user = await _currentUser(StaticTokenProvider(tokens), profile);
+    final user = await _currentUser(
+      StaticTokenProvider(tokens),
+      profile,
+      diagnostics,
+    );
     stdout.writeln('account=${user.username} id=${user.id}');
     return 0;
   } finally {
@@ -179,12 +194,17 @@ Future<int> _login(ArgResults arguments) async {
 
 Future<int> _whoami(ArgResults arguments) async {
   final profile = _profile(arguments['proxy'] as String?);
+  final diagnostics = _diagnostics(arguments);
   final tokens = await FileTokenStore().read();
   if (tokens == null) {
     stderr.writeln('Not logged in. Run `dakit login` first.');
     return 64;
   }
-  final user = await _currentUser(StaticTokenProvider(tokens), profile);
+  final user = await _currentUser(
+    StaticTokenProvider(tokens),
+    profile,
+    diagnostics,
+  );
   stdout.writeln('username=${user.username} id=${user.id}');
   return 0;
 }
@@ -202,10 +222,12 @@ Future<int> _download(ArgResults arguments) async {
   }
 
   final profile = _profile(arguments['proxy'] as String?);
+  final diagnostics = _diagnostics(arguments);
   final provider = StaticTokenProvider(tokens);
   final transport = OfficialApiClient(
     session: provider,
     networkProfile: profile,
+    diagnostics: diagnostics,
   );
   final mediaRepository = OfficialMediaRepository(transport);
   final asset = await mediaRepository.originalFile(uuid.trim());
@@ -256,9 +278,11 @@ Future<int> _download(ArgResults arguments) async {
 
 Future<int> _status(ArgResults arguments) async {
   final profile = _profile(arguments['proxy'] as String?);
+  final diagnostics = _diagnostics(arguments);
   final report = await ConnectivityProbe(
     target: Uri.https('www.deviantart.com', '/api/v1/oauth2/placebo'),
     profile: profile,
+    diagnostics: diagnostics,
   ).run();
 
   stdout.writeln('profile=${profile.mode.name}');
@@ -293,19 +317,42 @@ NetworkProfile _profile(String? proxy) {
 
 Future<UserProfile> _currentUser(
   AuthTokenProvider session,
-  NetworkProfile profile,
-) async {
+  NetworkProfile profile, [
+  DiagnosticSink diagnostics = const NoopDiagnosticSink(),
+]) async {
   final transport = OfficialApiClient(
     session: session,
     networkProfile: profile,
+    diagnostics: diagnostics,
   );
   return OfficialAccountRepository(transport).currentUser();
 }
+
+DiagnosticSink _diagnostics(ArgResults arguments) =>
+    arguments['verbose'] as bool
+    ? const CliDiagnostics()
+    : const NoopDiagnosticSink();
 
 String _safeFilename(String value) {
   final leaf = value.replaceAll('\\', '/').split('/').last;
   final safe = leaf.replaceAll(RegExp(r'[^A-Za-z0-9._ -]'), '_').trim();
   return safe.isEmpty || safe == '.' || safe == '..' ? 'original.bin' : safe;
+}
+
+final class CliDiagnostics implements DiagnosticSink {
+  const CliDiagnostics();
+
+  @override
+  void add(DiagnosticEvent event) {
+    final elapsed = event.elapsed == null
+        ? ''
+        : ' (${event.elapsed!.inMilliseconds}ms)';
+    final attributes = event.attributes.isEmpty ? '' : ' ${event.attributes}';
+    stderr.writeln(
+      '[${event.stage.name}] ${event.level.name} '
+      '${event.code}$elapsed$attributes',
+    );
+  }
 }
 
 final class StaticTokenProvider implements AuthTokenProvider {
