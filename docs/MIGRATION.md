@@ -24,9 +24,9 @@ promised after the rewrite.
 
 ### M2 — platform integration
 
-- [ ] External browser launcher.
-- [ ] Android, macOS, and Windows custom-scheme callbacks.
-- [ ] Secure token storage.
+- [x] External browser launcher and complete OAuth coordinator.
+- [x] Android, macOS, and Windows custom-scheme callbacks.
+- [x] Secure token and resumable PKCE transaction storage.
 - [ ] Background transfer adapter and task recovery.
 - [ ] Proxy configuration and staged connectivity diagnostics.
 

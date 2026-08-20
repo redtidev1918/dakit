@@ -15,12 +15,9 @@ same commit as every material milestone.
 
 ## Next actions
 
-1. Add a Flutter OAuth coordinator around the browser, deep-link source, PKCE,
-   token exchange, and structured diagnostics.
-2. Configure the example app custom-scheme callback on Android, macOS, and Windows.
-3. Replace the generated counter screen with an integration diagnostics client.
-4. Add native proxy selection, staged connectivity checks, and recoverable transfers.
-5. Add Dart, Android, macOS, and Windows CI jobs.
+1. Replace the generated counter screen with an integration diagnostics client.
+2. Add native proxy selection, staged connectivity checks, and recoverable transfers.
+3. Add Dart, Android, macOS, and Windows CI jobs.
 
 ## Decisions already made
 
@@ -38,7 +35,8 @@ same commit as every material milestone.
 - Engine `5d53178869`
 - Dart 3.13.1
 - `flutter analyze`: no issues
-- Test suites: 23 passing
+- Test suites: 28 passing
+- Local builds: Android debug APK and macOS debug application succeed
 
 ## Latest milestone
 
@@ -52,6 +50,16 @@ same commit as every material milestone.
   when a required domain field disappears.
 - Fixtures follow the official OpenAPI 3.1 definitions published with API version
   `1.20240701`; no live account data or credentials are checked in.
+- OAuth authorization now subscribes before browser launch, coalesces concurrent
+  attempts, persists PKCE state, restores cold-start callbacks, and emits separate
+  launch/callback/token/storage diagnostics.
+- `ArtRelayOAuthClient` wires mature browser, deep-link, secure-storage, and HTTP
+  adapters while preserving replaceable boundaries for advanced clients.
+- The example registers `artrelay://oauth/callback` on Android and macOS. Windows
+  forwards a callback to the existing instance and registers the protocol through
+  its MSIX manifest.
+- Verified Android APK SHA-256 on this machine:
+  `aa3a60f33fef360aa5d78f776eeb1042031878bbbdd4fbc7f52a957a3d317920`.
 
 ## Known external requirements
 

@@ -3,6 +3,7 @@ library;
 
 export 'src/http/api_config.dart';
 export 'src/http/official_api_client.dart';
+export 'src/oauth/authorization_coordinator.dart';
 export 'src/oauth/oauth_config.dart';
 export 'src/oauth/oauth_endpoint.dart';
 export 'src/oauth/oauth_session.dart';

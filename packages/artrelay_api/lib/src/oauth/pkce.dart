@@ -111,6 +111,9 @@ final class PkceFlow {
     return AuthorizationCallback(code: code);
   }
 
+  bool matchesRedirect(OAuthConfig config, Uri callbackUri) =>
+      _sameCallback(config.redirectUri, callbackUri);
+
   String _randomString(int length) => String.fromCharCodes(
     List<int>.generate(
       length,

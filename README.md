@@ -49,6 +49,9 @@ For mainland China mirror and proxy behavior, see
 live in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and
 [`docs/STATUS.md`](docs/STATUS.md).
 
+OAuth application registration and client integration are documented in
+[`docs/OAUTH.md`](docs/OAUTH.md).
+
 ## Project rules
 
 - Core packages contain no widgets, Riverpod, Bloc, or concrete database.

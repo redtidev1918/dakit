@@ -35,3 +35,8 @@ abstract interface class ExternalUriLauncher {
 abstract interface class CallbackUriSource {
   Stream<Uri> get uris;
 }
+
+/// Callback source that can recover the URI which cold-started an application.
+abstract interface class InitialCallbackUriSource implements CallbackUriSource {
+  Future<Uri?> initialUri();
+}

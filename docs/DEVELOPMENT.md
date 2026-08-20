@@ -65,3 +65,27 @@ flutter test packages/artrelay_core/test \
 Live OAuth and API tests are opt-in because they require user interaction and must
 never receive credentials in ordinary CI.
 
+## Platform builds
+
+The Android example follows Flutter 3.47.1 defaults: JDK 17, compile/target SDK
+36, and NDK `28.2.13676358`. Verify the installed toolchain with `flutter doctor
+-v`; local paths belong in Flutter configuration or `local.properties`, never in
+tracked source.
+
+```shell
+cd apps/example_client
+flutter build apk --debug
+flutter build macos --debug
+```
+
+The Windows callback scheme is registered by the MSIX package:
+
+```powershell
+cd apps/example_client
+flutter build windows
+dart run msix:create
+```
+
+An unpackaged Windows debug executable cannot own a system URL protocol without
+writing per-user registry state. ArtRelay deliberately leaves that state untouched;
+use an MSIX smoke test in CI or install the generated package locally.

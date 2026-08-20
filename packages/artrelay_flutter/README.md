@@ -9,3 +9,6 @@ platform-neutral interfaces exported by `artrelay_core`:
 
 The package does not provide screens or require a state-management framework.
 
+For ordinary clients, `ArtRelayOAuthClient` assembles these adapters into a complete
+public-client login lifecycle. Advanced clients can replace any boundary without
+forking the SDK. See the workspace `docs/OAUTH.md` integration guide.

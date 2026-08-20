@@ -40,6 +40,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  msix: ^3.18.0
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -58,6 +59,13 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+msix_config:
+  display_name: ArtRelay Example
+  publisher_display_name: ArtRelay
+  identity_name: io.artrelay.example-client
+  protocol_activation: artrelay
+  capabilities: internetClient
 
   # To add assets to your application, add an assets section, like this:
   # assets:
