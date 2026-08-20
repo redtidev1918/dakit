@@ -162,6 +162,40 @@ final class DeviationMapper {
     );
   }
 
+  ArtworkTopic topic(Map<String, Object?> json) {
+    final examples = <Artwork>[];
+    final seen = <String>{};
+
+    void addExample(Object? value) {
+      final item = _map(value);
+      if (item == null) throw _missing('example_deviations.item');
+      final mapped = artwork(item);
+      if (seen.add(mapped.id)) examples.add(mapped);
+    }
+
+    final rawExamples = json['example_deviations'];
+    if (rawExamples is List) {
+      for (final value in rawExamples) {
+        addExample(value);
+      }
+    } else if (rawExamples != null) {
+      addExample(rawExamples);
+    }
+    final rawDeviations = json['deviations'];
+    if (rawDeviations is List) {
+      for (final value in rawDeviations) {
+        addExample(value);
+      }
+    } else if (rawDeviations != null) {
+      throw _missing('deviations');
+    }
+    return ArtworkTopic(
+      name: _requiredString(json, 'name'),
+      canonicalName: _requiredString(json, 'canonical_name'),
+      exampleArtworks: List<Artwork>.unmodifiable(examples),
+    );
+  }
+
   MediaAsset original(Map<String, Object?> json, String artworkId) {
     final uri = _requiredWebUri(json, 'src');
     final filename = _requiredString(json, 'filename');

@@ -12,3 +12,5 @@
   watch, and social repository contracts.
 - Add full user-profile statistics, discovery-feed, and gallery/collection folder
   models and repository contracts without introducing provider DTOs.
+- Add provider-curated topic models, tag suggestions, topic navigation, and folder
+  content contracts.

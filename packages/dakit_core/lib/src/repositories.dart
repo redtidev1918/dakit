@@ -39,6 +39,14 @@ abstract interface class DiscoveryRepository {
   Future<Page<Artwork>> watched(PageRequest request);
 
   Future<Page<Artwork>> tag(String tag, PageRequest request);
+
+  Future<List<String>> suggestTags(String partialTag);
+
+  Future<Page<ArtworkTopic>> topics(PageRequest request);
+
+  Future<List<ArtworkTopic>> topTopics();
+
+  Future<Page<Artwork>> topic(String canonicalName, PageRequest request);
 }
 
 abstract interface class FolderRepository {
@@ -52,6 +60,18 @@ abstract interface class FolderRepository {
     String? username,
     PageRequest request = const PageRequest(),
     FolderQueryOptions options = const FolderQueryOptions(),
+  });
+
+  Future<Page<Artwork>> galleryContents(
+    String folderId, {
+    String? username,
+    PageRequest request = const PageRequest(),
+  });
+
+  Future<Page<Artwork>> collectionContents(
+    String folderId, {
+    String? username,
+    PageRequest request = const PageRequest(),
   });
 }
 

@@ -30,3 +30,5 @@
   artwork preload data.
 - Preserve opaque tag cursors separately from numeric offsets so either official
   continuation mode can be resumed correctly.
+- Add tag autocomplete, topic/top-topic browsing, and gallery/collection folder
+  content adapters; apply the same cursor/offset preservation to topic feeds.

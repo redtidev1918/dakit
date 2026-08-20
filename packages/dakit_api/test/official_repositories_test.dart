@@ -237,6 +237,7 @@ void main() {
         'results': <Object?>[artwork],
         'has_more': true,
         'next_offset': 10,
+        'next_cursor': '',
       },
       <String, Object?>{
         'results': <Object?>[],
@@ -255,6 +256,65 @@ void main() {
     expect(first.nextCursor, 'offset:10');
     expect(transport.requests[1].query['offset'], 10);
     expect(transport.requests[1].query, isNot(contains('cursor')));
+  });
+
+  test('maps topic navigation and tag suggestions', () async {
+    final artwork = await fixture('deviation.json');
+    final transport = FixtureTransport(<Map<String, Object?>>[
+      <String, Object?>{
+        'results': <Object?>[
+          <String, Object?>{'tag_name': 'digital-art'},
+          <String, Object?>{'tag_name': 'digital-painting'},
+        ],
+      },
+      <String, Object?>{
+        'results': <Object?>[
+          <String, Object?>{
+            'name': 'Digital Art',
+            'canonical_name': 'digital-art',
+            'example_deviations': <Object?>[artwork],
+          },
+        ],
+        'has_more': true,
+        'next_offset': 10,
+        'next_cursor': 'topics-token',
+      },
+      <String, Object?>{
+        'results': <Object?>[
+          <String, Object?>{
+            'name': 'Photography',
+            'canonical_name': 'photography',
+            'example_deviations': artwork,
+          },
+        ],
+      },
+      <String, Object?>{
+        'results': <Object?>[artwork],
+        'has_more': false,
+        'next_offset': null,
+        'next_cursor': null,
+        'prev_cursor': null,
+      },
+    ]);
+    final repository = OfficialDiscoveryRepository(transport);
+
+    final suggestions = await repository.suggestTags(' digital ');
+    final topics = await repository.topics(const PageRequest(limit: 10));
+    final topTopics = await repository.topTopics();
+    final topic = await repository.topic(
+      'digital-art',
+      const PageRequest(limit: 24),
+    );
+
+    expect(suggestions, <String>['digital-art', 'digital-painting']);
+    expect(topics.items.single.canonicalName, 'digital-art');
+    expect(topics.items.single.exampleArtworks.single.id, 'art-1');
+    expect(topics.nextCursor, 'cursor:topics-token');
+    expect(topTopics.single.exampleArtworks.single.id, 'art-1');
+    expect(topic.items.single.id, 'art-1');
+    expect(transport.requests[0].query['tag_name'], 'digital');
+    expect(transport.requests[1].path, 'browse/topics');
+    expect(transport.requests[3].query['topic'], 'digital-art');
   });
 
   test(
@@ -313,6 +373,34 @@ void main() {
       expect(transport.requests[1].query, isNot(contains('username')));
     },
   );
+
+  test('loads gallery and collection folder contents', () async {
+    final artwork = await fixture('deviation.json');
+    final response = <String, Object?>{
+      'results': <Object?>[artwork],
+      'has_more': false,
+      'next_offset': null,
+    };
+    final transport = FixtureTransport(<Map<String, Object?>>[
+      response,
+      Map<String, Object?>.of(response),
+    ]);
+    final repository = OfficialFolderRepository(transport);
+
+    final gallery = await repository.galleryContents(
+      'gallery-1',
+      username: 'sample-user',
+      request: const PageRequest(limit: 24),
+    );
+    final collection = await repository.collectionContents('collection-1');
+
+    expect(gallery.items.single.id, 'art-1');
+    expect(collection.items.single.id, 'art-1');
+    expect(transport.requests[0].path, 'gallery/gallery-1');
+    expect(transport.requests[0].query['username'], 'sample-user');
+    expect(transport.requests[1].path, 'collections/collection-1');
+    expect(transport.requests[1].query, isNot(contains('username')));
+  });
 
   test(
     'resolves original transfer metadata through the download endpoint',

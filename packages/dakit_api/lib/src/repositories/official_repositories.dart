@@ -209,13 +209,92 @@ final class OfficialDiscoveryRepository implements DiscoveryRepository {
       'browse/tags',
       query: <String, Object?>{
         'tag': normalized,
-        ..._tagPageQuery(request.cursor),
+        ..._hybridPageQuery(request.cursor),
         'limit': request.limit,
         'with_session': false,
         'expand': 'user.watch',
       },
     );
-    return _parseTagPage(json, _mapper.artwork);
+    return _parseHybridPage(json, _mapper.artwork);
+  }
+
+  @override
+  Future<List<String>> suggestTags(String partialTag) async {
+    final normalized = partialTag.trim();
+    if (normalized.isEmpty) {
+      throw const DAKitException(
+        kind: DAKitFailureKind.configuration,
+        code: 'api.tag.empty',
+        message: 'A partial tag must not be empty.',
+      );
+    }
+    final json = await _transport.getJson(
+      'browse/tags/search',
+      query: <String, Object?>{'tag_name': normalized, 'with_session': false},
+    );
+    final rawResults = json['results'];
+    if (rawResults is! List) throw _missingField('results');
+    final suggestions = <String>[];
+    for (final value in rawResults) {
+      final item = _requiredItemMap(value);
+      final tagName = item['tag_name'];
+      if (tagName is! String || tagName.trim().isEmpty) {
+        throw _missingField('tag_name');
+      }
+      suggestions.add(tagName.trim());
+    }
+    return List<String>.unmodifiable(suggestions);
+  }
+
+  @override
+  Future<Page<ArtworkTopic>> topics(PageRequest request) async {
+    _validatePageLimit(request, 10);
+    final json = await _transport.getJson(
+      'browse/topics',
+      query: <String, Object?>{
+        ..._hybridPageQuery(request.cursor),
+        'limit': request.limit,
+        'with_session': false,
+      },
+    );
+    return _parseHybridPage(json, _mapper.topic);
+  }
+
+  @override
+  Future<List<ArtworkTopic>> topTopics() async {
+    final json = await _transport.getJson(
+      'browse/toptopics',
+      query: const <String, Object?>{'with_session': false},
+    );
+    final rawResults = json['results'];
+    if (rawResults is! List) throw _missingField('results');
+    return List<ArtworkTopic>.unmodifiable(
+      rawResults.map((item) => _mapper.topic(_requiredItemMap(item))),
+    );
+  }
+
+  @override
+  Future<Page<Artwork>> topic(String canonicalName, PageRequest request) async {
+    final normalized = canonicalName.trim();
+    if (normalized.isEmpty) {
+      throw const DAKitException(
+        kind: DAKitFailureKind.configuration,
+        code: 'api.topic.empty',
+        message: 'A topic name must not be empty.',
+      );
+    }
+    _validatePageLimit(request, 24);
+    final json = await _transport.getJson(
+      'browse/topic',
+      query: <String, Object?>{
+        'topic': normalized,
+        ..._hybridPageQuery(request.cursor),
+        'limit': request.limit,
+        'with_session': false,
+        'expand': 'user.watch',
+      },
+    );
+    return _parseHybridPage(json, _mapper.artwork);
   }
 }
 
@@ -251,6 +330,20 @@ final class OfficialFolderRepository implements FolderRepository {
     options,
   );
 
+  @override
+  Future<Page<Artwork>> galleryContents(
+    String folderId, {
+    String? username,
+    PageRequest request = const PageRequest(),
+  }) => _contents('gallery', folderId, username, request);
+
+  @override
+  Future<Page<Artwork>> collectionContents(
+    String folderId, {
+    String? username,
+    PageRequest request = const PageRequest(),
+  }) => _contents('collections', folderId, username, request);
+
   Future<Page<ArtworkFolder>> _folders(
     String path,
     FolderKind kind,
@@ -276,6 +369,31 @@ final class OfficialFolderRepository implements FolderRepository {
       },
     );
     return _parsePage(json, (item) => _mapper.folder(item, kind));
+  }
+
+  Future<Page<Artwork>> _contents(
+    String path,
+    String folderId,
+    String? username,
+    PageRequest request,
+  ) async {
+    _validateIdentifier(folderId, 'folder id');
+    final normalizedUsername = username?.trim();
+    if (normalizedUsername != null && normalizedUsername.isEmpty) {
+      _validateIdentifier('', 'username');
+    }
+    _validatePageLimit(request, 24);
+    final json = await _transport.getJson(
+      '$path/${Uri.encodeComponent(folderId.trim())}',
+      query: <String, Object?>{
+        'username': ?normalizedUsername,
+        'offset': _offset(request.cursor),
+        'limit': request.limit,
+        'with_session': false,
+        'expand': 'user.watch',
+      },
+    );
+    return _parsePage(json, _mapper.artwork);
   }
 }
 
@@ -514,7 +632,10 @@ Page<T> _parsePage<T>(
     items.add(parse(item));
   }
   final hasMore = json['has_more'] == true;
-  final next = json['next_cursor'] ?? json['next_offset'];
+  final rawCursor = json['next_cursor'];
+  final next = rawCursor is String && rawCursor.isNotEmpty
+      ? rawCursor
+      : json['next_offset'];
   final nextCursor = next?.toString();
   if (hasMore && (nextCursor == null || nextCursor.isEmpty)) {
     throw const DAKitException(
@@ -530,7 +651,7 @@ Page<T> _parsePage<T>(
   );
 }
 
-Page<T> _parseTagPage<T>(
+Page<T> _parseHybridPage<T>(
   Map<String, Object?> json,
   T Function(Map<String, Object?> item) parse,
 ) {
@@ -555,7 +676,7 @@ Page<T> _parseTagPage<T>(
   );
 }
 
-Map<String, Object?> _tagPageQuery(String? continuation) {
+Map<String, Object?> _hybridPageQuery(String? continuation) {
   if (continuation == null) return const <String, Object?>{'offset': 0};
   if (continuation.startsWith('cursor:')) {
     final value = continuation.substring('cursor:'.length);
@@ -584,11 +705,15 @@ String _calendarDate(DateTime value) =>
     '${value.day.toString().padLeft(2, '0')}';
 
 void _validatePageRequest(PageRequest request) {
-  if (request.limit < 1 || request.limit > 50) {
+  _validatePageLimit(request, 50);
+}
+
+void _validatePageLimit(PageRequest request, int maximum) {
+  if (request.limit < 1 || request.limit > maximum) {
     throw const DAKitException(
       kind: DAKitFailureKind.configuration,
       code: 'api.page.invalid_limit',
-      message: 'The page limit must be between 1 and 50.',
+      message: 'The page limit is outside the provider limits.',
     );
   }
 }

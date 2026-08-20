@@ -256,3 +256,16 @@ final class FolderQueryOptions {
   final bool preloadArtworks;
   final bool filterEmpty;
 }
+
+/// A provider-curated discovery topic and its optional example artworks.
+final class ArtworkTopic {
+  const ArtworkTopic({
+    required this.name,
+    required this.canonicalName,
+    required this.exampleArtworks,
+  });
+
+  final String name;
+  final String canonicalName;
+  final List<Artwork> exampleArtworks;
+}
