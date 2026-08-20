@@ -4,6 +4,7 @@ import 'package:dakit_flutter/dakit_flutter.dart';
 import 'package:flutter/foundation.dart';
 
 import 'diagnostic_log.dart';
+import 'transfer_controller.dart';
 
 enum ClientPhase {
   configurationRequired,
@@ -63,35 +64,25 @@ final class ExampleClientController extends ChangeNotifier {
     required this.runConnectivity,
     required this._loadArtwork,
     required this._resolveOriginal,
-    required this.transferManager,
-    required this.initialTransferProxy,
-  }) : phase = ClientPhase.restoring {
-    _listenToTransfers();
+    required TransferManager transferManager,
+    required ProxyConfiguration? initialTransferProxy,
+  }) : _transfers = TransferController(
+         manager: transferManager,
+         initialProxy: initialTransferProxy,
+       ),
+       phase = ClientPhase.restoring {
+    _attachTransferListeners();
   }
 
   ExampleClientController.unconfigured({
     required this.diagnostics,
-    required this.transferManager,
-    this.initialTransferProxy,
+    required TransferManager transferManager,
+    ProxyConfiguration? initialTransferProxy,
     this.runConnectivity,
-  }) : _resumeSession = null,
-       _authorize = null,
-       _validTokens = null,
-       _logout = null,
-       _loadAccount = null,
-       _loadHome = null,
-       _loadArtwork = null,
-       _resolveOriginal = null,
-       phase = ClientPhase.configurationRequired {
-    _listenToTransfers();
-  }
-
-  ExampleClientController.configurationFailure({
-    required this.diagnostics,
-    required this.failure,
-    required this.transferManager,
-    this.initialTransferProxy,
-  }) : runConnectivity = null,
+  }) : _transfers = TransferController(
+         manager: transferManager,
+         initialProxy: initialTransferProxy,
+       ),
        _resumeSession = null,
        _authorize = null,
        _validTokens = null,
@@ -101,7 +92,29 @@ final class ExampleClientController extends ChangeNotifier {
        _loadArtwork = null,
        _resolveOriginal = null,
        phase = ClientPhase.configurationRequired {
-    _listenToTransfers();
+    _attachTransferListeners();
+  }
+
+  ExampleClientController.configurationFailure({
+    required this.diagnostics,
+    required this.failure,
+    required TransferManager transferManager,
+    ProxyConfiguration? initialTransferProxy,
+  }) : _transfers = TransferController(
+         manager: transferManager,
+         initialProxy: initialTransferProxy,
+       ),
+       runConnectivity = null,
+       _resumeSession = null,
+       _authorize = null,
+       _validTokens = null,
+       _logout = null,
+       _loadAccount = null,
+       _loadHome = null,
+       _loadArtwork = null,
+       _resolveOriginal = null,
+       phase = ClientPhase.configurationRequired {
+    _attachTransferListeners();
   }
 
   final DiagnosticLog diagnostics;
@@ -114,9 +127,7 @@ final class ExampleClientController extends ChangeNotifier {
   final RunConnectivity? runConnectivity;
   final LoadArtwork? _loadArtwork;
   final ResolveOriginal? _resolveOriginal;
-  final TransferManager transferManager;
-  final ProxyConfiguration? initialTransferProxy;
-  late final StreamSubscription<TransferSnapshot> _transferSubscription;
+  final TransferController _transfers;
 
   ClientPhase phase;
   UserProfile? user;
@@ -127,14 +138,15 @@ final class ExampleClientController extends ChangeNotifier {
   Artwork? selectedArtwork;
   MediaAsset? selectedOriginal;
   DAKitException? artworkFailure;
-  DAKitException? transferFailure;
   bool loadingArtwork = false;
-  bool schedulingTransfer = false;
-  bool controllingTransfer = false;
-  final Map<String, TransferSnapshot> transfers = <String, TransferSnapshot>{};
   bool _initialized = false;
   bool _disposed = false;
   int _detailGeneration = 0;
+
+  Map<String, TransferSnapshot> get transfers => _transfers.transfers;
+  DAKitException? get transferFailure => _transfers.transferFailure;
+  bool get schedulingTransfer => _transfers.schedulingTransfer;
+  bool get controllingTransfer => _transfers.controllingTransfer;
 
   bool get busy => switch (phase) {
     ClientPhase.restoring ||
@@ -147,7 +159,7 @@ final class ExampleClientController extends ChangeNotifier {
     if (_initialized) return;
     _initialized = true;
     unawaited(checkConnectivity());
-    await _restoreTransfers();
+    await _transfers.initialize();
     if (phase == ClientPhase.configurationRequired) return;
     _setPhase(ClientPhase.restoring);
     try {
@@ -168,13 +180,7 @@ final class ExampleClientController extends ChangeNotifier {
   TransferSnapshot? get selectedTransfer {
     final artwork = selectedArtwork;
     if (artwork == null) return null;
-    final prefix = _transferPrefix(artwork.id);
-    final matching =
-        transfers.values
-            .where((snapshot) => snapshot.id.startsWith(prefix))
-            .toList(growable: false)
-          ..sort((left, right) => right.id.compareTo(left.id));
-    return matching.firstOrNull;
+    return _transfers.forArtwork(artwork.id);
   }
 
   Future<void> openArtwork(String id) async {
@@ -185,7 +191,6 @@ final class ExampleClientController extends ChangeNotifier {
     selectedArtwork = artworks.where((item) => item.id == id).firstOrNull;
     selectedOriginal = null;
     artworkFailure = null;
-    transferFailure = null;
     loadingArtwork = true;
     notifyListeners();
     try {
@@ -214,7 +219,6 @@ final class ExampleClientController extends ChangeNotifier {
     selectedArtwork = null;
     selectedOriginal = null;
     artworkFailure = null;
-    transferFailure = null;
     loadingArtwork = false;
     notifyListeners();
   }
@@ -222,84 +226,23 @@ final class ExampleClientController extends ChangeNotifier {
   Future<void> downloadOriginal() async {
     final artwork = selectedArtwork;
     final asset = selectedOriginal;
-    if (artwork == null || asset == null || schedulingTransfer) return;
-    transferFailure = null;
-    schedulingTransfer = true;
-    notifyListeners();
-    try {
-      final snapshot = await transferManager.enqueue(
-        TransferRequest(
-          id: '${_transferPrefix(artwork.id)}${DateTime.now().microsecondsSinceEpoch}',
-          asset: asset,
-        ),
-      );
-      _onTransferUpdate(snapshot);
-    } on DAKitException catch (error) {
-      transferFailure = error;
-    } on Object catch (error) {
-      transferFailure = _unexpected(error);
-    } finally {
-      schedulingTransfer = false;
-      notifyListeners();
-    }
+    if (artwork == null || asset == null) return;
+    await _transfers.download(artwork.id, asset);
   }
 
-  Future<void> pauseTransfer() => _controlTransfer(transferManager.pause);
-
-  Future<void> resumeTransfer() => _controlTransfer(transferManager.resume);
-
-  Future<void> cancelTransfer() => _controlTransfer(transferManager.cancel);
-
-  Future<void> _controlTransfer(
-    Future<void> Function(String id) operation,
-  ) async {
+  Future<void> pauseTransfer() async {
     final snapshot = selectedTransfer;
-    if (snapshot == null || controllingTransfer) return;
-    transferFailure = null;
-    controllingTransfer = true;
-    notifyListeners();
-    try {
-      await operation(snapshot.id);
-    } on DAKitException catch (error) {
-      transferFailure = error;
-    } on Object catch (error) {
-      transferFailure = _unexpected(error);
-    } finally {
-      controllingTransfer = false;
-      notifyListeners();
-    }
+    if (snapshot != null) await _transfers.pause(snapshot.id);
   }
 
-  Future<void> _restoreTransfers() async {
-    try {
-      await transferManager.initialize();
-      await transferManager.configureProxy(initialTransferProxy);
-      for (final snapshot in await transferManager.records()) {
-        transfers[snapshot.id] = snapshot;
-      }
-      notifyListeners();
-    } on DAKitException catch (error) {
-      transferFailure = error;
-      notifyListeners();
-    } on Object catch (error) {
-      transferFailure = _unexpected(error);
-      notifyListeners();
-    }
+  Future<void> resumeTransfer() async {
+    final snapshot = selectedTransfer;
+    if (snapshot != null) await _transfers.resume(snapshot.id);
   }
 
-  void _onTransferUpdate(TransferSnapshot snapshot) {
-    transfers[snapshot.id] = snapshot;
-    notifyListeners();
-  }
-
-  void _listenToTransfers() {
-    _transferSubscription = transferManager.updates.listen(
-      _onTransferUpdate,
-      onError: (Object error, StackTrace stackTrace) {
-        transferFailure = _unexpected(error);
-        notifyListeners();
-      },
-    );
+  Future<void> cancelTransfer() async {
+    final snapshot = selectedTransfer;
+    if (snapshot != null) await _transfers.cancel(snapshot.id);
   }
 
   Future<void> checkConnectivity() async {
@@ -444,22 +387,25 @@ final class ExampleClientController extends ChangeNotifier {
     cause: error,
   );
 
-  static String _transferPrefix(String artworkId) {
-    final safeId = artworkId.replaceAll(RegExp('[^A-Za-z0-9_-]'), '_');
-    return 'original_${safeId}_';
-  }
-
   @override
   void notifyListeners() {
     if (!_disposed) super.notifyListeners();
+  }
+
+  void _attachTransferListeners() {
+    _transfers.addListener(_handleTransferChange);
+  }
+
+  void _handleTransferChange() {
+    if (!_disposed) notifyListeners();
   }
 
   @override
   void dispose() {
     if (_disposed) return;
     _disposed = true;
-    unawaited(_transferSubscription.cancel());
-    unawaited(transferManager.dispose());
+    _transfers.removeListener(_handleTransferChange);
+    _transfers.dispose();
     super.dispose();
   }
 }
