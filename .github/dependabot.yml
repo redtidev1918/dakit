@@ -8,3 +8,6 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    ignore:
+      - dependency-name: flutter_secure_storage
+        update-types: ["version-update:semver-major"]
