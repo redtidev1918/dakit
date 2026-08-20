@@ -101,6 +101,13 @@ same commit as every material milestone.
 - GitHub Actions now defines a credential-free quality job plus Android, macOS, and
   Windows/MSIX build jobs pinned to Flutter 3.47.1. Platform artifacts are smoke
   builds, not implicitly trusted releases; provider live tests remain opt-in.
+- Hosted CI run `32356670786` proved the 59-test quality gate, macOS application,
+  Windows application, protocol-enabled MSIX, and artifact upload jobs on their
+  real GitHub runners. Its first Android attempt also exposed that the Ubuntu
+  runner did not publish `sdkmanager` on `PATH`; the workflow now delegates Android
+  SDK discovery, license handling, and pinned component installation to
+  `android-actions/setup-android`. Artifact upload was moved to its Node 24 release
+  after the first runners reported the older action's deprecation warning.
 
 ## Known external requirements
 

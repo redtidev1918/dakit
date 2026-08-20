@@ -54,17 +54,19 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
           cache: true
-      - name: Install pinned Android components
-        run: >-
-          sdkmanager
-          "platforms;android-36"
-          "build-tools;36.0.0"
-          "ndk;28.2.13676358"
+      - name: Set up pinned Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          packages: >-
+            platform-tools
+            platforms;android-36
+            build-tools;36.0.0
+            ndk;28.2.13676358
       - name: Build APK
         working-directory: apps/example_client
         run: flutter build apk --debug
       - name: Upload APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: artrelay-example-android-debug
           path: apps/example_client/build/app/outputs/flutter-apk/app-debug.apk
@@ -88,7 +90,7 @@ jobs:
         working-directory: apps/example_client
         run: flutter build macos --debug
       - name: Upload macOS app
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: artrelay-example-macos-debug
           path: apps/example_client/build/macos/Build/Products/Debug/example_client.app
@@ -115,7 +117,7 @@ jobs:
         working-directory: apps/example_client
         run: dart run msix:create --build-windows false --install-certificate false
       - name: Upload Windows artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: artrelay-example-windows
           path: |

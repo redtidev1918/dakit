@@ -6,8 +6,9 @@ requests, and manual dispatches.
 ## Jobs
 
 - **Analyze and test** runs the same `tool/verify.sh` gate used locally.
-- **Android debug APK** installs API 36, Build Tools 36, NDK
-  `28.2.13676358`, and JDK 17 before uploading the APK.
+- **Android debug APK** uses the maintained Android SDK setup action to install
+  API 36, Build Tools 36, NDK `28.2.13676358`, and JDK 17 before uploading the
+  APK. It does not assume that a hosted runner exposes `sdkmanager` on `PATH`.
 - **macOS debug app** compiles the native application on a macOS runner and
   uploads the `.app` smoke-test artifact.
 - **Windows app and MSIX** compiles the release runner, packages the registered
