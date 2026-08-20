@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:dakit_flutter/dakit_flutter.dart';
 import 'package:flutter/foundation.dart';
 
+import 'browse_controller.dart';
+import 'controller_types.dart';
 import 'diagnostic_log.dart';
 import 'transfer_controller.dart';
 
@@ -21,8 +23,6 @@ typedef Authorize = Future<AuthTokens> Function();
 typedef ReadTokens = Future<AuthTokens> Function({bool forceRefresh});
 typedef Logout = Future<void> Function({bool revoke});
 typedef RunConnectivity = Future<ConnectivityReport> Function();
-typedef LoadArtwork = Future<Artwork> Function(String id);
-typedef ResolveOriginal = Future<MediaAsset> Function(String artworkId);
 
 final class ExampleClientController extends ChangeNotifier {
   factory ExampleClientController({
@@ -60,18 +60,24 @@ final class ExampleClientController extends ChangeNotifier {
     required this._validTokens,
     required this._logout,
     required this._loadAccount,
-    required this._loadHome,
+    required Future<Page<Artwork>> Function() loadHome,
     required this.runConnectivity,
-    required this._loadArtwork,
-    required this._resolveOriginal,
+    required LoadArtwork loadArtwork,
+    required ResolveOriginal resolveOriginal,
     required TransferManager transferManager,
     required ProxyConfiguration? initialTransferProxy,
-  }) : _transfers = TransferController(
+  }) : _browse = BrowseController(
+         loadHome: loadHome,
+         loadArtwork: loadArtwork,
+         resolveOriginal: resolveOriginal,
+       ),
+       _transfers = TransferController(
          manager: transferManager,
          initialProxy: initialTransferProxy,
        ),
        phase = ClientPhase.restoring {
     _attachTransferListeners();
+    _attachBrowseListeners();
   }
 
   ExampleClientController.unconfigured({
@@ -83,16 +89,19 @@ final class ExampleClientController extends ChangeNotifier {
          manager: transferManager,
          initialProxy: initialTransferProxy,
        ),
+       _browse = BrowseController(
+         loadHome: null,
+         loadArtwork: null,
+         resolveOriginal: null,
+       ),
        _resumeSession = null,
        _authorize = null,
        _validTokens = null,
        _logout = null,
        _loadAccount = null,
-       _loadHome = null,
-       _loadArtwork = null,
-       _resolveOriginal = null,
        phase = ClientPhase.configurationRequired {
     _attachTransferListeners();
+    _attachBrowseListeners();
   }
 
   ExampleClientController.configurationFailure({
@@ -104,17 +113,20 @@ final class ExampleClientController extends ChangeNotifier {
          manager: transferManager,
          initialProxy: initialTransferProxy,
        ),
+       _browse = BrowseController(
+         loadHome: null,
+         loadArtwork: null,
+         resolveOriginal: null,
+       ),
        runConnectivity = null,
        _resumeSession = null,
        _authorize = null,
        _validTokens = null,
        _logout = null,
        _loadAccount = null,
-       _loadHome = null,
-       _loadArtwork = null,
-       _resolveOriginal = null,
        phase = ClientPhase.configurationRequired {
     _attachTransferListeners();
+    _attachBrowseListeners();
   }
 
   final DiagnosticLog diagnostics;
@@ -123,26 +135,23 @@ final class ExampleClientController extends ChangeNotifier {
   final ReadTokens? _validTokens;
   final Logout? _logout;
   final Future<UserProfile> Function()? _loadAccount;
-  final Future<Page<Artwork>> Function()? _loadHome;
   final RunConnectivity? runConnectivity;
-  final LoadArtwork? _loadArtwork;
-  final ResolveOriginal? _resolveOriginal;
+  final BrowseController _browse;
   final TransferController _transfers;
 
   ClientPhase phase;
   UserProfile? user;
-  List<Artwork> artworks = const <Artwork>[];
   DAKitException? failure;
   ConnectivityReport? connectivity;
   bool checkingConnectivity = false;
-  Artwork? selectedArtwork;
-  MediaAsset? selectedOriginal;
-  DAKitException? artworkFailure;
-  bool loadingArtwork = false;
   bool _initialized = false;
   bool _disposed = false;
-  int _detailGeneration = 0;
 
+  List<Artwork> get artworks => _browse.artworks;
+  Artwork? get selectedArtwork => _browse.selectedArtwork;
+  MediaAsset? get selectedOriginal => _browse.selectedOriginal;
+  DAKitException? get artworkFailure => _browse.artworkFailure;
+  bool get loadingArtwork => _browse.loadingArtwork;
   Map<String, TransferSnapshot> get transfers => _transfers.transfers;
   DAKitException? get transferFailure => _transfers.transferFailure;
   bool get schedulingTransfer => _transfers.schedulingTransfer;
@@ -184,43 +193,11 @@ final class ExampleClientController extends ChangeNotifier {
   }
 
   Future<void> openArtwork(String id) async {
-    final loadArtwork = _loadArtwork;
-    final resolveOriginal = _resolveOriginal;
-    if (loadArtwork == null || resolveOriginal == null) return;
-    final generation = ++_detailGeneration;
-    selectedArtwork = artworks.where((item) => item.id == id).firstOrNull;
-    selectedOriginal = null;
-    artworkFailure = null;
-    loadingArtwork = true;
-    notifyListeners();
-    try {
-      final detail = await loadArtwork(id);
-      if (generation != _detailGeneration) return;
-      selectedArtwork = detail;
-      if (detail.downloadAvailability == MediaAvailability.available) {
-        final resolved = await resolveOriginal(detail.id);
-        if (generation != _detailGeneration) return;
-        selectedOriginal = resolved;
-      }
-    } on DAKitException catch (error) {
-      if (generation == _detailGeneration) artworkFailure = error;
-    } on Object catch (error) {
-      if (generation == _detailGeneration) artworkFailure = _unexpected(error);
-    } finally {
-      if (generation == _detailGeneration) {
-        loadingArtwork = false;
-        notifyListeners();
-      }
-    }
+    await _browse.openArtwork(id);
   }
 
   void closeArtwork() {
-    _detailGeneration += 1;
-    selectedArtwork = null;
-    selectedOriginal = null;
-    artworkFailure = null;
-    loadingArtwork = false;
-    notifyListeners();
+    _browse.closeArtwork();
   }
 
   Future<void> downloadOriginal() async {
@@ -285,9 +262,8 @@ final class ExampleClientController extends ChangeNotifier {
     _setPhase(ClientPhase.loading);
     try {
       await logout(revoke: true);
-      closeArtwork();
       user = null;
-      artworks = const <Artwork>[];
+      await _browse.clear();
       _setPhase(ClientPhase.signedOut);
     } on DAKitException catch (error) {
       _setFailure(error);
@@ -351,16 +327,11 @@ final class ExampleClientController extends ChangeNotifier {
 
   Future<void> _loadContent() async {
     final loadAccount = _loadAccount;
-    final loadHome = _loadHome;
-    if (loadAccount == null || loadHome == null) return;
+    if (loadAccount == null) return;
     _setPhase(ClientPhase.loading);
     try {
-      final values = await Future.wait<Object>(<Future<Object>>[
-        loadAccount(),
-        loadHome(),
-      ]);
-      user = values[0] as UserProfile;
-      artworks = List<Artwork>.unmodifiable((values[1] as Page<Artwork>).items);
+      user = await loadAccount();
+      await _browse.refresh();
       _setPhase(ClientPhase.ready);
     } on DAKitException catch (error) {
       _setFailure(error);
@@ -400,11 +371,21 @@ final class ExampleClientController extends ChangeNotifier {
     if (!_disposed) notifyListeners();
   }
 
+  void _attachBrowseListeners() {
+    _browse.addListener(_handleBrowseChange);
+  }
+
+  void _handleBrowseChange() {
+    if (!_disposed) notifyListeners();
+  }
+
   @override
   void dispose() {
     if (_disposed) return;
     _disposed = true;
     _transfers.removeListener(_handleTransferChange);
+    _browse.removeListener(_handleBrowseChange);
+    _browse.dispose();
     _transfers.dispose();
     super.dispose();
   }

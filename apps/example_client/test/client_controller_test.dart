@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:dakit_flutter/dakit_flutter.dart';
 import 'package:example_client/src/client_controller.dart';
+import 'package:example_client/src/controller_types.dart';
 import 'package:example_client/src/diagnostic_log.dart';
 import 'package:flutter_test/flutter_test.dart';
 
