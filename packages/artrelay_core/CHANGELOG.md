@@ -5,3 +5,5 @@
   contracts.
 - Add platform-neutral transfer request, state, progress, proxy, and manager
   contracts.
+- Add structured artwork text/rendered-content models and distinguish unavailable
+  media from restricted or missing media.

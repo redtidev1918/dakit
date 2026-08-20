@@ -80,8 +80,15 @@ progress, retry, pause, resume, and cancellation. No fixed chunk size is part of
 the public API.
 
 The SDK distinguishes preview, original, downloadable attachment, video, archive,
-literature, and restricted/unavailable assets. It never reports a preview as the
-original file.
+document, literature, login-required, purchase-required, restricted, unavailable,
+and missing assets. It never reports a preview as the original file. Expected
+provider denials resolve to non-transferable media values; transport and schema
+failures remain observable exceptions.
+
+Structured text on deviation detail and rendered literature from
+`deviation/content` are separate from byte transfers. HTML, CSS, and original
+markup are modeled as inert data; the SDK does not create an embedded browser or
+silently execute provider content.
 
 Transfer task headers do not contain access tokens. The official media repository
 resolves an HTTPS original URL first, then the transfer adapter persists only the

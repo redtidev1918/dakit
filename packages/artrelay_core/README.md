@@ -10,3 +10,7 @@ choose their own UI, state management, cache, and database.
 `MediaRepository` resolves protected original-file metadata independently from
 `ArtworkRepository`. A transfer engine therefore consumes a `MediaAsset` without
 knowing provider endpoints, OAuth details, or UI state.
+
+`ArtworkContentRepository` exposes full literature/journal content separately from
+metadata. Embedded markup, rendered HTML, and CSS remain inert strings so each host
+can apply its own sanitization and rendering policy.

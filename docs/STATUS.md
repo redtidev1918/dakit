@@ -5,7 +5,7 @@ same commit as every material milestone.
 
 ## Current state
 
-- Phase: M2 — platform integration
+- Phase: M3 — live provider verification
 - Branch: `main`
 - Last stable legacy tag: `python-preview-1.0.0a1`
 - Legacy remote: `legacy-origin`
@@ -34,7 +34,7 @@ same commit as every material milestone.
 - Engine `5d53178869`
 - Dart 3.13.1
 - `flutter analyze`: no issues
-- Test suites: 59 passing
+- Test suites: 65 passing
 - Local builds: Android debug APK and macOS debug application succeed
 
 ## Latest milestone
@@ -94,7 +94,7 @@ same commit as every material milestone.
   proxy is configured.
 - Preview-only behavior, stale-response suppression, task recovery, independent
   proxy configuration, enqueue/control mapping, and the detail UI are covered by
-  tests. The complete 59-test gate and both local platform builds pass.
+  tests. The complete 65-test gate and both local platform builds pass.
 - The example UI is split into status, network, artwork, transfer, and diagnostic
   components; the executable is not a new monolithic widget or tied to a state
   management package.
@@ -108,6 +108,17 @@ same commit as every material milestone.
   publish `sdkmanager` on `PATH`; Android SDK discovery, license handling, and
   pinned component installation now use `android-actions/setup-android`. Artifact
   upload uses its Node 24 release without the earlier deprecation warning.
+- OAuth token exchange now sends a genuine URL-encoded form. A loopback wire test
+  caught and prevents the previous mismatch where a Dio multipart object was paired
+  with a form content type, which could make a successful browser callback fail at
+  the token endpoint.
+- Artwork detail requests expand structured full text. The dedicated content
+  repository returns literature HTML, CSS, fonts, and editing markup as inert data;
+  no provider content is executed by the SDK.
+- Original media now distinguishes available, login-required, purchase-required,
+  restricted, unavailable, and missing states. Expected provider denials never
+  invent a preview URL, while network, throttling, and parsing failures still throw
+  typed exceptions.
 
 ## Known external requirements
 

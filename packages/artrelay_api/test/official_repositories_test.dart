@@ -30,6 +30,9 @@ void main() {
     expect(artwork.title, 'Example work');
     expect(artwork.publishedAt, DateTime.utc(2026, 8, 20, 3, 4, 5));
     expect(artwork.isDownloadable, isTrue);
+    expect(artwork.downloadAvailability, MediaAvailability.available);
+    expect(artwork.textContent?.format, 'writer');
+    expect(artwork.textContent?.features, 'tables,links');
     expect(artwork.media, hasLength(3));
     expect(
       artwork.media.map((asset) => asset.kind),
@@ -40,7 +43,58 @@ void main() {
       isTrue,
     );
     expect(transport.requests.single.path, 'deviation/art-1');
+    expect(transport.requests.single.query['expand'], 'deviation.fulltext');
   });
+
+  test(
+    'loads rendered literature without executing provider HTML or CSS',
+    () async {
+      final transport = FixtureTransport(<Map<String, Object?>>[
+        await fixture('content.json'),
+      ]);
+
+      final content = await OfficialArtworkContentRepository(transport)
+          .get('art-1');
+
+      expect(content.artworkId, 'art-1');
+      expect(content.html, contains('Rendered literature'));
+      expect(content.cssFonts, hasLength(1));
+      expect(content.isEmpty, isFalse);
+      expect(transport.requests.single.path, 'deviation/content');
+      expect(transport.requests.single.query, <String, Object?>{
+        'deviationid': 'art-1',
+        'for_edit': false,
+        'with_session': false,
+      });
+    },
+  );
+
+  test(
+    'distinguishes paid and blocked original access in detail metadata',
+    () async {
+      final paidJson = await fixture('deviation.json')
+        ..['is_downloadable'] = false
+        ..['premium_folder_data'] = <String, Object?>{
+          'type': 'premium',
+          'has_access': false,
+          'gallery_id': 'paid-gallery',
+        };
+      final blockedJson = await fixture('deviation.json')
+        ..['is_downloadable'] = false
+        ..['is_blocked'] = true;
+      final transport = FixtureTransport(<Map<String, Object?>>[
+        paidJson,
+        blockedJson,
+      ]);
+      final repository = OfficialArtworkRepository(transport);
+
+      final paid = await repository.getById('paid');
+      final blocked = await repository.getById('blocked');
+
+      expect(paid.downloadAvailability, MediaAvailability.purchaseRequired);
+      expect(blocked.downloadAvailability, MediaAvailability.restricted);
+    },
+  );
 
   test('uses documented home pagination and search parameters', () async {
     final transport = FixtureTransport(<Map<String, Object?>>[
@@ -100,6 +154,62 @@ void main() {
   );
 
   test(
+    'maps expected download denials without inventing an original URL',
+    () async {
+      final cases = <(ArtRelayException, MediaAvailability)>[
+        (
+          const ArtRelayException(
+            kind: ArtRelayFailureKind.upstream,
+            code: 'api.provider.invalid_request',
+            message: 'Deviation not downloadable.',
+            details: <String, Object?>{'provider_code': 2},
+          ),
+          MediaAvailability.unavailable,
+        ),
+        (
+          const ArtRelayException(
+            kind: ArtRelayFailureKind.authorization,
+            code: 'api.http.403',
+            message: 'Restricted.',
+          ),
+          MediaAvailability.restricted,
+        ),
+        (
+          const ArtRelayException(
+            kind: ArtRelayFailureKind.authentication,
+            code: 'api.http.401',
+            message: 'Login required.',
+          ),
+          MediaAvailability.loginRequired,
+        ),
+      ];
+
+      for (final (failure, availability) in cases) {
+        final asset = await OfficialMediaRepository(ThrowingTransport(failure))
+            .originalFile('art-1');
+        expect(asset.availability, availability);
+        expect(asset.uri, isNull);
+        expect(asset.canTransfer, isFalse);
+      }
+    },
+  );
+
+  test('keeps unexpected transfer failures observable', () async {
+    const failure = ArtRelayException(
+      kind: ArtRelayFailureKind.network,
+      code: 'network.connection',
+      message: 'Offline.',
+    );
+
+    expect(
+      () =>
+          OfficialMediaRepository(const ThrowingTransport(failure))
+              .originalFile('art-1'),
+      throwsA(same(failure)),
+    );
+  });
+
+  test(
     'reports a typed parsing failure when required fields disappear',
     () async {
       final transport = FixtureTransport(<Map<String, Object?>>[
@@ -152,4 +262,17 @@ final class FixtureRequest {
 
   final String path;
   final Map<String, Object?> query;
+}
+
+final class ThrowingTransport implements OfficialApiTransport {
+  const ThrowingTransport(this.failure);
+
+  final ArtRelayException failure;
+
+  @override
+  Future<Map<String, Object?>> getJson(
+    String path, {
+    Map<String, Object?> query = const <String, Object?>{},
+    CancelToken? cancelToken,
+  }) => Future<Map<String, Object?>>.error(failure);
 }

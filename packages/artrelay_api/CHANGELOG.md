@@ -11,3 +11,7 @@
 - Add redacted DNS, TCP, TLS, and HTTP connectivity reports.
 - Preserve OAuth transport failures as network errors instead of authentication
   errors.
+- Encode token, refresh, and revoke bodies as real URL-encoded forms and verify the
+  HTTP wire representation.
+- Add structured deviation text, rendered content, and honest original-file
+  availability mapping.

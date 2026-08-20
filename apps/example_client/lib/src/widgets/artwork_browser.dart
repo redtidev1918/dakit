@@ -31,7 +31,9 @@ final class ArtworkBrowser extends StatelessWidget {
               title: Text(artwork.title),
               subtitle: Text('@${artwork.author.username} · ${artwork.id}'),
               trailing: Icon(
-                artwork.isDownloadable ? Icons.download_done : Icons.visibility,
+                artwork.downloadAvailability == MediaAvailability.available
+                    ? Icons.download_done
+                    : Icons.visibility,
               ),
             ),
           ),
@@ -94,9 +96,7 @@ final class _ArtworkDetail extends StatelessWidget {
                 children: <Widget>[
                   Chip(
                     label: Text(
-                      artwork.isDownloadable
-                          ? 'Original allowed'
-                          : 'Preview only',
+                      _availabilityLabel(artwork.downloadAvailability),
                     ),
                   ),
                   if (artwork.isMature)
@@ -115,11 +115,12 @@ final class _ArtworkDetail extends StatelessWidget {
             ],
             if (!controller.loadingArtwork &&
                 artwork != null &&
-                !artwork.isDownloadable) ...<Widget>[
+                artwork.downloadAvailability !=
+                    MediaAvailability.available) ...<Widget>[
               const SizedBox(height: 12),
               const Text(
-                'The official metadata does not permit an original-file '
-                'request. Preview assets are not offered as downloads.',
+                'The official metadata does not provide a transferable '
+                'original. Preview assets are never substituted.',
               ),
             ],
             if (original != null) ...<Widget>[
@@ -221,6 +222,16 @@ final class _ArtworkDetail extends StatelessWidget {
     ];
     return values.join(' · ');
   }
+
+  static String _availabilityLabel(MediaAvailability availability) =>
+      switch (availability) {
+        MediaAvailability.available => 'Original allowed',
+        MediaAvailability.loginRequired => 'Login required',
+        MediaAvailability.purchaseRequired => 'Purchase required',
+        MediaAvailability.restricted => 'Restricted',
+        MediaAvailability.unavailable => 'Preview only',
+        MediaAvailability.missing => 'Original missing',
+      };
 
   static String _formatBytes(int? bytes) {
     if (bytes == null || bytes < 0) return 'size unknown';

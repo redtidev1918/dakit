@@ -59,6 +59,11 @@ can resume from secure storage. Callback timeouts, provider
 denials, browser launch failures, token failures, and storage failures have
 different diagnostic stages and error codes.
 
+Token, refresh, and revoke POST bodies use
+`application/x-www-form-urlencoded` exactly as required by the provider. A loopback
+HTTP wire test verifies both the content type and decoded fields, preventing a Dio
+multipart object from being mislabeled as an OAuth form.
+
 ## Platform notes
 
 - Android uses a browsable `singleTop` activity intent filter and disables

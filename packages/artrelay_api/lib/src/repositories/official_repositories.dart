@@ -30,7 +30,10 @@ final class OfficialArtworkRepository implements ArtworkRepository {
     _validateIdentifier(id, 'artwork id');
     final json = await _transport.getJson(
       'deviation/${Uri.encodeComponent(id)}',
-      query: const <String, Object?>{'with_session': false},
+      query: const <String, Object?>{
+        'with_session': false,
+        'expand': 'deviation.fulltext',
+      },
     );
     return _mapper.artwork(json);
   }
@@ -72,6 +75,31 @@ final class OfficialArtworkRepository implements ArtworkRepository {
 
   Page<Artwork> _artworkPage(Map<String, Object?> json) =>
       _parsePage(json, (item) => _mapper.artwork(item));
+}
+
+final class OfficialArtworkContentRepository
+    implements ArtworkContentRepository {
+  const OfficialArtworkContentRepository(this._transport);
+
+  final OfficialApiTransport _transport;
+  final DeviationMapper _mapper = const DeviationMapper();
+
+  @override
+  Future<ArtworkContent> get(
+    String artworkId, {
+    bool forEditing = false,
+  }) async {
+    _validateIdentifier(artworkId, 'artwork id');
+    final json = await _transport.getJson(
+      'deviation/content',
+      query: <String, Object?>{
+        'deviationid': artworkId,
+        'for_edit': forEditing,
+        'with_session': false,
+      },
+    );
+    return _mapper.content(json, artworkId);
+  }
 }
 
 final class OfficialGalleryRepository implements GalleryRepository {
@@ -116,11 +144,42 @@ final class OfficialMediaRepository implements MediaRepository {
   @override
   Future<MediaAsset> originalFile(String artworkId) async {
     _validateIdentifier(artworkId, 'artwork id');
-    final json = await _transport.getJson(
-      'deviation/download/${Uri.encodeComponent(artworkId)}',
-    );
-    return _mapper.original(json, artworkId);
+    try {
+      final json = await _transport.getJson(
+        'deviation/download/${Uri.encodeComponent(artworkId)}',
+      );
+      return _mapper.original(json, artworkId);
+    } on ArtRelayException catch (error) {
+      final availability = _expectedMediaAvailability(error);
+      if (availability == null) rethrow;
+      return MediaAsset(
+        id: '$artworkId:original',
+        kind: MediaKind.unknown,
+        role: MediaRole.original,
+        availability: availability,
+      );
+    }
   }
+}
+
+MediaAvailability? _expectedMediaAvailability(ArtRelayException error) {
+  final rawProviderCode = error.details['provider_code'];
+  final providerCode = switch (rawProviderCode) {
+    int value => value,
+    num value => value.toInt(),
+    String value => int.tryParse(value),
+    _ => null,
+  };
+  if (providerCode == 1 || providerCode == 3) {
+    return MediaAvailability.missing;
+  }
+  if (providerCode == 2) return MediaAvailability.unavailable;
+  return switch (error.kind) {
+    ArtRelayFailureKind.authentication => MediaAvailability.loginRequired,
+    ArtRelayFailureKind.authorization => MediaAvailability.restricted,
+    ArtRelayFailureKind.notFound => MediaAvailability.missing,
+    _ => null,
+  };
 }
 
 Page<T> _parsePage<T>(

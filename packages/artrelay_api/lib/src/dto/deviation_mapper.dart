@@ -85,6 +85,8 @@ final class DeviationMapper {
       publishedAt: _dateTime(json['published_time']),
       isMature: json['is_mature'] == true,
       isDownloadable: json['is_downloadable'] == true,
+      downloadAvailability: _downloadAvailability(json),
+      textContent: _textContent(json),
     );
   }
 
@@ -114,6 +116,55 @@ final class DeviationMapper {
       width: _integer(json['width']),
       height: _integer(json['height']),
     );
+  }
+
+  ArtworkContent content(Map<String, Object?> json, String artworkId) {
+    return ArtworkContent(
+      artworkId: artworkId,
+      html: _string(json['html']),
+      css: _string(json['css']),
+      cssFonts: List<String>.unmodifiable(
+        _list(json['css_fonts']).whereType<String>(),
+      ),
+      originalMarkup: _string(json['original_markup']),
+    );
+  }
+
+  static ArtworkTextContent? _textContent(Map<String, Object?> json) {
+    final text = _map(json['text_content']);
+    if (text == null) return null;
+    final body = _map(text['body']);
+    final excerpt = _string(text['excerpt']) ?? '';
+    final format = _string(body?['type']);
+    final markup = _string(body?['markup']);
+    final features = _string(body?['features']);
+    if (excerpt.isEmpty &&
+        format == null &&
+        markup == null &&
+        features == null) {
+      return null;
+    }
+    return ArtworkTextContent(
+      excerpt: excerpt,
+      format: format,
+      markup: markup,
+      features: features,
+    );
+  }
+
+  static MediaAvailability _downloadAvailability(Map<String, Object?> json) {
+    if (json['is_deleted'] == true) return MediaAvailability.missing;
+    if (json['is_blocked'] == true) return MediaAvailability.restricted;
+    final premium = _map(json['premium_folder_data']);
+    if (premium != null && premium['has_access'] == false) {
+      return MediaAvailability.purchaseRequired;
+    }
+    final tierAccess = _string(json['tier_access']);
+    if (tierAccess == 'locked' || tierAccess == 'locked-subscribed') {
+      return MediaAvailability.purchaseRequired;
+    }
+    if (json['is_downloadable'] == true) return MediaAvailability.available;
+    return MediaAvailability.unavailable;
   }
 
   static MediaKind _kindFromFilename(String filename) {

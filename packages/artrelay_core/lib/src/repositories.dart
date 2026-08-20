@@ -14,6 +14,14 @@ abstract interface class ArtworkRepository {
   Future<Page<Artwork>> search(String query, PageRequest request);
 }
 
+abstract interface class ArtworkContentRepository {
+  /// Fetches rendered literature/journal content independently from metadata.
+  ///
+  /// Editing markup is only available when the authenticated user owns the
+  /// artwork and [forEditing] is true.
+  Future<ArtworkContent> get(String artworkId, {bool forEditing = false});
+}
+
 abstract interface class GalleryRepository {
   Future<Page<Artwork>> gallery(String username, PageRequest request);
 

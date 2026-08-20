@@ -28,21 +28,21 @@ promised after the rewrite.
 - [x] Android, macOS, and Windows custom-scheme callbacks.
 - [x] Secure token and resumable PKCE transaction storage.
 - [x] Background transfer adapter and task recovery.
-- [ ] Proxy configuration and staged connectivity diagnostics.
+- [x] Proxy configuration and staged connectivity diagnostics.
 
 ### M3 — example client and live verification
 
 - [x] Minimal login/account/browse and diagnostic UI.
-- [ ] Artwork detail and transfer UI.
+- [x] Artwork detail and transfer UI.
 - [ ] Download representative image, video, archive, literature, and restricted cases.
-- [ ] Android debug APK smoke test.
-- [ ] macOS smoke test.
-- [ ] Windows CI build and smoke-test harness.
+- [x] Android debug APK smoke build locally and in hosted CI.
+- [x] macOS smoke build locally and in hosted CI.
+- [x] Windows application and protocol-enabled MSIX build in hosted CI.
 
 ### M4 — release
 
-- [ ] API documentation and integration guides.
-- [ ] GitHub Actions quality and platform build matrix.
+- [x] API documentation and integration guides.
+- [x] GitHub Actions quality and platform build matrix.
 - [ ] Package publication dry run.
 - [ ] Rename the remote repository only after package names and links are final.
 - [x] Remove every obsolete Python file from main.

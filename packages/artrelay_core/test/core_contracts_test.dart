@@ -27,6 +27,27 @@ void main() {
     expect(asset.canTransfer, isFalse);
   });
 
+  test('artwork derives an honest original availability by default', () {
+    final downloadable = Artwork(
+      id: 'downloadable',
+      title: 'Downloadable',
+      author: user,
+      pageUri: Uri.parse('https://example.test/downloadable'),
+      media: const <MediaAsset>[],
+      isDownloadable: true,
+    );
+    final previewOnly = Artwork(
+      id: 'preview-only',
+      title: 'Preview only',
+      author: user,
+      pageUri: Uri.parse('https://example.test/preview-only'),
+      media: const <MediaAsset>[],
+    );
+
+    expect(downloadable.downloadAvailability, MediaAvailability.available);
+    expect(previewOnly.downloadAvailability, MediaAvailability.unavailable);
+  });
+
   test('page with more results requires a cursor', () {
     expect(
       () => Page<String>(items: const <String>[], hasMore: true),
@@ -44,3 +65,5 @@ void main() {
     expect(snapshot.isFinal, isTrue);
   });
 }
+
+const user = UserProfile(id: 'user-1', username: 'sample-user');

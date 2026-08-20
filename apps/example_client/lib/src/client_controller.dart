@@ -192,7 +192,7 @@ final class ExampleClientController extends ChangeNotifier {
       final detail = await loadArtwork(id);
       if (generation != _detailGeneration) return;
       selectedArtwork = detail;
-      if (detail.isDownloadable) {
+      if (detail.downloadAvailability == MediaAvailability.available) {
         final resolved = await resolveOriginal(detail.id);
         if (generation != _detailGeneration) return;
         selectedOriginal = resolved;

@@ -15,6 +15,7 @@ enum MediaAvailability {
   loginRequired,
   purchaseRequired,
   restricted,
+  unavailable,
   missing,
 }
 

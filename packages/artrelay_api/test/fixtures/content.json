@@ -1,0 +1,6 @@
+{
+  "html": "<article><p>Rendered literature.</p></article>",
+  "css": "article { max-width: 70ch; }",
+  "css_fonts": ["https://fonts.example.test/writer.css"],
+  "original_markup": "{\"type\":\"doc\",\"content\":[]}"
+}

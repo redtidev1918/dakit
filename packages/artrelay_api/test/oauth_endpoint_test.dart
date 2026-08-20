@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:artrelay_api/artrelay_api.dart';
 import 'package:artrelay_core/artrelay_core.dart';
 import 'package:dio/dio.dart';
@@ -5,6 +8,48 @@ import 'package:test/test.dart';
 
 void main() {
   final endpoint = Uri.parse('https://www.deviantart.com/oauth2/token');
+
+  test(
+    'sends OAuth fields as an URL-encoded form, not multipart data',
+    () async {
+      final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+      addTearDown(() => server.close(force: true));
+      late String contentType;
+      late String body;
+      final received = server.first.then((request) async {
+        contentType = request.headers.contentType?.mimeType ?? '';
+        body = await utf8.decoder.bind(request).join();
+        request.response
+          ..statusCode = HttpStatus.ok
+          ..headers.contentType = ContentType.json
+          ..write(
+            jsonEncode(<String, Object?>{
+              'access_token': 'access',
+              'token_type': 'Bearer',
+              'expires_in': 3600,
+            }),
+          );
+        await request.response.close();
+      });
+      final form = <String, String>{
+        'grant_type': 'authorization_code',
+        'client_id': '12345',
+        'redirect_uri': 'artrelay://oauth/callback',
+        'code': 'one time code',
+        'code_verifier': 'verifier',
+      };
+
+      await DioOAuthEndpoint(dio: Dio()).postForm(
+        Uri.parse('http://${server.address.host}:${server.port}/token'),
+        form,
+      );
+      await received;
+
+      expect(contentType, Headers.formUrlEncodedContentType);
+      expect(body, isNot(contains('Content-Disposition')));
+      expect(Uri.splitQueryString(body), form);
+    },
+  );
 
   test('classifies a connection failure as network, not authentication', () {
     final dio = Dio();

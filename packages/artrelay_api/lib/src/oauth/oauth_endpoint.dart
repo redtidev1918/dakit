@@ -54,7 +54,7 @@ final class DioOAuthEndpoint implements OAuthEndpoint {
     try {
       final response = await _dio.post<Object?>(
         endpoint.toString(),
-        data: FormData.fromMap(form),
+        data: form,
         options: Options(
           contentType: Headers.formUrlEncodedContentType,
           responseType: ResponseType.json,

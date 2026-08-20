@@ -30,6 +30,14 @@
     }
   ],
   "excerpt": "A documented fixture.",
+  "text_content": {
+    "excerpt": "A documented fixture.",
+    "body": {
+      "type": "writer",
+      "markup": "{\"type\":\"doc\",\"content\":[]}",
+      "features": "tables,links"
+    }
+  },
   "is_mature": false,
   "is_downloadable": true,
   "future_additive_field": "ignored"
