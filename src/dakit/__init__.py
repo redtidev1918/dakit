@@ -1,63 +1,46 @@
-"""Public API for DAKit."""
+"""Stable public surface for DAKit 1.x."""
 
-from .auth import AuthState, Credentials, CredentialStore, JsonCredentialStore, OAuthConfig
-from .client import DAKit, DeviantArtClient
-from .downloads import DownloadService
-from .errors import (
-    ApiError,
-    AuthenticationError,
-    DeviantArtError,
-    DownloadError,
-    MissingDependencyError,
-    ParseError,
-    TransportError,
-)
-from .models import (
+from .auth import AuthorizationRequest, PublicOAuth, PublicOAuthConfig
+from .client import AdaptiveContent, DAKit
+from .core import (
     Artwork,
-    AssetQuality,
-    ClientCapabilities,
-    Deviation,
-    DeviationKind,
-    DownloadedAsset,
+    ArtworkKind,
+    AuthenticationError,
+    AuthState,
+    DAKitError,
+    Media,
     MediaKind,
-    MediaVariant,
     Page,
+    RemoteError,
+    SchemaChangedError,
+    TokenSet,
+    TransportError,
     User,
 )
-from .store import AssetStore, FileSystemStore
-from .transport import AsyncTransport, HttpxTransport, Response
+from .ports import ContentSource, TokenStore, Transport
 
 __all__ = [
-    "ApiError",
+    "AdaptiveContent",
     "Artwork",
-    "AssetQuality",
-    "AssetStore",
-    "AsyncTransport",
+    "ArtworkKind",
     "AuthState",
     "AuthenticationError",
-    "ClientCapabilities",
-    "CredentialStore",
-    "Credentials",
+    "AuthorizationRequest",
+    "ContentSource",
     "DAKit",
-    "DeviantArtClient",
-    "DeviantArtError",
-    "Deviation",
-    "DeviationKind",
-    "DownloadError",
-    "DownloadService",
-    "DownloadedAsset",
-    "FileSystemStore",
-    "HttpxTransport",
-    "JsonCredentialStore",
+    "DAKitError",
+    "Media",
     "MediaKind",
-    "MediaVariant",
-    "MissingDependencyError",
-    "OAuthConfig",
     "Page",
-    "ParseError",
-    "Response",
+    "PublicOAuth",
+    "PublicOAuthConfig",
+    "RemoteError",
+    "SchemaChangedError",
+    "TokenSet",
+    "TokenStore",
+    "Transport",
     "TransportError",
     "User",
 ]
 
-__version__ = "0.4.0"
+__version__ = "1.0.0a1"

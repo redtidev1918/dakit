@@ -1,103 +1,141 @@
-"""Authentication values and opt-in secure persistence."""
+"""Public OAuth 2.0 Authorization Code + PKCE state machine."""
 
 from __future__ import annotations
 
-import json
-import os
+import base64
+import hashlib
+import secrets
 import time
-from collections.abc import Mapping
 from dataclasses import dataclass
-from pathlib import Path
-from typing import Protocol
+from urllib.parse import parse_qs, urlencode, urlparse
+
+from .core import AuthenticationError, AuthState, SchemaChangedError, TokenSet
+from .ports import TokenStore, Transport
 
 
 @dataclass(frozen=True, slots=True)
-class Credentials:
-    """Cookie credentials owned by the embedding application."""
-
-    cookies: str = ""
-    access_token: str = ""
-    refresh_token: str = ""
-    expires_at: float | None = None
-
-    @classmethod
-    def from_mapping(cls, cookies: Mapping[str, str]) -> Credentials:
-        return cls("; ".join(f"{key}={value}" for key, value in cookies.items()))
-
-    def headers(self) -> dict[str, str]:
-        if self.access_token:
-            return {"Authorization": f"Bearer {self.access_token}"}
-        return {"Cookie": self.cookies} if self.cookies else {}
-
-    @property
-    def empty(self) -> bool:
-        return not (self.cookies or self.access_token)
-
-    @property
-    def expired(self) -> bool:
-        return self.expires_at is not None and time.time() >= self.expires_at
-
-
-@dataclass(frozen=True, slots=True)
-class OAuthConfig:
+class PublicOAuthConfig:
     client_id: str
-    client_secret: str
     redirect_uri: str
     scopes: tuple[str, ...] = ("basic", "browse")
 
 
 @dataclass(frozen=True, slots=True)
-class AuthState:
-    authenticated: bool
-    username: str | None = None
+class AuthorizationRequest:
+    url: str
+    state: str
+    verifier: str
 
 
-class CredentialStore(Protocol):
-    def load(self) -> Credentials | None: ...
-    def save(self, credentials: Credentials) -> None: ...
-    def clear(self) -> None: ...
+class PublicOAuth:
+    AUTHORIZE = "https://www.deviantart.com/oauth2/authorize"
+    TOKEN = "https://www.deviantart.com/oauth2/token"
+    WHOAMI = "https://www.deviantart.com/api/v1/oauth2/user/whoami"
 
+    def __init__(
+        self, transport: Transport, config: PublicOAuthConfig, store: TokenStore | None = None
+    ) -> None:
+        self._transport, self.config, self.store = transport, config, store
+        self.tokens = store.load() if store else None
 
-class JsonCredentialStore:
-    """Owner-readable credential file for CLI and desktop integrations."""
-
-    def __init__(self, path: str | Path | None = None) -> None:
-        self.path = Path(path or Path.home() / ".config" / "dakit" / "session.json")
-
-    def load(self) -> Credentials | None:
-        if not self.path.exists():
-            return None
-        try:
-            value = json.loads(self.path.read_text(encoding="utf-8"))
-            if not isinstance(value, dict):
-                return None
-            result = Credentials(
-                str(value.get("cookies", "")),
-                str(value.get("access_token", "")),
-                str(value.get("refresh_token", "")),
-                value.get("expires_at"),
-            )
-            return None if result.empty else result
-        except (OSError, ValueError):
-            return None
-
-    def save(self, credentials: Credentials) -> None:
-        self.path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
-        temporary = self.path.with_suffix(".tmp")
-        temporary.write_text(
-            json.dumps(
-                {
-                    "cookies": credentials.cookies,
-                    "access_token": credentials.access_token,
-                    "refresh_token": credentials.refresh_token,
-                    "expires_at": credentials.expires_at,
-                }
-            ),
-            encoding="utf-8",
+    def begin(self) -> AuthorizationRequest:
+        verifier = secrets.token_urlsafe(64)
+        digest = hashlib.sha256(verifier.encode("ascii")).digest()
+        challenge = base64.urlsafe_b64encode(digest).rstrip(b"=").decode("ascii")
+        state = secrets.token_urlsafe(32)
+        query = urlencode(
+            {
+                "response_type": "code",
+                "client_id": self.config.client_id,
+                "redirect_uri": self.config.redirect_uri,
+                "scope": " ".join(self.config.scopes),
+                "state": state,
+                "code_challenge": challenge,
+                "code_challenge_method": "S256",
+            }
         )
-        temporary.chmod(0o600)
-        os.replace(temporary, self.path)
-        self.path.chmod(0o600)
+        return AuthorizationRequest(f"{self.AUTHORIZE}?{query}", state, verifier)
 
-    def clear(self) -> None:
-        self.path.unlink(missing_ok=True)
+    async def complete(self, request: AuthorizationRequest, callback_url: str) -> AuthState:
+        query = parse_qs(urlparse(callback_url).query)
+        if query.get("state", [""])[0] != request.state:
+            raise AuthenticationError("OAuth state mismatch")
+        if query.get("error"):
+            raise AuthenticationError(str(query["error"][0]))
+        code = query.get("code", [""])[0]
+        if not code:
+            raise AuthenticationError("OAuth callback has no authorization code")
+        self._activate(
+            await self._token(
+                {
+                    "grant_type": "authorization_code",
+                    "client_id": self.config.client_id,
+                    "redirect_uri": self.config.redirect_uri,
+                    "code": code,
+                    "code_verifier": request.verifier,
+                }
+            )
+        )
+        return await self.status()
+
+    async def refresh(self) -> TokenSet:
+        if not self.tokens or not self.tokens.refresh_token:
+            raise AuthenticationError("no refresh token is available")
+        previous = self.tokens.refresh_token
+        tokens = await self._token(
+            {
+                "grant_type": "refresh_token",
+                "client_id": self.config.client_id,
+                "refresh_token": previous,
+            }
+        )
+        if not tokens.refresh_token:
+            tokens = TokenSet(tokens.access_token, previous, tokens.expires_at)
+        self._activate(tokens)
+        return tokens
+
+    async def status(self) -> AuthState:
+        if not self.tokens or not self.tokens.access_token:
+            return AuthState(False)
+        if self.tokens.expires_at is not None and self.tokens.expires_at <= time.time():
+            if not self.tokens.refresh_token:
+                return AuthState(False)
+            await self.refresh()
+        response = await self._transport.request(
+            "GET", self.WHOAMI, headers={"Authorization": f"Bearer {self.tokens.access_token}"}
+        )
+        payload = response.json()
+        if not isinstance(payload, dict) or not payload.get("username"):
+            raise SchemaChangedError("official-oauth", "whoami lacks username")
+        return AuthState(True, str(payload["username"]))
+
+    def access_token(self) -> str | None:
+        return self.tokens.access_token if self.tokens else None
+
+    def logout(self) -> None:
+        self.tokens = None
+        if self.store:
+            self.store.clear()
+
+    async def _token(self, data: dict[str, object]) -> TokenSet:
+        payload = (await self._transport.request("POST", self.TOKEN, data=data)).json()
+        if not isinstance(payload, dict) or not payload.get("access_token"):
+            raise SchemaChangedError("official-oauth", "token response lacks access_token")
+        lifetime = _number(payload.get("expires_in"))
+        return TokenSet(
+            str(payload["access_token"]),
+            str(payload.get("refresh_token", "")),
+            time.time() + lifetime if lifetime else None,
+        )
+
+    def _activate(self, tokens: TokenSet) -> None:
+        self.tokens = tokens
+        if self.store:
+            self.store.save(tokens)
+
+
+def _number(value: object) -> float:
+    try:
+        return float(str(value))
+    except (TypeError, ValueError):
+        return 0

@@ -1,69 +1,54 @@
 # DAKit
 
-DAKit 是用于构建第三方 DeviantArt 客户端的异步 Python 内核。
+DAKit 是用于构建第三方艺术社区客户端的异步 Python 内核。1.x 是一次破坏性重写，不兼容旧下载器 API，也不保留旧登录方式。
 
-它不是单纯的批量下载器，也不是一个已经完成的终端客户端。DAKit 负责账号会话、作品、用户、浏览、分页、媒体和网站兼容；Flutter、桌面、Web 或移动客户端在它之上实现界面、导航、状态管理与平台能力。
+它提供稳定领域模型、Public OAuth + PKCE、官方 API 适配器、网站只读回退和可替换基础设施。Flutter、桌面、移动端、Web 后端或机器人负责 UI 与平台生命周期。
+
+## 设计边界
 
 ```text
-Flutter / Desktop / Web / Bot
-              │
-            DAKit
-              │
-  Auth · Users · Artworks · Browse · Media
-              │
-      DeviantArt API / Website
+Host application
+      │
+    DAKit ── Public OAuth + PKCE
+      │
+AdaptiveContent
+  ├─ OfficialAPI（首选）
+  └─ WebsiteFallback（有限只读降级）
+      │
+Transport · TokenStore · ContentSource
 ```
 
-> DAKit 使用 DeviantArt 官方 OAuth API，并在官方 API 不覆盖的只读场景使用网站数据兼容层。网站接口可能变化。使用者应遵守 DeviantArt 服务条款、访问权限和作品授权要求。
+- `core`：稳定且不可变的领域对象，不依赖 HTTP、文件系统或浏览器。
+- `ports`：宿主可实现的 `Transport`、`TokenStore`、`ContentSource`。
+- `adapters`：官方 API、网站回退、HTTPX 和本地 Token 存储。
+- `auth`：只实现适合公开客户端的 Authorization Code + PKCE。
+- `client`：组合根与官方优先的自适应内容网关。
+- `cli`：薄调试宿主；浏览器行为不会进入核心库。
 
-## 项目状态
+旧版 `DeviantArtClient`、Cookie 登录、Confidential OAuth、localhost 回调、旧门面方法和下载器专用对象均已删除。
 
-DAKit 目前处于 Alpha 阶段，适合客户端原型和 SDK 开发，不建议直接作为无需维护的生产依赖。
+## 网站变化策略
 
-| 领域 | 状态 |
-|---|---|
-| OAuth2 Authorization Code | 已实现 |
-| Cookie 会话兼容 | 已实现 |
-| 登录状态、会话存储、登出 | 已实现 |
-| 用户资料 | 已实现 |
-| 作品详情 | 已实现 |
-| 用户画廊、收藏夹 | 已实现 |
-| 全局搜索、用户内搜索 | 已实现 |
-| 图片、GIF、视频、文学 | 已实现 |
-| 原文件链接与成熟内容识别 | 已实现 |
-| 评论读取与回复 | 尚未实现 |
-| 收藏、取消收藏 | 尚未实现 |
-| 关注、取消关注 | 尚未实现 |
-| 首页推荐、关注动态 | 尚未实现 |
-| 通知与站内消息 | 尚未实现 |
-| 面向普通用户的内置 OAuth 应用 | 尚未提供 |
-| PyPI 发布 | 尚未发布 |
+不存在能够保证“自动适应任意网站更新”的解析器。DAKit 采用可维护的容错策略：
 
-运行时可以通过 `DAKit.capabilities` 查询能力。未实现功能不会提供假成功接口。
+1. 优先调用版本更稳定的官方 OAuth API。
+2. 只有公开作品详情可以回退到网站适配器。
+3. 网站适配器支持多个状态信封，并把远端数据转换为稳定模型。
+4. 契约不匹配时抛出 `SchemaChangedError`，包含适配器和失败位置。
+5. `last_adapter` 和 `last_failures` 让宿主能够上报遥测并发现远端变更。
+6. 宿主可以注入新的 `ContentSource`，无需修改 UI 或领域层。
 
-## 普通用户须知
-
-DAKit 当前是客户端开发库，不是类似 PixEz 的完整应用。普通用户通常不应直接安装或配置 DAKit，而应使用基于 DAKit 开发的图形客户端。
-
-在最终客户端中，普通用户的体验应当只有：
-
-1. 点击“登录”。
-2. 在系统浏览器打开的 DeviantArt 官方页面登录并授权。
-3. 返回客户端。
-
-普通用户不应该填写 `client_id`、`client_secret` 或手工导出 Cookie。
-
-目前仓库中的 CLI 是 SDK 调试工具。由于 DAKit 项目尚未注册并配置一个可供示例客户端使用的 OAuth 应用，CLI 登录仍需要客户端开发者自己的 OAuth 参数。这不是最终用户界面。
+不会静默吞掉解析错误，也不会用空对象伪装成功。
 
 ## 安装
 
-DAKit 尚未发布到 PyPI。当前从 GitHub 安装：
+尚未发布到 PyPI，请从 GitHub 安装：
 
 ```bash
 pip install 'dakit @ git+https://github.com/redtidev1918/dakit.git'
 ```
 
-本地开发安装：
+本地开发：
 
 ```bash
 git clone https://github.com/redtidev1918/dakit.git
@@ -72,347 +57,94 @@ python -m pip install -e '.[dev]'
 pytest
 ```
 
-需要 Python 3.10 或更新版本。
+需要 Python 3.10 或更高版本。
 
-## 快速开始
+## Public OAuth + PKCE
 
-### 创建客户端内核
-
-```python
-import asyncio
-
-from dakit import DAKit
-
-
-async def main() -> None:
-    async with DAKit() as da:
-        user = await da.users.get("sakimichan")
-        print(user.username, user.avatar_url)
-
-        page = await da.artworks.gallery(user.username, limit=24)
-        for artwork in page.items:
-            print(artwork.id, artwork.title, artwork.kind)
-
-
-asyncio.run(main())
-```
-
-`DAKit` 是组合根。一个实例代表一个共享会话，并提供以下领域服务：
-
-- `da.auth`：登录、状态检查、凭据生命周期和登出
-- `da.users`：用户资料
-- `da.artworks`：作品详情、画廊、收藏夹和分页
-- `da.browse`：全局与用户内搜索
-- `da.media(store)`：媒体解析与存储
-- `da.session`：底层共享会话
-
-不要为每个请求创建新的 `DAKit`。客户端通常为每个登录账号维护一个长生命周期实例。
-
-## 登录模型
-
-### 谁负责 OAuth 配置？
-
-OAuth 应用由第三方客户端开发者注册和配置，而不是由普通用户配置。
-
-```text
-客户端开发者
-  └─ 注册 DeviantArt OAuth 应用
-       ├─ client_id
-       ├─ redirect_uri
-       └─ client_secret（只能保存在可信后端）
-
-普通用户
-  └─ 点击登录并在 DeviantArt 页面授权
-```
-
-### Authorization Code
-
-DAKit 当前实现了 Authorization Code Grant。适合拥有可信后端，或仅用于本地开发验证的客户端：
+Public Client 不应包含 `client_secret`。宿主打开授权 URL、接收自定义 URI，然后把完整回调交回 DAKit：
 
 ```python
-from dakit import DAKit, JsonCredentialStore, OAuthConfig
+from dakit import DAKit, PublicOAuthConfig
 
-
-da = DAKit(credential_store=JsonCredentialStore())
-
-state = await da.auth.login_oauth(
-    OAuthConfig(
-        client_id="your-client-id",
-        client_secret="your-client-secret",
-        redirect_uri="http://127.0.0.1:8765/callback",
-        scopes=("basic", "browse"),
-    )
+kit = DAKit(
+    PublicOAuthConfig(
+        client_id="your-public-client-id",
+        redirect_uri="yourapp://oauth/callback",
+    ),
+    token_store=platform_token_store,
 )
 
-print(state.authenticated, state.username)
+request = kit.auth.begin()
+await platform.open_browser(request.url)
+
+# 平台收到 yourapp://oauth/callback?... 后：
+state = await kit.auth.complete(request, callback_url)
+print(state.username)
 ```
 
-登录过程：
+DAKit 会生成 S256 challenge，校验随机 `state`，携带 `code_verifier` 交换 Token，调用官方 `user/whoami` 验证登录，并在到期后使用 Refresh Token 刷新。
 
-1. DAKit 在 localhost 启动一次性回调监听。
-2. 使用系统默认浏览器打开 DeviantArt 官方授权页。
-3. 校验随机 OAuth `state`。
-4. 使用授权码交换 Access Token。
-5. 调用官方 `user/whoami` 验证账号。
-6. 更新所有领域服务共享的会话。
+正式客户端应实现 `TokenStore` 并连接 Keychain、Android Keystore、Windows Credential Manager 或服务端密钥系统。`JsonTokenStore` 只适合 CLI 和本地开发。
 
-### 移动端和桌面端安全
-
-不要把 `client_secret` 打包到 Flutter、Android、iOS、Windows 或 macOS 客户端中。二进制中的 secret 可以被提取。
-
-生产客户端应选择以下方案之一：
-
-- Authorization Code 交换放在开发者后端。
-- 使用 DeviantArt 支持的公开客户端授权方式，并仅在客户端保存公开 `client_id`。
-- 由平台安全存储保存最终 Token，而不是保存账号密码。
-
-DAKit 后续会增加不要求客户端 secret 的公开客户端登录流程。当前版本不会把不安全的内置 secret 当作便利功能提供。
-
-### 凭据存储
-
-`JsonCredentialStore` 适合 CLI 和本地开发。文件权限会设置为 `0600`：
+## 内容 API
 
 ```python
-from dakit import JsonCredentialStore
+artwork = await kit.content.artwork_url(artwork_url)
+user = await kit.content.user("username")
+page = await kit.content.gallery("username", limit=24)
+results = await kit.content.search("landscape", limit=24)
 
-store = JsonCredentialStore()
-da = DAKit(credential_store=store)
+print(kit.content.last_adapter)
+print(kit.content.last_failures)
 ```
 
-正式客户端应实现 `CredentialStore`，连接系统安全设施：
+领域对象只有 `Artwork`、`User`、`Media`、`Page[T]` 等稳定值，不暴露远端原始 JSON。媒体数据通过 `Artwork.media` 返回；宿主可使用注入的 `Transport.stream(media.url)` 写入缓存、数据库、对象存储或移动端沙箱。
 
-- iOS/macOS Keychain
-- Android Keystore
-- Windows Credential Manager
-- 服务端密钥管理系统
+## 自定义适配器
 
-DAKit 不接收、记录或保存用户密码。
-
-### Cookie 兼容
-
-Cookie 入口只用于已有宿主会话和兼容测试，不应作为普通用户默认登录流程：
+实现 `ContentSource` 后可将自己的代理、缓存 API 或更新后的解析器放在适配器链中：
 
 ```python
-state = await da.auth.login_cookies("auth=...; auth_secure=...")
-```
-
-## 用户、作品与浏览
-
-### 用户资料
-
-```python
-user = await da.users.get("username")
-print(user.id, user.username, user.avatar_url)
-```
-
-### 完整作品
-
-```python
-artwork = await da.artworks.get(
-    "https://www.deviantart.com/user/art/title-123456"
-)
-
-print(artwork.title)
-print(artwork.author)
-print(artwork.kind)
-print(artwork.media)
-```
-
-### 画廊分页
-
-```python
-page = await da.artworks.gallery("username", limit=24)
-
-while True:
-    for artwork in page.items:
-        print(artwork.title)
-
-    if not page.has_more:
-        break
-
-    page = await da.artworks.gallery(
-        "username",
-        cursor=page.next_cursor,
-        limit=24,
-    )
-```
-
-也可以异步迭代：
-
-```python
-async for artwork in da.artworks.iter_gallery("username"):
-    print(artwork.title)
-```
-
-### 搜索
-
-```python
-global_results = await da.browse.search("landscape", limit=20)
-user_results = await da.browse.search(
-    "portrait",
-    username="username",
-    limit=20,
-)
-```
-
-## 媒体不是客户端核心
-
-下载属于独立媒体服务，不会污染用户、浏览和社交领域：
-
-```python
-from dakit import AssetQuality, FileSystemStore
-
-artwork = await da.artworks.get(artwork_url)
-media = da.media(FileSystemStore("./media-cache"))
-
-saved = await media.download(
-    artwork,
-    quality=AssetQuality.FULL,
-)
-
-print(saved.location)
-```
-
-媒体服务当前支持：
-
-- 普通图片
-- GIF
-- 最高可用分辨率视频
-- 文学正文导出
-- 原文件元数据与链接
-- 成熟内容模糊占位图检测
-- 临时文件与原子落盘
-
-成熟内容需要拥有相应权限的登录会话。若 DeviantArt 只返回模糊占位图，DAKit 会抛出 `AuthenticationError`，不会将其报告为成功下载。
-
-实现 `AssetStore` 可以写入客户端缓存、对象存储、数据库或移动端沙箱。
-
-## 可替换基础设施
-
-### 自定义网络层
-
-```python
-da = DAKit(
+kit = DAKit(
+    oauth_config,
     transport=my_transport,
-    credentials=my_credentials,
+    token_store=my_secure_store,
+    sources=(official_source, cached_source, website_source),
 )
 ```
 
-实现 `AsyncTransport` 可以接入：
-
-- 客户端统一代理
-- 请求缓存
-- 证书固定
-- 调试日志与遥测
-- Mock Server
-- Flutter/原生网络桥接
-
-由调用方传入的 transport 仍归调用方所有。关闭 DAKit 时不会擅自关闭它。
-
-### 稳定领域模型
-
-上层客户端应依赖：
-
-- `Artwork`
-- `User`
-- `Page[T]`
-- `MediaVariant`
-- `AuthState`
-- `ClientCapabilities`
-
-不要让 UI 直接依赖 DeviantArt `_puppy` JSON。网站字段只应存在于解析兼容层；必要的原始响应可以通过模型的 `raw` 字段用于诊断。
-
-## 架构
-
-```text
-Application / Flutter Bridge / HTTP API
-                    │
-                  DAKit
-                    │
-             ClientSession
-       credentials · OAuth · CSRF · HTTP
-                    │
-     ┌──────────┬──────────┬──────────┐
-    Auth       Users     Artworks    Browse
-                              │
-                            Media
-                    │
-          Stable domain models
-                    │
-       AsyncTransport · AssetStore
-```
-
-模块职责：
-
-```text
-src/dakit/
-├── client.py                 # 组合根和兼容门面
-├── session.py                # 共享会话
-├── auth.py                   # OAuth 配置与凭据存储
-├── models.py                 # 稳定领域模型
-├── parser.py                 # 网站响应兼容层
-├── transport.py              # 可替换网络接口
-├── downloads.py              # 媒体服务
-└── services/
-    ├── authentication.py
-    ├── users.py
-    ├── artworks.py
-    └── browse.py
-```
+这使网站更新只影响一个适配器，而不会迫使客户端 UI、缓存和业务状态一起重写。
 
 ## CLI
 
-CLI 是 SDK 调试入口，不是最终产品：
+CLI 内置公共 Client ID，不包含 secret：
 
 ```bash
-dakit search "digital art"
-dakit url "https://www.deviantart.com/user/art/title-123"
-dakit gallery username --limit 20
-```
-
-OAuth 开发测试：
-
-```bash
-export DAKIT_CLIENT_ID=...
-export DAKIT_CLIENT_SECRET=...
-export DAKIT_REDIRECT_URI=http://127.0.0.1:8765/callback
-
 dakit login
 dakit status
+dakit artwork 'https://www.deviantart.com/user/art/title-123'
+dakit gallery username
+dakit search landscape
 dakit logout
 ```
 
-不要把包含 secret 的 `.env` 提交到仓库。
+若系统没有注册 `dakit://`，浏览器跳转失败后复制完整回调 URL 并粘贴到 CLI。开发者可用 `DAKIT_CLIENT_ID` 和 `DAKIT_REDIRECT_URI` 覆盖默认配置。
 
-## 兼容性
+## 当前能力与限制
 
-早期版本中的 `DeviantArtClient` 暂时保留为 `DAKit` 的兼容别名。`gallery()`、`search()`、`deviation()` 等门面方法仍可调用，但新代码应使用领域服务：
+- 已实现：PKCE 登录、Token 持久化与刷新、账号验证、作品、用户、画廊、搜索、分页、媒体变体、适配器回退。
+- 网站回退目前只支持公开作品详情；账号数据和社交能力坚持走官方 API。
+- 评论、收藏、关注、动态和通知尚未实现。
+- 网站接口随时可能变化；`SchemaChangedError` 是需要更新适配器的明确信号。
+- 项目目前为 `1.0.0a1`，尚未发布 PyPI。
 
-```python
-await da.artworks.gallery(...)
-await da.browse.search(...)
-await da.artworks.get(...)
-```
-
-## 路线图
-
-1. 适合公开客户端的 OAuth 登录流程
-2. 官方 OAuth API 优先的数据服务
-3. 评论读取、线程和回复
-4. 收藏、取消收藏、关注和取消关注
-5. 首页推荐、关注动态和标签浏览
-6. 通知与站内消息
-7. Flutter/HTTP Bridge
-8. 缓存、离线数据和多账号同步
-9. PyPI 自动发布与版本兼容策略
-
-## 开发与验证
+## 验证
 
 ```bash
-pytest
-ruff check .
+ruff check src tests
 mypy src
+pytest
 python -m build
 ```
 
-项目使用 MIT License。
+MIT License。

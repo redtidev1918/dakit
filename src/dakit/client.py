@@ -1,89 +1,93 @@
-"""Composable client kernel and backwards-compatible facade."""
+"""Composition root and adaptive content gateway."""
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator
+import re
+from collections.abc import Awaitable, Callable
+from typing import TypeVar, cast
 
-from .auth import Credentials, CredentialStore
-from .downloads import DownloadService
-from .models import Artwork, ClientCapabilities, Page
-from .services import ArtworkService, AuthenticationService, BrowseService, UserService
-from .session import ClientSession
-from .store import AssetStore
-from .transport import AsyncTransport
+from .adapters import HttpxTransport, OfficialAPI, WebsiteFallback
+from .auth import PublicOAuth, PublicOAuthConfig
+from .core import Artwork, Page, RemoteError, User
+from .ports import ContentSource, TokenStore, Transport
+
+T = TypeVar("T")
+
+
+class AdaptiveContent:
+    """Official-first gateway with explicit, observable fallback."""
+
+    def __init__(self, primary: ContentSource, fallbacks: tuple[ContentSource, ...] = ()) -> None:
+        self.primary, self.fallbacks = primary, fallbacks
+        self.last_adapter: str | None = None
+        self.last_failures: tuple[str, ...] = ()
+
+    async def artwork(self, artwork_id: str, *, url: str | None = None) -> Artwork:
+        return await self._run(lambda source: source.artwork(artwork_id, url=url))
+
+    async def artwork_url(self, url: str) -> Artwork:
+        match = re.search(r"-(\d+)(?:[/?#]|$)", url)
+        if not match:
+            raise ValueError("artwork URL has no numeric identifier")
+        return await self.artwork(match.group(1), url=url)
+
+    async def user(self, username: str) -> User:
+        return await self._run(lambda source: source.user(username))
+
+    async def gallery(
+        self, username: str, *, cursor: str | None = None, limit: int = 24
+    ) -> Page[Artwork]:
+        return await self._run(lambda source: source.gallery(username, cursor=cursor, limit=limit))
+
+    async def search(
+        self, query: str, *, cursor: str | None = None, limit: int = 24
+    ) -> Page[Artwork]:
+        return await self._run(lambda source: source.search(query, cursor=cursor, limit=limit))
+
+    async def _run(self, operation: Callable[[ContentSource], Awaitable[T]]) -> T:
+        failures: list[str] = []
+        for source in (self.primary, *self.fallbacks):
+            try:
+                result = await operation(source)
+                self.last_adapter, self.last_failures = source.name, tuple(failures)
+                return result
+            except RemoteError as exc:
+                failures.append(f"{source.name}: {exc}")
+        self.last_failures = tuple(failures)
+        raise RemoteError("all content adapters failed: " + "; ".join(failures))
 
 
 class DAKit:
-    """Shared application kernel for building a third-party client."""
-
-    capabilities = ClientCapabilities()
-
     def __init__(
         self,
+        oauth: PublicOAuthConfig,
         *,
-        transport: AsyncTransport | None = None,
-        credentials: Credentials | None = None,
-        credential_store: CredentialStore | None = None,
+        transport: Transport | None = None,
+        token_store: TokenStore | None = None,
+        sources: tuple[ContentSource, ...] | None = None,
     ) -> None:
-        self.session = ClientSession(transport, credentials)
-        self.auth = AuthenticationService(self.session, credential_store)
-        self.artworks = ArtworkService(self.session)
-        self.browse = BrowseService(self.session)
-        self.users = UserService(self.session)
+        self._transport = transport or cast(Transport, HttpxTransport())
+        self._owns_transport = transport is None
+        self.auth = PublicOAuth(self._transport, oauth, token_store)
+        if sources is None:
+            sources = (
+                OfficialAPI(self._transport, self.auth.access_token),
+                WebsiteFallback(self._transport),
+            )
+        if not sources:
+            raise ValueError("at least one content source is required")
+        self.content = AdaptiveContent(sources[0], sources[1:])
 
     @property
-    def transport(self) -> AsyncTransport:
-        return self.session.transport
+    def transport(self) -> Transport:
+        return self._transport
 
-    @property
-    def credentials(self) -> Credentials:
-        return self.session.credentials
-
-    def set_credentials(self, credentials: Credentials) -> None:
-        self.session.set_credentials(credentials)
-
-    def media(self, store: AssetStore) -> DownloadService:
-        return DownloadService(self.transport, store)
+    async def close(self) -> None:
+        if self._owns_transport:
+            await self._transport.close()
 
     async def __aenter__(self) -> DAKit:
         return self
 
     async def __aexit__(self, *_: object) -> None:
         await self.close()
-
-    async def close(self) -> None:
-        await self.session.close()
-
-    async def deviation(self, url: str) -> Artwork:
-        return await self.artworks.get(url)
-
-    async def gallery(
-        self,
-        username: str,
-        *,
-        folder_id: str | None = None,
-        cursor: str | None = None,
-        limit: int = 24,
-    ) -> Page[Artwork]:
-        return await self.artworks.gallery(
-            username, folder_id=folder_id, cursor=cursor, limit=limit
-        )
-
-    async def favorites(
-        self, username: str, folder_id: str, *, cursor: str | None = None, limit: int = 24
-    ) -> Page[Artwork]:
-        return await self.artworks.favorites(username, folder_id, cursor=cursor, limit=limit)
-
-    async def search(
-        self, query: str, *, username: str | None = None, cursor: str | None = None, limit: int = 24
-    ) -> Page[Artwork]:
-        return await self.browse.search(query, username=username, cursor=cursor, limit=limit)
-
-    async def iter_gallery(
-        self, username: str, *, folder_id: str | None = None, limit: int = 24
-    ) -> AsyncIterator[Artwork]:
-        async for item in self.artworks.iter_gallery(username, folder_id=folder_id, limit=limit):
-            yield item
-
-
-DeviantArtClient = DAKit
