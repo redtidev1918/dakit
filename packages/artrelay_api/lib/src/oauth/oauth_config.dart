@@ -7,11 +7,14 @@ final class OAuthConfig {
     this.scopes = const <String>{'basic', 'browse'},
     Uri? authorizationEndpoint,
     Uri? tokenEndpoint,
+    Uri? revokeEndpoint,
   }) : authorizationEndpoint =
            authorizationEndpoint ??
            Uri.https('www.deviantart.com', '/oauth2/authorize'),
        tokenEndpoint =
-           tokenEndpoint ?? Uri.https('www.deviantart.com', '/oauth2/token') {
+           tokenEndpoint ?? Uri.https('www.deviantart.com', '/oauth2/token'),
+       revokeEndpoint =
+           revokeEndpoint ?? Uri.https('www.deviantart.com', '/oauth2/revoke') {
     if (clientId.trim().isEmpty) {
       throw const ArtRelayException(
         kind: ArtRelayFailureKind.configuration,
@@ -33,4 +36,5 @@ final class OAuthConfig {
   final Set<String> scopes;
   final Uri authorizationEndpoint;
   final Uri tokenEndpoint;
+  final Uri revokeEndpoint;
 }

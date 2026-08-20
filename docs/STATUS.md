@@ -15,7 +15,7 @@ same commit as every material milestone.
 
 ## Next actions
 
-1. Implement token exchange, refresh coordination, redaction, and Dio transport.
+1. Implement the versioned Dio API transport and error/backoff policy.
 2. Add official API DTO fixtures and repository adapters.
 3. Configure the example app custom-scheme callback on all three platforms.
 4. Replace the generated counter screen with an integration diagnostics client.
@@ -37,7 +37,7 @@ same commit as every material milestone.
 - Engine `5d53178869`
 - Dart 3.13.1
 - `flutter analyze`: no issues
-- Test suites: 8 passing
+- Test suites: 13 passing
 
 ## Known external requirements
 

@@ -19,7 +19,7 @@ promised after the rewrite.
 - [ ] Stable domain models and typed failures.
 - [ ] Repository, pagination, clock, transport, and diagnostic interfaces.
 - [ ] Dio transport with timeouts, cancellation, redaction, and API versioning.
-- [ ] OAuth PKCE transaction creation, callback validation, refresh, and logout.
+- [x] OAuth PKCE transaction creation, callback validation, refresh, and logout.
 - [ ] Official API DTO mapping and fixture tests.
 
 ### M2 — platform integration
