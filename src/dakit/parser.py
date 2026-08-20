@@ -34,7 +34,7 @@ def parse_state_deviations(state: Mapping[str, Any]) -> tuple[Deviation, ...]:
     return tuple(_parse_state_item(item, entities) for item in deviations.values())
 
 
-def parse_page(payload: object) -> Page:
+def parse_page(payload: object) -> Page[Deviation]:
     if not isinstance(payload, Mapping):
         raise ParseError("page response must be an object")
     raw_items = payload.get("results", payload.get("deviations", []))

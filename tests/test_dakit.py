@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import json
 from collections.abc import AsyncIterator, Mapping
 from pathlib import Path
 
@@ -29,7 +28,11 @@ class FakeTransport:
         *,
         params: Mapping[str, object] | None = None,
         headers: Mapping[str, str] | None = None,
+        json: object | None = None,
+        data: Mapping[str, object] | None = None,
     ) -> Response:
+        import json as jsonlib
+
         if "_puppy" not in url:
             return Response(200, {}, b"<script>window.__CSRF_TOKEN__ = 'token-1';</script>")
         payload = {
@@ -53,7 +56,7 @@ class FakeTransport:
             ],
             "hasMore": False,
         }
-        return Response(200, {"content-type": "application/json"}, json.dumps(payload).encode())
+        return Response(200, {"content-type": "application/json"}, jsonlib.dumps(payload).encode())
 
     async def stream(
         self, url: str, *, headers: Mapping[str, str] | None = None
@@ -76,6 +79,10 @@ async def test_client_and_download_are_embeddable(tmp_path: Path) -> None:
     assert result.bytes_written == 6
     await client.close()
     assert transport.closed is False
+    assert client.artworks is not None
+    assert client.browse is not None
+    assert client.users is not None
+    assert client.capabilities.comments is False
 
 
 def test_parser_preserves_unknown_fields() -> None:

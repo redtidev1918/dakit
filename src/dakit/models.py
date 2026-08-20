@@ -5,7 +5,9 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from typing import Any, Generic, TypeVar
+
+T = TypeVar("T")
 
 
 class DeviationKind(str, Enum):
@@ -74,8 +76,8 @@ class Deviation:
 
 
 @dataclass(frozen=True, slots=True)
-class Page:
-    items: tuple[Deviation, ...]
+class Page(Generic[T]):
+    items: tuple[T, ...]
     next_cursor: str | None = None
 
     @property
@@ -89,3 +91,33 @@ class DownloadedAsset:
     media: MediaVariant
     location: str
     bytes_written: int
+
+
+@dataclass(frozen=True, slots=True)
+class User:
+    id: str
+    username: str
+    url: str
+    avatar_url: str | None = None
+    display_name: str | None = None
+    bio: str | None = None
+    is_group: bool = False
+    is_watching: bool = False
+    watchers: int | None = None
+    deviations: int | None = None
+    raw: Mapping[str, Any] = field(default_factory=dict, repr=False, compare=False)
+
+
+@dataclass(frozen=True, slots=True)
+class ClientCapabilities:
+    artwork_details: bool = True
+    gallery: bool = True
+    favorites: bool = True
+    global_search: bool = True
+    user_profiles: bool = True
+    media_downloads: bool = True
+    comments: bool = False
+    social_writes: bool = False
+
+
+Artwork = Deviation

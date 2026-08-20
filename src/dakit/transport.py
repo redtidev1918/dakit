@@ -36,6 +36,8 @@ class AsyncTransport(Protocol):
         *,
         params: Mapping[str, object] | None = None,
         headers: Mapping[str, str] | None = None,
+        json: object | None = None,
+        data: Mapping[str, object] | None = None,
     ) -> Response: ...
     def stream(
         self, url: str, *, headers: Mapping[str, str] | None = None
@@ -65,6 +67,8 @@ class HttpxTransport:
         *,
         params: Mapping[str, object] | None = None,
         headers: Mapping[str, str] | None = None,
+        json: object | None = None,
+        data: Mapping[str, object] | None = None,
     ) -> Response:
         for attempt in range(self.retries + 1):
             try:
@@ -73,6 +77,8 @@ class HttpxTransport:
                     url,
                     params=params,  # type: ignore[arg-type]
                     headers=headers,
+                    json=json,
+                    data=data,
                 )
                 if result.status_code in (401, 403):
                     raise AuthenticationError(
