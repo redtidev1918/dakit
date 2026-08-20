@@ -8,6 +8,10 @@ environment:
 
 resolution: workspace
 
+executables:
+  dakit: dakit
+  devart-dl: devart_dl
+
 dependencies:
   args: ^2.7.0
   crypto: ^3.0.7

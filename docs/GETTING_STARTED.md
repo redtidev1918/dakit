@@ -83,16 +83,23 @@ Windows 需要安装 MSIX 才能由系统注册 `dakit` 协议；未打包的 EX
 ```shell
 dart run packages/dakit_cli/bin/dakit.dart status --proxy 127.0.0.1:7892
 dart run packages/dakit_cli/bin/dakit.dart login --client-id 你的_PUBLIC_CLIENT_ID --proxy 127.0.0.1:7892
-dart run packages/dakit_cli/bin/dakit.dart download 作品UUID --output downloads --proxy 127.0.0.1:7892
+dart run packages/dakit_cli/bin/dakit.dart url 作品UUID --dest downloads --proxy 127.0.0.1:7892
+dart run packages/dakit_cli/bin/dakit.dart artist 用户名 --limit 24 --delay 1
+dart run packages/dakit_cli/bin/dakit.dart gallery 用户名 [gallery_id]
+dart run packages/dakit_cli/bin/dakit.dart fav 用户名 [folder_id]
+dart run packages/dakit_cli/bin/dakit.dart search "digital art" --limit 24
+dart run packages/dakit_cli/bin/dakit.dart login validate
 ```
 
-CLI 登录使用 loopback 回调 `http://127.0.0.1:8765/callback`，需要在 Public 应用白名单中精确加入该地址。`download` 需要先完成一次登录，并传入作品 UUID。凭据会保存到本机 `~/.config/dakit/credentials.json`（Windows 为 `%APPDATA%/dakit/credentials.json`），下载完成后 CLI 会输出保存路径、字节数、SHA-256 和媒体类型。运行 `dakit --help` 可以查看完整检查清单。
+CLI 登录使用 loopback 回调 `http://127.0.0.1:8765/callback`，需要在 Public 应用白名单中精确加入该地址。批量下载命令需要先完成登录，并传入作品 UUID / 用户名。凭据会保存到本机 `~/.config/dakit/credentials.json`（Windows 为 `%APPDATA%/dakit/credentials.json`），下载完成后 CLI 会输出保存路径、字节数、SHA-256 和媒体类型。运行 `dakit --help` 可以查看完整检查清单。
 
 所有 CLI 命令都支持 `--verbose` / `-v`，会把脱敏诊断事件输出到 `stderr`：
 
 ```shell
 dart run packages/dakit_cli/bin/dakit.dart status --proxy 127.0.0.1:7892 --verbose
 ```
+
+CLI 使用官方 OAuth API，不使用网页 Cookie / 抓取；因此不支持 `cookies.txt`、`SOCKS5` 代理、预览画质切换或“防封”参数。官方接口直接提供原文件，CLI 不会用 preview 冒充 original。
 
 Flutter 示例客户端登录后，在页面底部有内置 Debug console，可输入 `help`、`account`、`status`、`open UUID`、`download UUID`、`clear`。
 
