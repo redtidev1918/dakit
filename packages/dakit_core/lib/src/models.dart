@@ -88,3 +88,81 @@ final class ArtworkContent {
   bool get isEmpty =>
       html == null && css == null && cssFonts.isEmpty && originalMarkup == null;
 }
+
+/// A comment returned by the official API.
+///
+/// [body] and [hiddenReason] are provider-authored data. Hosts should escape or
+/// sanitize them for their chosen renderer.
+final class Comment {
+  const Comment({
+    required this.id,
+    required this.postedAt,
+    required this.body,
+    required this.author,
+    required this.replyCount,
+    required this.likeCount,
+    this.parentId,
+    this.hiddenReason,
+    this.isLiked = false,
+    this.isFeatured = false,
+  });
+
+  final String id;
+  final String? parentId;
+  final DateTime postedAt;
+  final String body;
+  final UserProfile author;
+  final int replyCount;
+  final int likeCount;
+  final String? hiddenReason;
+  final bool isLiked;
+  final bool isFeatured;
+}
+
+final class CommentPage {
+  const CommentPage({
+    required this.items,
+    required this.hasMore,
+    required this.hasLess,
+    this.nextOffset,
+    this.previousOffset,
+    this.total,
+  });
+
+  final List<Comment> items;
+  final bool hasMore;
+  final bool hasLess;
+  final int? nextOffset;
+  final int? previousOffset;
+  final int? total;
+}
+
+final class FavouriteResult {
+  const FavouriteResult({required this.isFavourite, required this.total});
+
+  final bool isFavourite;
+  final int total;
+}
+
+/// Categories selected when watching a user.
+final class WatchOptions {
+  const WatchOptions({
+    this.friend = true,
+    this.deviations = true,
+    this.journals = true,
+    this.forumThreads = true,
+    this.critiques = true,
+    this.scraps = true,
+    this.activity = true,
+    this.collections = true,
+  });
+
+  final bool friend;
+  final bool deviations;
+  final bool journals;
+  final bool forumThreads;
+  final bool critiques;
+  final bool scraps;
+  final bool activity;
+  final bool collections;
+}

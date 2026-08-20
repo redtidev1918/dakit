@@ -14,3 +14,17 @@ final class Page<T> {
   final bool hasMore;
   final String? nextCursor;
 }
+
+final class CommentPageRequest {
+  const CommentPageRequest({
+    this.offset = 0,
+    this.limit = 10,
+    this.maxDepth = 0,
+    this.commentId,
+  });
+
+  final int offset;
+  final int limit;
+  final int maxDepth;
+  final String? commentId;
+}

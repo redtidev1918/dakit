@@ -36,3 +36,35 @@ abstract interface class GalleryRepository {
 abstract interface class MediaRepository {
   Future<MediaAsset> originalFile(String artworkId);
 }
+
+abstract interface class CommentRepository {
+  Future<CommentPage> forArtwork(
+    String artworkId, {
+    CommentPageRequest request = const CommentPageRequest(),
+  });
+
+  Future<Comment> postToArtwork(
+    String artworkId,
+    String body, {
+    String? parentCommentId,
+  });
+}
+
+abstract interface class SocialRepository {
+  Future<FavouriteResult> favourite(
+    String artworkId, {
+    List<String> collectionFolderIds = const <String>[],
+  });
+
+  Future<FavouriteResult> unfavourite(
+    String artworkId, {
+    List<String> collectionFolderIds = const <String>[],
+  });
+
+  Future<void> watch(
+    String username, {
+    WatchOptions options = const WatchOptions(),
+  });
+
+  Future<void> unwatch(String username);
+}

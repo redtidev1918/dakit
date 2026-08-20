@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:dakit_api/dakit_api.dart';
 import 'package:dakit_core/dakit_core.dart';
 import 'package:dio/dio.dart';
@@ -59,6 +62,103 @@ void main() {
     expect(provider.calls, 1);
   });
 
+  test('sends authenticated mutations as URL-encoded POST forms', () async {
+    final harness = ApiHarness(
+      now: now,
+      responses: <ResponseSpec>[
+        const ResponseSpec(200, <String, Object?>{
+          'success': true,
+          'favourites': 12,
+        }),
+      ],
+    );
+
+    await harness.client.postFormJson(
+      'collections/fave',
+      form: const <String, Object?>{
+        'deviationid': 'art-1',
+        'folderid': <String>['folder-1', 'folder-2'],
+      },
+    );
+
+    final request = harness.requests.single;
+    expect(request.method, 'POST');
+    expect(request.contentType, Headers.formUrlEncodedContentType);
+    expect(request.data, <String, Object?>{
+      'deviationid': 'art-1',
+      'folderid': <String>['folder-1', 'folder-2'],
+    });
+    expect(request.headers['Authorization'], 'Bearer original-access');
+  });
+
+  test(
+    'Dio wire encoding preserves arrays and nested form field names',
+    () async {
+      final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+      addTearDown(() => server.close(force: true));
+      late String body;
+      final received = server.first.then((request) async {
+        body = await utf8.decoder.bind(request).join();
+        request.response
+          ..statusCode = HttpStatus.ok
+          ..headers.contentType = ContentType.json
+          ..write('{"success":true}');
+        await request.response.close();
+      });
+
+      await Dio().post<Object?>(
+        'http://${server.address.host}:${server.port}/form',
+        data: <String, Object?>{
+          'folderid': <String>['folder-1', 'folder-2'],
+          'watch[activity]': false,
+        },
+        options: Options(contentType: Headers.formUrlEncodedContentType),
+      );
+      await received;
+
+      final fields = body
+          .split('&')
+          .map(Uri.decodeQueryComponent)
+          .toList(growable: false);
+      expect(
+        fields,
+        containsAll(<String>[
+          'folderid=folder-1',
+          'folderid=folder-2',
+          'watch[activity]=false',
+        ]),
+      );
+    },
+  );
+
+  test('does not automatically retry non-idempotent mutations', () async {
+    final delays = <Duration>[];
+    final harness = ApiHarness(
+      now: now,
+      responses: <ResponseSpec>[
+        const ResponseSpec(503, <String, Object?>{'error': 'server_error'}),
+      ],
+      delay: (duration) async => delays.add(duration),
+    );
+
+    await expectLater(
+      harness.client.postFormJson(
+        'comments/post/deviation/art-1',
+        form: const <String, Object?>{'body': 'Hello'},
+      ),
+      throwsA(
+        isA<DAKitException>().having(
+          (error) => error.kind,
+          'kind',
+          DAKitFailureKind.upstream,
+        ),
+      ),
+    );
+
+    expect(harness.requests, hasLength(1));
+    expect(delays, isEmpty);
+  });
+
   test('refreshes once after 401 and replays with the new token', () async {
     final harness = ApiHarness(
       now: now,
@@ -84,6 +184,36 @@ void main() {
       'Bearer refreshed-access',
     );
     expect(harness.tokenForms, hasLength(1));
+  });
+
+  test('refreshes once after a mutation 401 and preserves the form', () async {
+    final harness = ApiHarness(
+      now: now,
+      responses: <ResponseSpec>[
+        const ResponseSpec(401, <String, Object?>{'error': 'unauthorized'}),
+        const ResponseSpec(200, <String, Object?>{
+          'success': true,
+          'favourites': 1,
+        }),
+      ],
+      tokenResponses: <Map<String, Object?>>[
+        <String, Object?>{
+          'access_token': 'refreshed-access',
+          'token_type': 'Bearer',
+          'expires_in': 3600,
+        },
+      ],
+    );
+    const form = <String, Object?>{'deviationid': 'art-1'};
+
+    await harness.client.postFormJson('collections/fave', form: form);
+
+    expect(harness.requests, hasLength(2));
+    expect(harness.requests.every((request) => request.data == form), isTrue);
+    expect(
+      harness.requests.last.headers['Authorization'],
+      'Bearer refreshed-access',
+    );
   });
 
   test('uses exponential delay for adaptive rate limiting', () async {
@@ -125,6 +255,34 @@ void main() {
       ),
     );
   });
+
+  test(
+    'preserves a bounded provider description for API diagnostics',
+    () async {
+      final description = List<String>.filled(100, 'rejected').join(' ');
+      final harness = ApiHarness(
+        now: now,
+        responses: <ResponseSpec>[
+          ResponseSpec(400, <String, Object?>{
+            'error': 'invalid_request',
+            'error_description': description,
+          }),
+        ],
+      );
+
+      await expectLater(
+        harness.client.getJson('placebo'),
+        throwsA(
+          isA<DAKitException>().having(
+            (error) =>
+                (error.details['provider_description']! as String).length,
+            'bounded description length',
+            241,
+          ),
+        ),
+      );
+    },
+  );
 }
 
 final class ApiHarness {

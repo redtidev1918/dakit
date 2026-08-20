@@ -8,3 +8,5 @@
 - Add structured artwork text/rendered-content models and distinguish unavailable
   media from restricted or missing media.
 - Add the authentication-implementation-neutral `AuthTokenProvider` contract.
+- Add official OAuth scope constants plus platform-neutral comment, favourite,
+  watch, and social repository contracts.

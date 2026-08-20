@@ -87,12 +87,14 @@ final class DioOAuthEndpoint implements OAuthEndpoint {
         throw networkFailure;
       }
       final responseData = error.response?.data;
-      final provider = responseData is Map<String, Object?>
-          ? responseData['error'] as String?
+      final rawProvider = responseData is Map<String, Object?>
+          ? responseData['error']
           : null;
-      final description = responseData is Map<String, Object?>
-          ? responseData['error_description'] as String?
+      final provider = rawProvider is String ? rawProvider : null;
+      final rawDescription = responseData is Map<String, Object?>
+          ? responseData['error_description']
           : null;
+      final description = rawDescription is String ? rawDescription : null;
       final failure = DAKitException(
         kind: DAKitFailureKind.authentication,
         code: provider == null

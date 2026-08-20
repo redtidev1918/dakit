@@ -17,8 +17,22 @@ abstract interface class OfficialApiTransport {
   });
 }
 
-/// Versioned, authenticated transport for idempotent official API reads.
-final class OfficialApiClient implements OfficialApiTransport {
+/// Official API transport that can also perform form-encoded mutations.
+///
+/// Mutations refresh once after an authentication failure, but are not
+/// automatically retried after rate-limit or server responses because the
+/// provider may already have applied a non-idempotent operation.
+abstract interface class OfficialApiMutationTransport
+    implements OfficialApiTransport {
+  Future<Map<String, Object?>> postFormJson(
+    String path, {
+    Map<String, Object?> form = const <String, Object?>{},
+    CancelToken? cancelToken,
+  });
+}
+
+/// Versioned, authenticated transport for the official API.
+final class OfficialApiClient implements OfficialApiMutationTransport {
   factory OfficialApiClient({
     required AuthTokenProvider session,
     Dio? dio,
@@ -67,6 +81,34 @@ final class OfficialApiClient implements OfficialApiTransport {
     String path, {
     Map<String, Object?> query = const <String, Object?>{},
     CancelToken? cancelToken,
+  }) => _requestJson(
+    path,
+    method: 'GET',
+    query: query,
+    cancelToken: cancelToken,
+    retryTransientResponses: true,
+  );
+
+  @override
+  Future<Map<String, Object?>> postFormJson(
+    String path, {
+    Map<String, Object?> form = const <String, Object?>{},
+    CancelToken? cancelToken,
+  }) => _requestJson(
+    path,
+    method: 'POST',
+    form: form,
+    cancelToken: cancelToken,
+    retryTransientResponses: false,
+  );
+
+  Future<Map<String, Object?>> _requestJson(
+    String path, {
+    required String method,
+    required bool retryTransientResponses,
+    Map<String, Object?> query = const <String, Object?>{},
+    Map<String, Object?>? form,
+    CancelToken? cancelToken,
   }) async {
     final uri = _resolve(path);
     var tokens = await _session.validTokens();
@@ -76,11 +118,13 @@ final class OfficialApiClient implements OfficialApiTransport {
     while (true) {
       final started = DateTime.now();
       try {
-        final response = await _dio.get<Object?>(
+        final response = await _dio.request<Object?>(
           uri.toString(),
           queryParameters: query,
+          data: form,
           cancelToken: cancelToken,
           options: Options(
+            method: method,
             headers: <String, Object?>{
               Headers.acceptHeader: Headers.jsonContentType,
               'Accept-Encoding': 'gzip',
@@ -88,6 +132,9 @@ final class OfficialApiClient implements OfficialApiTransport {
               'Authorization': '${tokens.tokenType} ${tokens.accessToken}',
               'dA-minor-version': config.minorVersion.toString(),
             },
+            contentType: form == null
+                ? null
+                : Headers.formUrlEncodedContentType,
             responseType: ResponseType.json,
             sendTimeout: config.connectTimeout,
             receiveTimeout: config.receiveTimeout,
@@ -100,6 +147,7 @@ final class OfficialApiClient implements OfficialApiTransport {
           'api.response',
           path,
           started,
+          method: method,
           status: status,
           retry: retries,
         );
@@ -109,7 +157,8 @@ final class OfficialApiClient implements OfficialApiTransport {
           refreshed = true;
           continue;
         }
-        if (_retryableStatus(status) &&
+        if (retryTransientResponses &&
+            _retryableStatus(status) &&
             retries < config.retryPolicy.maxRetries) {
           retries += 1;
           await _delay(config.retryPolicy.delayFor(retries));
@@ -130,7 +179,13 @@ final class OfficialApiClient implements OfficialApiTransport {
         rethrow;
       } on DioException catch (error) {
         final failure = _dioFailure(error);
-        _record(DiagnosticLevel.error, failure.code, path, started);
+        _record(
+          DiagnosticLevel.error,
+          failure.code,
+          path,
+          started,
+          method: method,
+        );
         throw failure;
       }
     }
@@ -138,11 +193,15 @@ final class OfficialApiClient implements OfficialApiTransport {
 
   Uri _resolve(String path) {
     final candidate = Uri.parse(path);
-    if (candidate.hasScheme || candidate.hasAuthority || path.startsWith('/')) {
+    if (candidate.hasScheme ||
+        candidate.hasAuthority ||
+        candidate.hasQuery ||
+        candidate.hasFragment ||
+        path.startsWith('/')) {
       throw const DAKitException(
         kind: DAKitFailureKind.configuration,
         code: 'api.path.invalid',
-        message: 'API paths must be relative to the configured base URI.',
+        message: 'API paths must be relative and contain no query or fragment.',
       );
     }
     return config.baseUri.resolve(path);
@@ -164,8 +223,10 @@ final class OfficialApiClient implements OfficialApiTransport {
     final body = data is Map<String, Object?>
         ? data
         : const <String, Object?>{};
-    final providerCode = body['error'] as String?;
-    final description = body['error_description'] as String?;
+    final rawProviderCode = body['error'];
+    final providerCode = rawProviderCode is String ? rawProviderCode : null;
+    final rawDescription = body['error_description'];
+    final description = rawDescription is String ? rawDescription : null;
     final kind = switch (status) {
       401 => DAKitFailureKind.authentication,
       403 => DAKitFailureKind.authorization,
@@ -184,6 +245,8 @@ final class OfficialApiClient implements OfficialApiTransport {
       details: <String, Object?>{
         'status': status,
         if (body['error_code'] case final Object code) 'provider_code': code,
+        if (description != null)
+          'provider_description': _boundedDescription(description),
       },
     );
   }
@@ -213,11 +276,19 @@ final class OfficialApiClient implements OfficialApiTransport {
     );
   }
 
+  static String _boundedDescription(String value) {
+    final normalized = value.replaceAll(RegExp(r'\s+'), ' ').trim();
+    return normalized.length <= 240
+        ? normalized
+        : '${normalized.substring(0, 240)}…';
+  }
+
   void _record(
     DiagnosticLevel level,
     String code,
     String path,
     DateTime started, {
+    required String method,
     int? status,
     int? retry,
   }) {
@@ -230,6 +301,7 @@ final class OfficialApiClient implements OfficialApiTransport {
         elapsed: DateTime.now().difference(started),
         attributes: <String, Object?>{
           'path': path,
+          'method': method,
           ...status == null
               ? const <String, Object?>{}
               : <String, Object?>{'status': status},

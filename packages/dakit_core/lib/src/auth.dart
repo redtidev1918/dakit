@@ -1,3 +1,19 @@
+abstract final class OAuthScope {
+  static const String basic = 'basic';
+  static const String browse = 'browse';
+  static const String collection = 'collection';
+  static const String commentManage = 'comment.manage';
+  static const String commentPost = 'comment.post';
+  static const String feed = 'feed';
+  static const String gallery = 'gallery';
+  static const String message = 'message';
+  static const String note = 'note';
+  static const String publish = 'publish';
+  static const String stash = 'stash';
+  static const String user = 'user';
+  static const String userManage = 'user.manage';
+}
+
 /// OAuth tokens owned by a public client session.
 final class AuthTokens {
   const AuthTokens({

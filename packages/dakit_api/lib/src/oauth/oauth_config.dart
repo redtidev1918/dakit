@@ -4,7 +4,7 @@ final class OAuthConfig {
   OAuthConfig({
     required this.clientId,
     required this.redirectUri,
-    this.scopes = const <String>{'basic', 'browse'},
+    this.scopes = const <String>{OAuthScope.basic, OAuthScope.browse},
     Uri? authorizationEndpoint,
     Uri? tokenEndpoint,
     Uri? revokeEndpoint,

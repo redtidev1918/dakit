@@ -86,7 +86,27 @@ final artworkRepository = OfficialArtworkRepository(api);
 final contentRepository = OfficialArtworkContentRepository(api);
 final galleryRepository = OfficialGalleryRepository(api);
 final mediaRepository = OfficialMediaRepository(api);
+final commentRepository = OfficialCommentRepository(api);
+final socialRepository = OfficialSocialRepository(api);
 ```
+
+默认 scope 只有 `basic` 与 `browse`。需要写操作时，在首次授权前明确申请对应权限：
+
+```dart
+OAuthConfig(
+  clientId: clientId,
+  redirectUri: Uri.parse('dakit://oauth/callback'),
+  scopes: const <String>{
+    OAuthScope.basic,
+    OAuthScope.browse,
+    OAuthScope.collection,
+    OAuthScope.commentPost,
+    OAuthScope.userManage,
+  },
+)
+```
+
+修改 scope 后必须让用户重新授权；已有 token 不会自动获得新增权限。收藏需要 `collection`，发布评论需要 `comment.post`，关注管理需要 `user.manage`。
 
 宿主应用自行决定 UI、状态管理、缓存和数据库。需要已有账户系统时，可以向 `OfficialApiClient` 提供自定义 `AuthTokenProvider`；需要企业网络栈时，可以注入配置好的 Dio；需要不同安全存储或深链实现时，可以替换 `DAKitOAuthClient` 的对应接口。
 

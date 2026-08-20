@@ -228,7 +228,119 @@ void main() {
       );
     },
   );
+
+  test('loads and posts artwork comments through stable models', () async {
+    final transport = FixtureMutationTransport(
+      getResponses: <Map<String, Object?>>[
+        <String, Object?>{
+          'has_more': true,
+          'next_offset': 10,
+          'has_less': false,
+          'prev_offset': null,
+          'total': 11,
+          'thread': <Object?>[commentJson('comment-1', 'Existing comment')],
+        },
+      ],
+      postResponses: <Map<String, Object?>>[
+        commentJson('comment-2', 'Reply text', parentId: 'comment-1'),
+      ],
+    );
+    final repository = OfficialCommentRepository(transport);
+
+    final page = await repository.forArtwork(
+      'art-1',
+      request: const CommentPageRequest(limit: 10, maxDepth: 2),
+    );
+    final posted = await repository.postToArtwork(
+      'art-1',
+      'Reply text',
+      parentCommentId: 'comment-1',
+    );
+
+    expect(page.items.single.body, 'Existing comment');
+    expect(page.nextOffset, 10);
+    expect(page.total, 11);
+    expect(posted.parentId, 'comment-1');
+    expect(transport.getRequests.single.path, 'comments/deviation/art-1');
+    expect(transport.getRequests.single.query['maxdepth'], 2);
+    expect(transport.postRequests.single.path, 'comments/post/deviation/art-1');
+    expect(transport.postRequests.single.form, <String, Object?>{
+      'body': 'Reply text',
+      'commentid': 'comment-1',
+    });
+  });
+
+  test(
+    'maps favourite and watch mutations without leaking transport types',
+    () async {
+      final transport = FixtureMutationTransport(
+        getResponses: <Map<String, Object?>>[
+          <String, Object?>{'success': true},
+        ],
+        postResponses: <Map<String, Object?>>[
+          <String, Object?>{'success': true, 'favourites': 8},
+          <String, Object?>{'success': true, 'favourites': 7},
+          <String, Object?>{'success': true},
+        ],
+      );
+      final repository = OfficialSocialRepository(transport);
+
+      final added = await repository.favourite(
+        'art-1',
+        collectionFolderIds: const <String>['folder-1'],
+      );
+      final removed = await repository.unfavourite('art-1');
+      await repository.watch(
+        'sample-user',
+        options: const WatchOptions(activity: false),
+      );
+      await repository.unwatch('sample-user');
+
+      expect(added.isFavourite, isTrue);
+      expect(added.total, 8);
+      expect(removed.isFavourite, isFalse);
+      expect(removed.total, 7);
+      expect(transport.postRequests[0].path, 'collections/fave');
+      expect(transport.postRequests[0].form['folderid'], <String>['folder-1']);
+      expect(transport.postRequests[2].form['watch[activity]'], isFalse);
+      expect(
+        transport.getRequests.single.path,
+        'user/friends/unwatch/sample-user',
+      );
+    },
+  );
+
+  test('validates comment limits before making a request', () async {
+    final transport = FixtureMutationTransport();
+
+    await expectLater(
+      OfficialCommentRepository(transport)
+          .forArtwork('art-1', request: const CommentPageRequest(maxDepth: 6)),
+      throwsA(
+        isA<DAKitException>().having(
+          (error) => error.code,
+          'code',
+          'api.comment.page.invalid',
+        ),
+      ),
+    );
+    expect(transport.getRequests, isEmpty);
+  });
 }
+
+Map<String, Object?> commentJson(String id, String body, {String? parentId}) =>
+    <String, Object?>{
+      'commentid': id,
+      'parentid': parentId,
+      'posted': '2026-08-20T12:00:00Z',
+      'replies': 0,
+      'hidden': null,
+      'body': body,
+      'is_liked': false,
+      'is_featured': false,
+      'likes': 2,
+      'user': <String, Object?>{'userid': 'user-1', 'username': 'sample-user'},
+    };
 
 Future<Map<String, Object?>> fixture(String name) async {
   final packageLocal = File('test/fixtures/$name');
@@ -262,6 +374,48 @@ final class FixtureRequest {
 
   final String path;
   final Map<String, Object?> query;
+}
+
+final class FixtureMutationTransport implements OfficialApiMutationTransport {
+  FixtureMutationTransport({
+    List<Map<String, Object?>> getResponses = const <Map<String, Object?>>[],
+    List<Map<String, Object?>> postResponses = const <Map<String, Object?>>[],
+  }) : getResponses = List<Map<String, Object?>>.of(getResponses),
+       postResponses = List<Map<String, Object?>>.of(postResponses);
+
+  final List<Map<String, Object?>> getResponses;
+  final List<Map<String, Object?>> postResponses;
+  final List<FixtureRequest> getRequests = <FixtureRequest>[];
+  final List<FixtureMutationRequest> postRequests = <FixtureMutationRequest>[];
+
+  @override
+  Future<Map<String, Object?>> getJson(
+    String path, {
+    Map<String, Object?> query = const <String, Object?>{},
+    CancelToken? cancelToken,
+  }) async {
+    getRequests.add(FixtureRequest(path, Map<String, Object?>.of(query)));
+    return getResponses.removeAt(0);
+  }
+
+  @override
+  Future<Map<String, Object?>> postFormJson(
+    String path, {
+    Map<String, Object?> form = const <String, Object?>{},
+    CancelToken? cancelToken,
+  }) async {
+    postRequests.add(
+      FixtureMutationRequest(path, Map<String, Object?>.of(form)),
+    );
+    return postResponses.removeAt(0);
+  }
+}
+
+final class FixtureMutationRequest {
+  const FixtureMutationRequest(this.path, this.form);
+
+  final String path;
+  final Map<String, Object?> form;
 }
 
 final class ThrowingTransport implements OfficialApiTransport {

@@ -9,7 +9,7 @@
 - 版本阶段：`0.1.0-dev.1`，尚未发布 pub.dev；
 - 运行时：Flutter 3.47.1 / Dart 3.13.1；
 - 平台：Android、macOS、Windows/MSIX；
-- 测试：格式与分析通过，69 个测试通过；
+- 测试：格式与分析通过，81 个测试通过；
 - 本机构建：Android debug APK、macOS debug app 通过；
 - CI：Linux 质量门及 Android/macOS/Windows 四个 job 通过；
 - 包发布检查：`dakit_core`、`dakit_api`、`dakit_flutter` dry-run 均为 0 warning；
@@ -23,12 +23,15 @@
 - Public Client Authorization Code + S256 PKCE；
 - pending transaction/token 安全存储、冷启动回调、并发授权合并与串行 refresh；
 - 账户、作品详情/正文、首页/搜索、画廊、收藏、原文件元数据；
+- 作品评论读取/发布、收藏/取消收藏、关注/取消关注，以及集中维护的 OAuth scope 常量；
+- 统一的 authenticated form mutation transport；POST 仅在 401 后刷新重放，不会对 429/5xx 自动重复非幂等操作；
 - 环境/直连/显式 HTTP 代理、自定义 Dio、DNS/TCP/TLS/HTTP 探针；
 - 原文件可用性分类，不以 preview 冒充 original；
 - Flutter 后台任务恢复、进度、重试、暂停/继续/取消及独立代理；
 - 中英文示例客户端和脱敏诊断面板；
 - Android 自定义 scheme、macOS URL type、Windows MSIX 协议激活；
 - 三包 MIT 许可证、package README/changelog 与可发布归档。
+- refresh/logout/token exchange 具备 generation guard，迟到操作不能在退出后恢复会话；主动取消登录会立即结束回调等待。
 
 ## 已验证的登录链路
 

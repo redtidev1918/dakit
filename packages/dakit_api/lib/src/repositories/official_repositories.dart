@@ -162,6 +162,167 @@ final class OfficialMediaRepository implements MediaRepository {
   }
 }
 
+final class OfficialCommentRepository implements CommentRepository {
+  const OfficialCommentRepository(this._transport);
+
+  final OfficialApiMutationTransport _transport;
+  final DeviationMapper _mapper = const DeviationMapper();
+
+  @override
+  Future<CommentPage> forArtwork(
+    String artworkId, {
+    CommentPageRequest request = const CommentPageRequest(),
+  }) async {
+    _validateIdentifier(artworkId, 'artwork id');
+    _validateCommentPage(request);
+    final commentId = request.commentId?.trim();
+    final json = await _transport.getJson(
+      'comments/deviation/${Uri.encodeComponent(artworkId)}',
+      query: <String, Object?>{
+        'offset': request.offset,
+        'limit': request.limit,
+        'maxdepth': request.maxDepth,
+        if (commentId != null && commentId.isNotEmpty) 'commentid': commentId,
+        'expand': 'comment.fulltext',
+      },
+    );
+    final rawThread = json['thread'];
+    if (rawThread is! List) throw _missingField('thread');
+    final hasMore = _requiredResponseBoolean(json, 'has_more');
+    final hasLess = _requiredResponseBoolean(json, 'has_less');
+    final nextOffset = _optionalInteger(json['next_offset']);
+    final previousOffset = _optionalInteger(json['prev_offset']);
+    if (hasMore && nextOffset == null) throw _missingField('next_offset');
+    if (hasLess && previousOffset == null) throw _missingField('prev_offset');
+    return CommentPage(
+      items: List<Comment>.unmodifiable(
+        rawThread.map((item) => _mapper.comment(_requiredItemMap(item))),
+      ),
+      hasMore: hasMore,
+      hasLess: hasLess,
+      nextOffset: nextOffset,
+      previousOffset: previousOffset,
+      total: _optionalInteger(json['total']),
+    );
+  }
+
+  @override
+  Future<Comment> postToArtwork(
+    String artworkId,
+    String body, {
+    String? parentCommentId,
+  }) async {
+    _validateIdentifier(artworkId, 'artwork id');
+    if (body.trim().isEmpty) {
+      throw const DAKitException(
+        kind: DAKitFailureKind.configuration,
+        code: 'api.comment.empty',
+        message: 'A comment body must not be empty.',
+      );
+    }
+    final parent = parentCommentId?.trim();
+    if (parentCommentId != null && (parent == null || parent.isEmpty)) {
+      throw const DAKitException(
+        kind: DAKitFailureKind.configuration,
+        code: 'api.comment.parent.invalid',
+        message: 'A parent comment ID must not be empty.',
+      );
+    }
+    final json = await _transport.postFormJson(
+      'comments/post/deviation/${Uri.encodeComponent(artworkId)}',
+      form: <String, Object?>{'body': body, 'commentid': ?parent},
+    );
+    return _mapper.comment(json);
+  }
+}
+
+final class OfficialSocialRepository implements SocialRepository {
+  const OfficialSocialRepository(this._transport);
+
+  final OfficialApiMutationTransport _transport;
+
+  @override
+  Future<FavouriteResult> favourite(
+    String artworkId, {
+    List<String> collectionFolderIds = const <String>[],
+  }) => _setFavourite(
+    'collections/fave',
+    artworkId,
+    collectionFolderIds,
+    expected: true,
+  );
+
+  @override
+  Future<FavouriteResult> unfavourite(
+    String artworkId, {
+    List<String> collectionFolderIds = const <String>[],
+  }) => _setFavourite(
+    'collections/unfave',
+    artworkId,
+    collectionFolderIds,
+    expected: false,
+  );
+
+  Future<FavouriteResult> _setFavourite(
+    String path,
+    String artworkId,
+    List<String> folderIds, {
+    required bool expected,
+  }) async {
+    _validateIdentifier(artworkId, 'artwork id');
+    final folders = folderIds.map((value) => value.trim()).toList();
+    if (folders.any((value) => value.isEmpty)) {
+      throw const DAKitException(
+        kind: DAKitFailureKind.configuration,
+        code: 'api.collection.folder.invalid',
+        message: 'Collection folder IDs must not be empty.',
+      );
+    }
+    final json = await _transport.postFormJson(
+      path,
+      form: <String, Object?>{
+        'deviationid': artworkId,
+        if (folders.isNotEmpty) 'folderid': folders,
+      },
+    );
+    _requireSuccess(json, path);
+    final total = _optionalInteger(json['favourites']);
+    if (total == null || total < 0) throw _missingField('favourites');
+    return FavouriteResult(isFavourite: expected, total: total);
+  }
+
+  @override
+  Future<void> watch(
+    String username, {
+    WatchOptions options = const WatchOptions(),
+  }) async {
+    _validateIdentifier(username, 'username');
+    final json = await _transport.postFormJson(
+      'user/friends/watch/${Uri.encodeComponent(username)}',
+      form: <String, Object?>{
+        'watch[friend]': options.friend,
+        'watch[deviations]': options.deviations,
+        'watch[journals]': options.journals,
+        'watch[forum_threads]': options.forumThreads,
+        'watch[critiques]': options.critiques,
+        'watch[scraps]': options.scraps,
+        'watch[activity]': options.activity,
+        'watch[collections]': options.collections,
+      },
+    );
+    _requireSuccess(json, 'user/friends/watch');
+  }
+
+  @override
+  Future<void> unwatch(String username) async {
+    _validateIdentifier(username, 'username');
+    final json = await _transport.getJson(
+      'user/friends/unwatch/${Uri.encodeComponent(username)}',
+    );
+    _requireSuccess(json, 'user/friends/unwatch');
+  }
+}
+
 MediaAvailability? _expectedMediaAvailability(DAKitException error) {
   final rawProviderCode = error.details['provider_code'];
   final providerCode = switch (rawProviderCode) {
@@ -246,4 +407,62 @@ void _validateIdentifier(String value, String label) {
       message: 'The $label must not be empty.',
     );
   }
+}
+
+void _validateCommentPage(CommentPageRequest request) {
+  if (request.offset < -10000 ||
+      request.offset > 10000 ||
+      request.limit < 1 ||
+      request.limit > 50 ||
+      request.maxDepth < 0 ||
+      request.maxDepth > 5 ||
+      (request.commentId != null && request.commentId!.trim().isEmpty)) {
+    throw const DAKitException(
+      kind: DAKitFailureKind.configuration,
+      code: 'api.comment.page.invalid',
+      message: 'Comment pagination or depth is outside provider limits.',
+    );
+  }
+}
+
+Map<String, Object?> _requiredItemMap(Object? value) {
+  if (value is Map<String, Object?>) return value;
+  if (value is Map) {
+    return value.map((key, item) => MapEntry(key.toString(), item));
+  }
+  throw _missingField('thread.item');
+}
+
+int? _optionalInteger(Object? value) => switch (value) {
+  int number => number,
+  num number => number.toInt(),
+  String text => int.tryParse(text),
+  _ => null,
+};
+
+bool _requiredResponseBoolean(Map<String, Object?> json, String field) {
+  final value = json[field];
+  if (value is bool) return value;
+  throw _missingField(field);
+}
+
+DAKitException _missingField(String field) => DAKitException(
+  kind: DAKitFailureKind.parsing,
+  code: 'api.response.missing_field',
+  message: 'The official API response is missing a required field.',
+  details: <String, Object?>{'field': field},
+);
+
+void _requireSuccess(Map<String, Object?> json, String operation) {
+  final success = json['success'];
+  if (success == true) return;
+  if (success == false) {
+    throw DAKitException(
+      kind: DAKitFailureKind.upstream,
+      code: 'api.mutation.rejected',
+      message: 'The provider did not apply the requested operation.',
+      details: <String, Object?>{'operation': operation},
+    );
+  }
+  throw _missingField('success');
 }

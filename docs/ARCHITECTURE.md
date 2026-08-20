@@ -38,10 +38,12 @@ DAKit 的目标是成为第三方 Flutter 客户端的底层 SDK，而不是把�
 - PKCE 事务、回调验证、token exchange/refresh/revoke；
 - 可替换的 OAuth endpoint 与官方 API transport；
 - 环境、直连、显式 HTTP 代理和 Dio 注入；
-- 当前已实现的账户、作品、正文、浏览、画廊、收藏和原文件仓库；
+- 当前已实现的账户、作品、正文、浏览、画廊、收藏夹、原文件、评论和社交操作仓库；
 - 上游 JSON 到稳定领域模型的私有映射。
 
 DTO 不从顶层库导出。官方响应新增未知字段不应破坏解析；必需字段消失时必须抛出明确 parsing failure。
+
+`OfficialApiTransport` 提供读取扩展点，`OfficialApiMutationTransport` 额外提供统一的 URL-encoded POST。GET 会按配置退避重试 429/500/503；非幂等 POST 只会在 401 后刷新一次 token，不会自动重试可能已生效的写操作。
 
 ### `dakit_flutter`
 
@@ -90,4 +92,4 @@ DTO 不从顶层库导出。官方响应新增未知字段不应破坏解析；�
 
 ## 版本与新增功能
 
-三个包按语义化版本独立发布。新增评论、关注、通知、提交作品等能力时，先在 core 增加最小领域契约，再在 api 实现官方适配器，最后由 Flutter/example 验证平台交互。不要直接从页面组件调用未封装 endpoint。
+三个包按语义化版本独立发布。新增通知、消息、提交作品等能力时，先在 core 增加最小领域契约，再在 api 实现官方适配器，最后由 Flutter/example 验证平台交互。不要直接从页面组件调用未封装 endpoint。

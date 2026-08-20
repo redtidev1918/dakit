@@ -21,3 +21,7 @@
   exchange, and preserve granted scopes when refresh responses omit `scope`.
 - Make active browser authorization explicitly cancellable instead of waiting for
   the callback timeout.
+- Add authenticated URL-encoded mutation transport without unsafe automatic POST
+  retries, plus typed artwork comments, favourite/unfavourite, and watch/unwatch
+  repositories.
+- Preserve bounded provider API descriptions for actionable diagnostics.

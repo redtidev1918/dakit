@@ -130,6 +130,23 @@ final class DeviationMapper {
     );
   }
 
+  Comment comment(Map<String, Object?> json) {
+    final rawBody = json['body'];
+    if (rawBody is! String) throw _missing('body');
+    return Comment(
+      id: _requiredString(json, 'commentid'),
+      parentId: _string(json['parentid']),
+      postedAt: _requiredDateTime(json, 'posted'),
+      body: rawBody,
+      author: user(_requiredMap(json, 'user')),
+      replyCount: _requiredInteger(json, 'replies'),
+      likeCount: _requiredInteger(json, 'likes'),
+      hiddenReason: _string(json['hidden']),
+      isLiked: _requiredBoolean(json, 'is_liked'),
+      isFeatured: _requiredBoolean(json, 'is_featured'),
+    );
+  }
+
   static ArtworkTextContent? _textContent(Map<String, Object?> json) {
     final text = _map(json['text_content']);
     if (text == null) return null;
@@ -195,6 +212,24 @@ String _requiredString(Map<String, Object?> json, String key) {
 
 Uri _requiredWebUri(Map<String, Object?> json, String key) {
   final value = _webUri(json[key]);
+  if (value == null) throw _missing(key);
+  return value;
+}
+
+int _requiredInteger(Map<String, Object?> json, String key) {
+  final value = _integer(json[key]);
+  if (value == null) throw _missing(key);
+  return value;
+}
+
+bool _requiredBoolean(Map<String, Object?> json, String key) {
+  final value = json[key];
+  if (value is! bool) throw _missing(key);
+  return value;
+}
+
+DateTime _requiredDateTime(Map<String, Object?> json, String key) {
+  final value = _dateTime(json[key]);
   if (value == null) throw _missing(key);
   return value;
 }
