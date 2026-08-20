@@ -2,6 +2,17 @@
 
 本文从零完成开发者应用注册、示例客户端运行和 SDK 嵌入。先准备 Flutter 3.47.1、Dart 3.13.1，以及目标平台工具链。
 
+## 0. 准备清单
+
+开始前先确认以下内容：
+
+- 有一个 DeviantArt 账号，并能在开发者页面创建应用；
+- 客户端类程序选择 **Public** Client type，只需要 `client_id`，不保存 `client_secret`；
+- 回调地址按你要运行的程序精确白名单：
+  - 示例客户端 / 桌面 / Android：`dakit://oauth/callback`
+  - 命令行客户端：`http://127.0.0.1:8765/callback`
+- 登录需要 `client_id`；下载还需要作品 UUID。
+
 ## 1. 注册开发者应用
 
 在 DeviantArt 的应用管理页创建应用。先根据程序的部署方式选择 Client type：

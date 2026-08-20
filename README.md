@@ -19,6 +19,17 @@ DAKit 是面向 Dart 与 Flutter 的模块化 DeviantArt 客户端 SDK，为 And
 
 目前尚未实现作品提交/编辑、Notes 私信和本地数据库。网站私有接口或页面抓取也不属于稳定 API。
 
+## 开始前准备
+
+运行任何登录、下载或诊断流程前，先确认下面几件事：
+
+- 你需要一个 DeviantArt 开发者应用。客户端类程序（示例客户端、CLI、Android/macOS/Windows 应用）必须选 **Public**；只有把凭据安全保存在服务端时才选 **Confidential**。
+- Public 应用只需要 `client_id`，不要使用或保存 `client_secret`；DAKit 的客户端登录流程不接收 secret。
+- 回调地址必须精确写入应用的 OAuth2 Redirect URI Whitelist：
+  - Flutter 示例客户端 / 桌面：`dakit://oauth/callback`
+  - 命令行客户端：`http://127.0.0.1:8765/callback`
+- 登录需要 `client_id`；下载还需要一个作品 UUID（不是网页地址里的 slug/数字编号）。
+
 ## 包结构
 
 | 包 | 用途 | Flutter 依赖 |

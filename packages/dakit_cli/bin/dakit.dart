@@ -26,7 +26,8 @@ Environment:
 
 const _prerequisites = '''
 Before `login`, prepare:
-  1. Register a Public OAuth application on DeviantArt.
+  1. Register a Public OAuth application on DeviantArt (not Confidential).
+     DAKit client login never accepts a client_secret.
   2. Add this exact redirect URI to its whitelist:
        http://127.0.0.1:8765/callback
      If you pass --port, use that port instead.
