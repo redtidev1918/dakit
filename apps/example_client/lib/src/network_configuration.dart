@@ -10,6 +10,11 @@ NetworkProfile readExampleNetworkProfile() => parseExampleNetworkProfile(
   bypass: const String.fromEnvironment('ARTRELAY_PROXY_BYPASS'),
 );
 
+ProxyConfiguration? readExampleTransferProxy() => parseExampleTransferProxy(
+  host: const String.fromEnvironment('ARTRELAY_TRANSFER_PROXY_HOST'),
+  port: const String.fromEnvironment('ARTRELAY_TRANSFER_PROXY_PORT'),
+);
+
 NetworkProfile parseExampleNetworkProfile({
   required String mode,
   String host = '',
@@ -43,4 +48,30 @@ int _proxyPort(String value) {
     );
   }
   return parsed;
+}
+
+ProxyConfiguration? parseExampleTransferProxy({
+  String host = '',
+  String port = '',
+}) {
+  final normalizedHost = host.trim();
+  final normalizedPort = port.trim();
+  if (normalizedHost.isEmpty && normalizedPort.isEmpty) return null;
+  if (normalizedHost.isEmpty || normalizedPort.isEmpty) {
+    throw const ArtRelayException(
+      kind: ArtRelayFailureKind.configuration,
+      code: 'example.transfer_proxy.incomplete',
+      message: 'Transfer proxy host and port must be provided together.',
+    );
+  }
+  final parsedPort = int.tryParse(normalizedPort);
+  if (parsedPort == null || parsedPort < 1 || parsedPort > 65535) {
+    throw const ArtRelayException(
+      kind: ArtRelayFailureKind.configuration,
+      code: 'example.transfer_proxy.port_invalid',
+      message: 'Transfer proxy port must be between 1 and 65535.',
+    );
+  }
+  final validated = HttpProxyServer(host: normalizedHost, port: parsedPort);
+  return ProxyConfiguration(host: validated.host, port: validated.port);
 }

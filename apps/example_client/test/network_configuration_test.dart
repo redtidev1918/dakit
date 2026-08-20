@@ -35,4 +35,25 @@ void main() {
       ),
     );
   });
+
+  test('transfer proxy stays independent from API routing', () {
+    final proxy = parseExampleTransferProxy(host: '127.0.0.1', port: '7892');
+
+    expect(proxy?.host, '127.0.0.1');
+    expect(proxy?.port, 7892);
+    expect(parseExampleTransferProxy(), isNull);
+  });
+
+  test('rejects a half-configured transfer proxy', () {
+    expect(
+      () => parseExampleTransferProxy(host: '127.0.0.1'),
+      throwsA(
+        isA<ArtRelayException>().having(
+          (error) => error.code,
+          'code',
+          'example.transfer_proxy.incomplete',
+        ),
+      ),
+    );
+  });
 }

@@ -33,6 +33,13 @@ final task = await transfers.enqueue(
 transfers.updates.listen(renderTransfer);
 ```
 
+The example client initializes the manager before session restoration, reloads
+persisted records, and displays them independently from the selected artwork. Its
+detail workflow checks `Artwork.isDownloadable` before resolving an original and
+coalesces scheduling/control actions so repeated taps cannot enqueue or mutate a
+task concurrently. Late detail responses are generation-checked and cannot replace
+a newer selection.
+
 Tasks use an application-relative directory rather than persisting an absolute
 mobile path. Filenames are reduced to a safe leaf name. Transfer task records do
 not include OAuth headers; callers should enqueue the HTTPS URL resolved by the

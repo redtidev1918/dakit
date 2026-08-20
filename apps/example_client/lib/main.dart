@@ -9,14 +9,19 @@ import 'src/network_configuration.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   final diagnostics = DiagnosticLog();
+  final transfers = BackgroundTransferManager(diagnostics: diagnostics);
   const clientId = String.fromEnvironment('ARTRELAY_CLIENT_ID');
   late final NetworkProfile networkProfile;
+  late final ProxyConfiguration? transferProxy;
   try {
     networkProfile = readExampleNetworkProfile();
+    transferProxy = readExampleTransferProxy();
   } on ArtRelayException catch (error) {
     final controller = ExampleClientController.configurationFailure(
       diagnostics: diagnostics,
       failure: error,
+      transferManager: transfers,
+      initialTransferProxy: null,
     );
     runApp(ArtRelayExampleApp(controller: controller));
     return;
@@ -30,12 +35,16 @@ void main() {
       ? ExampleClientController.unconfigured(
           diagnostics: diagnostics,
           runConnectivity: connectivity.run,
+          transferManager: transfers,
+          initialTransferProxy: transferProxy,
         )
       : _configuredController(
           clientId,
           diagnostics,
           networkProfile,
           connectivity,
+          transfers,
+          transferProxy,
         );
   runApp(ArtRelayExampleApp(controller: controller));
   controller.initialize();
@@ -46,6 +55,8 @@ ExampleClientController _configuredController(
   DiagnosticLog diagnostics,
   NetworkProfile networkProfile,
   ConnectivityProbe connectivity,
+  TransferManager transfers,
+  ProxyConfiguration? transferProxy,
 ) {
   final oauth = ArtRelayOAuthClient(
     config: OAuthConfig(
@@ -61,6 +72,8 @@ ExampleClientController _configuredController(
     config: ApiConfig(userAgent: 'ArtRelay-Example/0.1'),
     networkProfile: networkProfile,
   );
+  final artworks = OfficialArtworkRepository(transport);
+  final media = OfficialMediaRepository(transport);
   return ExampleClientController(
     diagnostics: diagnostics,
     resumeSession: oauth.resumePending,
@@ -68,9 +81,11 @@ ExampleClientController _configuredController(
     validTokens: oauth.validTokens,
     logout: oauth.logout,
     loadAccount: OfficialAccountRepository(transport).currentUser,
-    loadHome: () =>
-        OfficialArtworkRepository(transport)
-            .browse(const PageRequest(limit: 12)),
+    loadHome: () => artworks.browse(const PageRequest(limit: 12)),
     runConnectivity: connectivity.run,
+    loadArtwork: artworks.getById,
+    resolveOriginal: media.originalFile,
+    transferManager: transfers,
+    initialTransferProxy: transferProxy,
   );
 }

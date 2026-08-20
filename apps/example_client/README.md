@@ -32,6 +32,25 @@ Use `ARTRELAY_PROXY_MODE=direct` to prove direct behavior. Android emulators use
 `10.0.2.2`, not `127.0.0.1`, to reach a proxy on the development computer. Full
 profile and diagnostic semantics are in `docs/NETWORKING.md`.
 
+Native background transfers have a separate persisted proxy setting. Configure it
+explicitly when media traffic also needs the local proxy:
+
+```shell
+flutter run -d macos \
+  --dart-define=ARTRELAY_CLIENT_ID=YOUR_PUBLIC_CLIENT_ID \
+  --dart-define=ARTRELAY_PROXY_MODE=http \
+  --dart-define=ARTRELAY_PROXY_HOST=127.0.0.1 \
+  --dart-define=ARTRELAY_PROXY_PORT=7892 \
+  --dart-define=ARTRELAY_TRANSFER_PROXY_HOST=127.0.0.1 \
+  --dart-define=ARTRELAY_TRANSFER_PROXY_PORT=7892
+```
+
+After authorization, select a home item to load its official detail. The client
+only calls the original-file endpoint when the detail says it is downloadable.
+It shows filename, media kind, full byte size, availability, native progress,
+speed, remaining time, persisted tasks, and pause/resume/cancel controls. A preview
+is never substituted when original metadata is unavailable.
+
 Build-only smoke tests do not require an OAuth application:
 
 ```shell

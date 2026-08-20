@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:ui' show Size;
+
 import 'package:artrelay_flutter/artrelay_flutter.dart';
 import 'package:example_client/src/client_app.dart';
 import 'package:example_client/src/client_controller.dart';
@@ -11,6 +14,8 @@ void main() {
     (tester) async {
       final controller = ExampleClientController.unconfigured(
         diagnostics: DiagnosticLog(),
+        transferManager: FakeTransferManager(),
+        initialTransferProxy: null,
       );
 
       await tester.pumpWidget(ArtRelayExampleApp(controller: controller));
@@ -24,6 +29,8 @@ void main() {
   testWidgets(
     'login updates the account and home content without manual refresh',
     (tester) async {
+      await tester.binding.setSurfaceSize(const Size(900, 1000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
       final controller = ExampleClientController(
         diagnostics: DiagnosticLog(),
         resumeSession: ({waitForCallback = false}) async => null,
@@ -40,6 +47,10 @@ void main() {
         loadHome: () async =>
             Page<Artwork>(items: <Artwork>[artwork], hasMore: false),
         runConnectivity: successfulConnectivity,
+        loadArtwork: (_) async => downloadableArtwork,
+        resolveOriginal: (_) async => originalAsset,
+        transferManager: FakeTransferManager(),
+        initialTransferProxy: null,
       );
       await tester.pumpWidget(ArtRelayExampleApp(controller: controller));
       await controller.initialize();
@@ -52,6 +63,20 @@ void main() {
       expect(find.text('@sample-user'), findsOneWidget);
       expect(find.text('Example work'), findsOneWidget);
       expect(find.text('All four stages reached the service.'), findsOneWidget);
+
+      final artworkTile = find.byKey(const Key('artwork-art-1'));
+      await tester.ensureVisible(artworkTile);
+      await tester.tap(artworkTile);
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('artwork-detail')), findsOneWidget);
+      expect(find.text('Original file'), findsOneWidget);
+      expect(find.textContaining('48.0 MiB'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('download-original-button')));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('queued · original.zip'), findsOneWidget);
     },
   );
 }
@@ -90,3 +115,66 @@ final artwork = Artwork(
   pageUri: Uri.parse('https://example.test/art-1'),
   media: const <MediaAsset>[],
 );
+
+final downloadableArtwork = Artwork(
+  id: artwork.id,
+  title: artwork.title,
+  author: artwork.author,
+  pageUri: artwork.pageUri,
+  media: artwork.media,
+  isDownloadable: true,
+);
+
+final originalAsset = MediaAsset(
+  id: 'art-1:original',
+  kind: MediaKind.archive,
+  role: MediaRole.original,
+  availability: MediaAvailability.available,
+  uri: Uri.parse('https://files.example.test/original.zip'),
+  filename: 'original.zip',
+  byteLength: 50331648,
+);
+
+final class FakeTransferManager implements TransferManager {
+  final StreamController<TransferSnapshot> controller =
+      StreamController<TransferSnapshot>.broadcast();
+  final Map<String, TransferSnapshot> snapshots = <String, TransferSnapshot>{};
+
+  @override
+  Stream<TransferSnapshot> get updates => controller.stream;
+
+  @override
+  Future<void> initialize() async {}
+
+  @override
+  Future<TransferSnapshot> enqueue(TransferRequest request) async {
+    final snapshot = TransferSnapshot(
+      id: request.id,
+      state: TransferState.queued,
+      progress: 0,
+      filename: request.asset.filename,
+      expectedBytes: request.asset.byteLength,
+    );
+    snapshots[snapshot.id] = snapshot;
+    controller.add(snapshot);
+    return snapshot;
+  }
+
+  @override
+  Future<List<TransferSnapshot>> records() async => snapshots.values.toList();
+
+  @override
+  Future<void> pause(String id) async {}
+
+  @override
+  Future<void> resume(String id) async {}
+
+  @override
+  Future<void> cancel(String id) async {}
+
+  @override
+  Future<void> configureProxy(ProxyConfiguration? proxy) async {}
+
+  @override
+  Future<void> dispose() => controller.close();
+}

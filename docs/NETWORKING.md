@@ -99,6 +99,17 @@ flutter run -d macos \
 `10.0.2.2` for the standard Android emulator or a reachable LAN address for a
 physical device. Do not embed authenticated proxy passwords in `--dart-define`.
 
+Media transfer defines are deliberately separate:
+
+```shell
+--dart-define=ARTRELAY_TRANSFER_PROXY_HOST=127.0.0.1 \
+--dart-define=ARTRELAY_TRANSFER_PROXY_PORT=7892
+```
+
+When these are absent, the example explicitly clears any native transfer proxy
+persisted by an earlier run. Providing only a host or only a port is a visible
+configuration error. Use `10.0.2.2` for both proxy hosts on an Android emulator.
+
 The example runs the four-stage check at startup and exposes a **Run check** button.
 An invalid mode, host, or port produces a visible configuration error rather than a
 blank screen or an ignored fallback.

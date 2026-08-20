@@ -15,10 +15,9 @@ same commit as every material milestone.
 
 ## Next actions
 
-1. Add artwork detail and transfer controls to the example client.
-2. Run representative live transfers for image, video, archive, literature, and
+1. Run representative live transfers for image, video, archive, literature, and
    restricted cases.
-3. Add Dart, Android, macOS, and Windows CI jobs.
+2. Add Dart, Android, macOS, and Windows CI jobs.
 
 ## Decisions already made
 
@@ -36,7 +35,7 @@ same commit as every material milestone.
 - Engine `5d53178869`
 - Dart 3.13.1
 - `flutter analyze`: no issues
-- Test suites: 53 passing
+- Test suites: 59 passing
 - Local builds: Android debug APK and macOS debug application succeed
 
 ## Latest milestone
@@ -60,7 +59,7 @@ same commit as every material milestone.
   forwards a callback to the existing instance and registers the protocol through
   its MSIX manifest.
 - Verified Android APK SHA-256 on this machine:
-  `1443d56e86671a8f50bf2c9179450a3666441c8d45d316cc82f34aa6e3f074eb`.
+  `5ab1049ecc6d2193cbd757400f01abf293c5e775fab00cb1cfaa6317a0e1dc27`.
 - Startup restoration no longer waits for a callback when the app was opened
   normally, and a previous initial link cannot poison a new authorization attempt.
 - The generated counter was replaced by a responsive integration client with
@@ -85,8 +84,21 @@ same commit as every material milestone.
   both `https_proxy=http://127.0.0.1:7892` and an explicit HTTP profile. Forced
   direct mode resolved DNS but timed out at TCP, proving route selection is not a
   cosmetic setting. A probe socket shutdown leak found by this test was fixed.
-- The complete 53-test gate, macOS debug application, and Android debug APK all
-  pass after the network-routing integration.
+- The example now loads artwork detail on selection, resolves the dedicated
+  original endpoint only for provider-downloadable work, and renders filename,
+  media type, true byte size, availability, progress, speed, ETA, and local path.
+- Native task records restore before login. Download scheduling and pause/resume/
+  cancel controls reject concurrent taps, while late detail responses cannot
+  overwrite a newer selection.
+- API/OAuth and background-transfer proxy build defines are separate. The example
+  explicitly clears a previously persisted native transfer proxy when no media
+  proxy is configured.
+- Preview-only behavior, stale-response suppression, task recovery, independent
+  proxy configuration, enqueue/control mapping, and the detail UI are covered by
+  tests. The complete 59-test gate and both local platform builds pass.
+- The example UI is split into status, network, artwork, transfer, and diagnostic
+  components; the executable is not a new monolithic widget or tied to a state
+  management package.
 
 ## Known external requirements
 
