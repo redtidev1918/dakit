@@ -28,11 +28,23 @@ tool/verify.sh             本地与 CI 共用质量门
 ## 日常验证
 
 ```shell
-flutter pub get
+dart pub get
 ./tool/verify.sh
 ```
 
-脚本依次检查格式、静态分析，并运行 core、api、flutter 与示例应用测试。当前基线为 91 个测试。
+`tool/verify.sh` 会先拉取依赖，再通过 melos 依次检查格式、静态分析，并运行
+core、api、flutter 与示例应用测试。当前基线为 94 个测试。
+
+更细粒度的 melos 命令：
+
+```shell
+dart run melos run format
+dart run melos run analyze
+dart run melos run test
+dart run melos run test:coverage
+dart run melos run graph
+dart run melos run publish:check
+```
 
 真实 OAuth/API 测试不进入普通 CI，因为它需要用户授权并受 provider 内容影响。测试方法见 [LIVE_TESTING.md](LIVE_TESTING.md)。
 
@@ -84,7 +96,7 @@ dart pub publish --dry-run --directory packages/dakit_api
 flutter pub publish --dry-run --directory packages/dakit_flutter
 ```
 
-发布顺序为 core → api → flutter。正式发布前还需确认 pub.dev 上的包名可用、repository 链接、版本依赖和 changelog 一致。当前 README 使用 Git dependency，是因为尚未宣称已经发布到 pub.dev。
+发布顺序为 core → api → flutter。正式发布前还需确认 pub.dev 上的包名可用、repository 链接、版本依赖和 changelog 一致。当前 README 使用 Git dependency，是因为尚未宣称已经发布到 pub.dev。完整发布流程见 [RELEASING.md](RELEASING.md)。
 
 ## 提交纪律
 

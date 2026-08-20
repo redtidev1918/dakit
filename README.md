@@ -147,6 +147,7 @@ final account = await OfficialAccountRepository(transport).currentUser();
 - [网络](docs/NETWORKING.md)：代理模型、国内网络、分阶段诊断；
 - [媒体](docs/MEDIA.md)：原文件、正文、后台任务与验收边界；
 - [开发](docs/DEVELOPMENT.md)：工具链、测试、三平台构建、CI、发布；
+- [发布](docs/RELEASING.md)：包版本更新与 pub.dev 发布流程；
 - [真实服务测试](docs/LIVE_TESTING.md)：需用户授权的完整媒体矩阵；
 - [当前状态](docs/STATUS.md)：已验证结果和后续工作。
 
