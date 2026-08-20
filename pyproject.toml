@@ -1,0 +1,39 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "dakit"
+version = "0.1.0"
+description = "Async, embeddable DeviantArt client SDK"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [{ name = "DeviantArt SDK contributors" }]
+dependencies = ["httpx>=0.27,<1"]
+classifiers = ["Development Status :: 3 - Alpha", "Typing :: Typed"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-asyncio>=0.23", "ruff>=0.6", "mypy>=1.11"]
+
+[project.scripts]
+dakit = "dakit.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/dakit"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+packages = ["dakit"]
