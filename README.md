@@ -76,6 +76,13 @@ dependencies:
 2. 把精确回调地址 `http://127.0.0.1:8765/callback` 加入应用白名单；
 3. 记录该应用的 `client_id`。
 
+在仓库根目录，可以直接用短脚本运行，不用输入完整 Dart 路径：
+
+```shell
+./dakit --help
+./devart-dl artist 用户名
+```
+
 ```shell
 dart run packages/dakit_cli/bin/dakit.dart status --proxy 127.0.0.1:7892
 dart run packages/dakit_cli/bin/dakit.dart login --client-id 你的_PUBLIC_CLIENT_ID --proxy 127.0.0.1:7892

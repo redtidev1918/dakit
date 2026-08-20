@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+set -eu
+
+ROOT=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+cd "$ROOT"
+exec dart run packages/dakit_cli/bin/dakit.dart "$@"
