@@ -21,6 +21,12 @@ class AssetQuality(str, Enum):
     PREVIEW = "preview"
 
 
+class MediaKind(str, Enum):
+    IMAGE = "image"
+    VIDEO = "video"
+    DOCUMENT = "document"
+
+
 @dataclass(frozen=True, slots=True)
 class MediaVariant:
     url: str
@@ -29,6 +35,8 @@ class MediaVariant:
     width: int | None = None
     height: int | None = None
     file_size: int | None = None
+    kind: MediaKind = MediaKind.IMAGE
+    restricted: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -41,6 +49,7 @@ class Deviation:
     mature: bool = False
     downloadable: bool = False
     media: tuple[MediaVariant, ...] = ()
+    text_content: str | None = None
     raw: Mapping[str, Any] = field(default_factory=dict, repr=False, compare=False)
 
     def best_media(self, quality: AssetQuality = AssetQuality.FULL) -> MediaVariant | None:
@@ -55,6 +64,10 @@ class Deviation:
         }[quality]
         for candidate in order:
             matches = [item for item in self.media if item.quality is candidate]
+            expected = MediaKind.VIDEO if self.kind is DeviationKind.VIDEO else MediaKind.IMAGE
+            typed = [item for item in matches if item.kind is expected]
+            if typed:
+                matches = typed
             if matches:
                 return max(matches, key=lambda item: (item.height or 0, item.width or 0))
         return None

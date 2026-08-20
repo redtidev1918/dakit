@@ -90,3 +90,43 @@ def test_store_contains_traversal(tmp_path: Path) -> None:
 
     location, _ = asyncio.run(FileSystemStore(tmp_path).write("../../outside.txt", chunks()))
     assert Path(location).parent == tmp_path
+
+
+def test_video_selection_ignores_larger_cover() -> None:
+    from dakit import Deviation, DeviationKind, MediaKind, MediaVariant
+
+    item = Deviation(
+        "1",
+        "film",
+        "https://example/art/1",
+        "artist",
+        DeviationKind.VIDEO,
+        media=(
+            MediaVariant("https://cdn/cover.jpg", AssetQuality.FULL, width=1000, height=1000),
+            MediaVariant(
+                "https://cdn/movie.mp4",
+                AssetQuality.FULL,
+                width=640,
+                height=480,
+                kind=MediaKind.VIDEO,
+            ),
+        ),
+    )
+    assert item.best_media().url.endswith(".mp4")
+
+
+@pytest.mark.asyncio
+async def test_literature_is_saved_as_text(tmp_path: Path) -> None:
+    from dakit import Deviation, DeviationKind
+
+    item = Deviation(
+        "2",
+        "story",
+        "https://example/art/2",
+        "writer",
+        DeviationKind.LITERATURE,
+        text_content="hello world",
+    )
+    result = await DownloadService(FakeTransport(), FileSystemStore(tmp_path)).download(item)
+    assert Path(result.location).suffix == ".txt"
+    assert Path(result.location).read_text() == "hello world"

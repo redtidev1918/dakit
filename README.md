@@ -57,6 +57,7 @@ result = await downloader.download(work)
 ```bash
 dakit search "digital art" --username username
 dakit --output ./downloads gallery username --quality full --limit 20
+dakit --output ./downloads url "https://www.deviantart.com/user/art/title-123" --quality full
 ```
 
 Cookie 可通过全局 `--cookie` 参数或 `DEVIANTART_COOKIE` 提供。生产客户端建议直接调用 SDK 并自行管理密钥。
@@ -73,4 +74,6 @@ Host application
 
 公共入口集中在 `dakit.__init__`。远端响应不会直接泄漏成业务模型；排查兼容问题时可读取 `Deviation.raw`。
 
-支持画廊、收藏夹、搜索、Cookie 认证透传、媒体质量选择、流式下载，以及自定义传输和存储适配器。Python 3.10+，MIT License。
+支持画廊、收藏夹、全局与用户搜索、单作品 URL、图片/GIF、最高分辨率视频、文学文本、原文件链接、Cookie 认证透传、流式下载，以及自定义传输和存储适配器。Python 3.10+，MIT License。
+
+成熟内容需要有效 Cookie。SDK 检测到 DeviantArt 返回的模糊占位图时会抛出 `AuthenticationError`，不会把占位图报告为下载成功。部分原文件链接也可能要求登录；如果站点拒绝访问，SDK 会明确报告认证错误。

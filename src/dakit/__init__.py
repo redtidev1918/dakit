@@ -16,6 +16,7 @@ from .models import (
     Deviation,
     DeviationKind,
     DownloadedAsset,
+    MediaKind,
     MediaVariant,
     Page,
 )
@@ -38,6 +39,7 @@ __all__ = [
     "DownloadedAsset",
     "FileSystemStore",
     "HttpxTransport",
+    "MediaKind",
     "MediaVariant",
     "Page",
     "ParseError",
@@ -45,4 +47,4 @@ __all__ = [
     "TransportError",
 ]
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"

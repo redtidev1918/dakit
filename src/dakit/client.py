@@ -8,7 +8,7 @@ from collections.abc import AsyncIterator
 from .auth import Credentials
 from .errors import ParseError
 from .models import Deviation, Page
-from .parser import parse_page
+from .parser import parse_initial_state, parse_page, parse_state_deviations
 from .transport import AsyncTransport, HttpxTransport
 
 
@@ -82,9 +82,31 @@ class DeviantArtClient:
                 "csrf_token": token,
             }
         else:
-            path = "/_puppy/da-browse/api/networkbar/search/deviations"
-            params = {"q": query, "cursor": cursor or "", "csrf_token": token}
+            response = await self.transport.request(
+                "GET",
+                f"{self.BASE_URL}/search",
+                params={"q": query},
+                headers=self.credentials.headers(),
+            )
+            items = parse_state_deviations(parse_initial_state(response.text))
+            return Page(items[:limit])
         return await self._page(path, params)
+
+    async def deviation(self, url: str) -> Deviation:
+        """Load a complete deviation, including original download and literature text."""
+        if not url.startswith((f"{self.BASE_URL}/", "https://deviantart.com/")):
+            raise ValueError("url must be a DeviantArt artwork URL")
+        response = await self.transport.request("GET", url, headers=self.credentials.headers())
+        items = parse_state_deviations(parse_initial_state(response.text))
+        match = re.search(r"-(\d+)(?:[/?#]|$)", url)
+        deviation_id = match.group(1) if match else None
+        if deviation_id:
+            for item in items:
+                if item.id == deviation_id:
+                    return item
+        if items:
+            return items[0]
+        raise ParseError("deviation was not present in the page")
 
     async def iter_gallery(
         self, username: str, *, folder_id: str | None = None, limit: int = 24
