@@ -32,6 +32,14 @@ jobs:
           cache: true
       - name: Verify workspace
         run: ./tool/verify.sh
+      - name: Collect coverage
+        run: dart run melos run test:coverage
+      - name: Upload coverage
+        uses: actions/upload-artifact@v7
+        with:
+          name: dakit-coverage
+          path: coverage/lcov.info
+          if-no-files-found: error
 
   android:
     name: Android debug APK
