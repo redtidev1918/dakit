@@ -7,3 +7,5 @@
   configuration.
 - Allow the OAuth facade to use an explicit API network profile without coupling
   it to media-transfer proxy settings.
+- Cancel a pending browser transaction before logging out so a late callback
+  cannot silently restore the local session.

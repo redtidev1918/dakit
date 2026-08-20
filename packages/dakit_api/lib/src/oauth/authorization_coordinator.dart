@@ -68,6 +68,8 @@ final class OAuthAuthorizationCoordinator {
   final DateTime Function() _now;
   final Duration timeout;
   Future<AuthTokens>? _active;
+  Completer<void>? _cancellation;
+  int _authorizationGeneration = 0;
 
   bool get isAuthorizing => _active != null;
 
@@ -94,6 +96,11 @@ final class OAuthAuthorizationCoordinator {
   }
 
   Future<void> cancelPending() async {
+    _authorizationGeneration += 1;
+    final cancellation = _cancellation;
+    if (cancellation != null && !cancellation.isCompleted) {
+      cancellation.complete();
+    }
     await _pendingStore.clear();
     _record(
       DiagnosticStage.oauthCallback,
@@ -106,6 +113,7 @@ final class OAuthAuthorizationCoordinator {
   Future<AuthTokens> _singleFlight(Future<AuthTokens> Function() operation) {
     final existing = _active;
     if (existing != null) return existing;
+    _cancellation = Completer<void>();
     final future = operation();
     _active = future;
     unawaited(
@@ -118,7 +126,10 @@ final class OAuthAuthorizationCoordinator {
   }
 
   void _clearActive(Future<AuthTokens> future) {
-    if (identical(_active, future)) _active = null;
+    if (identical(_active, future)) {
+      _active = null;
+      _cancellation = null;
+    }
   }
 
   Future<AuthTokens> _start() async {
@@ -184,6 +195,16 @@ final class OAuthAuthorizationCoordinator {
     Uri? initialCallback,
   }) async {
     final started = _now();
+    final expectedAuthorizationGeneration = _authorizationGeneration;
+    final expectedSessionGeneration = _session.generation;
+    final cancellation = _cancellation;
+    if (cancellation == null) {
+      throw const DAKitException(
+        kind: DAKitFailureKind.configuration,
+        code: 'oauth.transaction.not_active',
+        message: 'No OAuth authorization transaction is active.',
+      );
+    }
     _record(
       DiagnosticStage.oauthCallback,
       DiagnosticLevel.debug,
@@ -194,9 +215,11 @@ final class OAuthAuthorizationCoordinator {
     try {
       final callbackUri = await _nextCallback(
         remaining ?? timeout,
+        cancellation: cancellation,
         afterListening: afterListening,
         initialCallback: initialCallback,
       );
+      _ensureNotCancelled(expectedAuthorizationGeneration);
       final callback = _flow.validateCallback(
         config: config,
         pending: pending,
@@ -216,7 +239,15 @@ final class OAuthAuthorizationCoordinator {
         pending: pending,
         callback: callback,
       );
-      await _session.save(tokens);
+      _ensureNotCancelled(expectedAuthorizationGeneration);
+      await _session.save(
+        tokens,
+        expectedGeneration: expectedSessionGeneration,
+      );
+      if (expectedAuthorizationGeneration != _authorizationGeneration) {
+        await _session.logout();
+        throw _cancelledAuthorization();
+      }
       await _pendingStore.clear();
       _record(
         DiagnosticStage.storage,
@@ -260,6 +291,7 @@ final class OAuthAuthorizationCoordinator {
 
   Future<Uri> _nextCallback(
     Duration wait, {
+    required Completer<void> cancellation,
     Future<void> Function()? afterListening,
     Uri? initialCallback,
   }) async {
@@ -271,16 +303,35 @@ final class OAuthAuthorizationCoordinator {
       }
     }, onError: controller.addError);
     try {
+      if (cancellation.isCompleted) throw _cancelledAuthorization();
       if (initialCallback != null) {
         controller.add(initialCallback);
       }
       await afterListening?.call();
-      return await controller.stream.first.timeout(wait);
+      final cancelled = cancellation.future.then<Uri>(
+        (_) => throw _cancelledAuthorization(),
+      );
+      return await Future.any<Uri>(<Future<Uri>>[
+        controller.stream.first,
+        cancelled,
+      ]).timeout(wait);
     } finally {
       await subscription.cancel();
       await controller.close();
     }
   }
+
+  void _ensureNotCancelled(int expectedGeneration) {
+    if (expectedGeneration != _authorizationGeneration) {
+      throw _cancelledAuthorization();
+    }
+  }
+
+  static DAKitException _cancelledAuthorization() => const DAKitException(
+    kind: DAKitFailureKind.cancelled,
+    code: 'oauth.transaction.cancelled',
+    message: 'The OAuth authorization transaction was cancelled.',
+  );
 
   void _record(
     DiagnosticStage stage,

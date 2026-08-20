@@ -168,6 +168,42 @@ void main() {
   });
 
   test(
+    'cancels an active browser transaction without waiting for timeout',
+    () async {
+      final callbacks = FakeCallbackSource();
+      final pendingStore = MemoryPendingStore();
+      final tokenStore = MemoryTokenStore();
+      final launched = Completer<void>();
+      final coordinator = buildCoordinator(
+        config: config,
+        callbacks: callbacks,
+        pendingStore: pendingStore,
+        tokenStore: tokenStore,
+        endpoint: FakeOAuthEndpoint(),
+        launcher: FakeLauncher((_) async => launched.complete()),
+        now: now,
+      );
+
+      final authorization = coordinator.authorize();
+      await launched.future;
+      await coordinator.cancelPending();
+
+      await expectLater(
+        authorization,
+        throwsA(
+          isA<DAKitException>().having(
+            (error) => error.code,
+            'code',
+            'oauth.transaction.cancelled',
+          ),
+        ),
+      );
+      expect(pendingStore.value, isNull);
+      expect(tokenStore.value, isNull);
+    },
+  );
+
+  test(
     'startup recovery returns promptly when no cold-start callback exists',
     () async {
       final pending = PendingAuthorization(

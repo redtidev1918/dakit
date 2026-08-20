@@ -65,7 +65,11 @@ final class OAuthTokenClient {
           'refresh_token': refreshToken,
         },
       );
-      final tokens = _parse(response, fallbackRefreshToken: refreshToken);
+      final tokens = _parse(
+        response,
+        fallbackRefreshToken: refreshToken,
+        fallbackScopes: current.scopes,
+      );
       _recordSuccess('oauth.token.refreshed', started);
       return tokens;
     } on Object catch (error) {
@@ -89,6 +93,7 @@ final class OAuthTokenClient {
   AuthTokens _parse(
     Map<String, Object?> response, {
     String? fallbackRefreshToken,
+    Set<String> fallbackScopes = const <String>{},
   }) {
     final accessToken = response['access_token'];
     final tokenType = response['token_type'];
@@ -108,7 +113,7 @@ final class OAuthTokenClient {
     final rawScope = response['scope'];
     final scopes = rawScope is String
         ? rawScope.split(' ').where((value) => value.isNotEmpty).toSet()
-        : const <String>{};
+        : fallbackScopes;
     return AuthTokens(
       accessToken: accessToken,
       tokenType: tokenType,

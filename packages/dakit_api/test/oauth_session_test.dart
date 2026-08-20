@@ -74,6 +74,111 @@ void main() {
     expect(store.value?.accessToken, 'new-access');
   });
 
+  test('refresh preserves scopes when the provider omits scope', () async {
+    final endpoint = FakeOAuthEndpoint(<Map<String, Object?>>[
+      <String, Object?>{
+        'access_token': 'new-access',
+        'token_type': 'Bearer',
+        'expires_in': 3600,
+      },
+    ]);
+    final store = MemoryTokenStore(
+      AuthTokens(
+        accessToken: 'old-access',
+        tokenType: 'Bearer',
+        refreshToken: 'old-refresh',
+        expiresAt: now.subtract(const Duration(minutes: 1)),
+        scopes: const <String>{'basic', 'browse', 'user'},
+      ),
+    );
+    final session = OAuthSession(
+      config: config,
+      store: store,
+      tokenClient: OAuthTokenClient(endpoint: endpoint, now: () => now),
+      now: () => now,
+    );
+
+    final refreshed = await session.validTokens();
+
+    expect(refreshed.scopes, const <String>{'basic', 'browse', 'user'});
+  });
+
+  test('logout cannot be undone by an in-flight refresh', () async {
+    final endpoint = ControlledOAuthEndpoint();
+    final store = MemoryTokenStore(
+      AuthTokens(
+        accessToken: 'old-access',
+        tokenType: 'Bearer',
+        refreshToken: 'old-refresh',
+        expiresAt: now.subtract(const Duration(minutes: 1)),
+        scopes: const <String>{'basic', 'browse'},
+      ),
+    );
+    final session = OAuthSession(
+      config: config,
+      store: store,
+      tokenClient: OAuthTokenClient(endpoint: endpoint, now: () => now),
+      now: () => now,
+    );
+
+    final refresh = session.validTokens();
+    await endpoint.refreshStarted.future;
+    final logout = session.logout();
+    endpoint.releaseRefresh.complete();
+
+    await expectLater(
+      refresh,
+      throwsA(
+        isA<DAKitException>().having(
+          (error) => error.code,
+          'code',
+          'oauth.session.changed',
+        ),
+      ),
+    );
+    await logout;
+
+    expect(store.value, isNull);
+    expect(endpoint.forms, hasLength(2));
+    expect(endpoint.forms.last['token'], 'old-refresh');
+  });
+
+  test(
+    'a token exchange started before logout cannot restore a session',
+    () async {
+      final endpoint = FakeOAuthEndpoint(const <Map<String, Object?>>[]);
+      final store = MemoryTokenStore(null);
+      final session = OAuthSession(
+        config: config,
+        store: store,
+        tokenClient: OAuthTokenClient(endpoint: endpoint, now: () => now),
+        now: () => now,
+      );
+      final generation = session.generation;
+
+      await session.logout(revoke: false);
+
+      await expectLater(
+        session.save(
+          AuthTokens(
+            accessToken: 'late-access',
+            tokenType: 'Bearer',
+            expiresAt: now.add(const Duration(hours: 1)),
+          ),
+          expectedGeneration: generation,
+        ),
+        throwsA(
+          isA<DAKitException>().having(
+            (error) => error.code,
+            'code',
+            'oauth.session.changed',
+          ),
+        ),
+      );
+      expect(store.value, isNull);
+    },
+  );
+
   test('logout clears local tokens after successful revocation', () async {
     final endpoint = FakeOAuthEndpoint(<Map<String, Object?>>[
       <String, Object?>{'success': true},
@@ -116,6 +221,30 @@ final class FakeOAuthEndpoint implements OAuthEndpoint {
     forms.add(Map<String, String>.unmodifiable(form));
     if (delay > Duration.zero) await Future<void>.delayed(delay);
     return responses.removeAt(0);
+  }
+}
+
+final class ControlledOAuthEndpoint implements OAuthEndpoint {
+  final Completer<void> refreshStarted = Completer<void>();
+  final Completer<void> releaseRefresh = Completer<void>();
+  final List<Map<String, String>> forms = <Map<String, String>>[];
+
+  @override
+  Future<Map<String, Object?>> postForm(
+    Uri endpoint,
+    Map<String, String> form,
+  ) async {
+    forms.add(Map<String, String>.unmodifiable(form));
+    if (form['grant_type'] == 'refresh_token') {
+      refreshStarted.complete();
+      await releaseRefresh.future;
+      return <String, Object?>{
+        'access_token': 'new-access',
+        'token_type': 'Bearer',
+        'expires_in': 3600,
+      };
+    }
+    return <String, Object?>{'success': true};
   }
 }
 

@@ -17,3 +17,7 @@
   availability mapping.
 - Depend on a replaceable core token provider and add an opt-in, redacted live
   contract/media verifier.
+- Prevent logout from being undone by an in-flight refresh or late browser token
+  exchange, and preserve granted scopes when refresh responses omit `scope`.
+- Make active browser authorization explicitly cancellable instead of waiting for
+  the callback timeout.

@@ -78,5 +78,8 @@ final class DAKitOAuthClient {
   Future<AuthTokens> validTokens({bool forceRefresh = false}) =>
       session.validTokens(forceRefresh: forceRefresh);
 
-  Future<void> logout({bool revoke = true}) => session.logout(revoke: revoke);
+  Future<void> logout({bool revoke = true}) async {
+    await authorization.cancelPending();
+    await session.logout(revoke: revoke);
+  }
 }
