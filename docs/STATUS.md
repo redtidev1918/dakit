@@ -152,9 +152,9 @@ same commit as every material milestone.
   client secret, which according to current provider documentation identifies a
   Confidential registration; the example intentionally requires a Public client
   and never embeds that secret.
-- All three packages now carry consistent MIT license files. Publication dry-runs
-  build valid archives; before this rename commit they report only the expected
-  dirty-worktree warning, which must be rerun from the clean commit.
+- All three packages now carry consistent MIT license files. Clean-commit
+  publication dry-runs build valid archives and pass with zero warnings for
+  `dakit_core`, `dakit_api`, and `dakit_flutter`.
 
 ## Known external requirements
 
