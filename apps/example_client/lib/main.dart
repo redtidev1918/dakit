@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import 'src/client_app.dart';
 import 'src/client_controller.dart';
+import 'src/client_runtime.dart';
 import 'src/diagnostic_log.dart';
 import 'src/network_configuration.dart';
 
@@ -41,7 +42,6 @@ void main() {
           initialTransferProxy: transferProxy,
         )
       : _configuredController(
-          clientId,
           diagnostics,
           networkProfile,
           connectivity,
@@ -61,13 +61,13 @@ Future<void> _initialize(ExampleClientController controller) async {
 }
 
 ExampleClientController _configuredController(
-  String clientId,
   DiagnosticLog diagnostics,
   NetworkProfile networkProfile,
   ConnectivityProbe connectivity,
   TransferManager transfers,
   ProxyConfiguration? transferProxy,
 ) {
+  const clientId = String.fromEnvironment('DAKIT_CLIENT_ID');
   final oauth = DAKitOAuthClient(
     config: OAuthConfig(
       clientId: clientId,
@@ -82,19 +82,25 @@ ExampleClientController _configuredController(
     config: ApiConfig(userAgent: 'DAKit-Example/0.1'),
     networkProfile: networkProfile,
   );
-  final artworks = OfficialArtworkRepository(transport);
-  final media = OfficialMediaRepository(transport);
+  final runtime = ClientRuntime(
+    oauth: oauth,
+    transport: transport,
+    connectivity: connectivity,
+    transfers: transfers,
+    transferProxy: transferProxy,
+  );
   return ExampleClientController(
     diagnostics: diagnostics,
     resumeSession: oauth.resumePending,
     authorize: oauth.authorize,
     validTokens: oauth.validTokens,
     logout: oauth.logout,
-    loadAccount: OfficialAccountRepository(transport).currentUser,
-    loadHome: () => artworks.browse(const PageRequest(limit: 12)),
+    loadAccount: runtime.accountRepository.currentUser,
+    loadHome: () =>
+        runtime.artworkRepository.browse(const PageRequest(limit: 12)),
     runConnectivity: connectivity.run,
-    loadArtwork: artworks.getById,
-    resolveOriginal: media.originalFile,
+    loadArtwork: runtime.artworkRepository.getById,
+    resolveOriginal: runtime.mediaRepository.originalFile,
     transferManager: transfers,
     initialTransferProxy: transferProxy,
   );

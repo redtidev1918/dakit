@@ -17,9 +17,11 @@ DAKit 为第三方 Flutter 客户端提供分层 SDK。公共层描述稳定的�
           │
           ▼
      dakit_core ───────── 模型、错误、仓库、诊断、传输契约
+
+    dakit_cli ─────────── 纯 Dart 命令行 kit（依赖 api/core，不依赖 Flutter）
 ```
 
-`dakit_core` 不依赖 Flutter 或网络库；`dakit_api` 只使用 Dart 能力；`dakit_flutter` 才依赖平台插件。依赖只能向下，领域层永远不引用实现层。
+`dakit_core` 不依赖 Flutter 或网络库；`dakit_api` 只使用 Dart 能力；`dakit_flutter` 才依赖平台插件；`dakit_cli` 是纯 Dart 的调试与批量下载工具。依赖只能向下，领域层永远不引用实现层。
 
 ## 每层职责
 
@@ -56,6 +58,20 @@ DTO 不从顶层库导出。官方响应新增未知字段不应破坏解析；�
 ### `example_client`
 
 这是可运行的集成探针：验证平台回调、网络诊断、账户/浏览、原文件解析和任务恢复。它不是 SDK 公共 API，也不是推荐的产品架构。
+
+它用 `ClientRuntime` 作为组合根，把 OAuth、transport、仓库、连通性和传输任务集中装配后注入控制器，`main.dart` 只负责选择和启动 UI，避免散落构造代码。页面底部还提供 `DebugConsole`，通过 `runConsoleCommand` 调用控制器能力，便于在 UI 内排查问题。
+
+### `dakit_cli`
+
+命令行 kit 面向开发者调试、批量下载和脚本化使用。它按模块拆分：
+
+- `cli.dart`：命令解析与分发；
+- `cli_session.dart`：文件 token store、静态会话、`CliContext`；
+- `cli_networking.dart`：代理解析、下载器、UUID/文件名工具；
+- `cli_platform.dart`：系统浏览器、loopback/粘贴回调；
+- `cli_diagnostics.dart`：`--verbose` 诊断输出。
+
+普通用户不应直接使用 CLI 登录；最终客户端使用 `dakit_flutter` 的系统浏览器深链登录。
 
 ## 解耦方式
 
