@@ -102,6 +102,66 @@ final class DeviationMapper {
     );
   }
 
+  UserProfileDetails profile(Map<String, Object?> json) {
+    final stats = _requiredMap(json, 'stats');
+    return UserProfileDetails(
+      user: user(_requiredMap(json, 'user')),
+      isWatching: _requiredBoolean(json, 'is_watching'),
+      profileUri: _requiredWebUri(json, 'profile_url'),
+      isArtist: _requiredBoolean(json, 'user_is_artist'),
+      stats: UserProfileStats(
+        deviations: _requiredInteger(stats, 'user_deviations'),
+        favourites: _requiredInteger(stats, 'user_favourites'),
+        comments: _requiredInteger(stats, 'user_comments'),
+        pageViews: _requiredInteger(stats, 'profile_pageviews'),
+        profileComments: _requiredInteger(stats, 'profile_comments'),
+      ),
+      artistLevel: _nullableRequiredText(json, 'artist_level'),
+      artistSpecialty: _nullableRequiredText(json, 'artist_specialty'),
+      realName: _emptyToNull(_requiredText(json, 'real_name')),
+      tagline: _emptyToNull(_requiredText(json, 'tagline')),
+      country: _emptyToNull(_requiredText(json, 'country')),
+      website: _emptyToNull(_requiredText(json, 'website')),
+      bio: _emptyToNull(_requiredText(json, 'bio')),
+      coverPhotoUri: _nullableRequiredWebUri(json, 'cover_photo'),
+    );
+  }
+
+  ArtworkFolder folder(Map<String, Object?> json, FolderKind kind) {
+    final rawThumbnail = _nullableRequiredMap(json, 'thumb');
+    final rawPreloaded = json['deviations'];
+    if (rawPreloaded != null && rawPreloaded is! List) {
+      throw _missing('deviations');
+    }
+    final preloaded = <Artwork>[];
+    for (final value
+        in rawPreloaded is List ? rawPreloaded : const <Object?>[]) {
+      final item = _map(value);
+      if (item == null) throw _missing('deviations.item');
+      preloaded.add(artwork(item));
+    }
+    final rawSize = json['size'];
+    final size = _integer(rawSize);
+    if (rawSize != null && size == null) throw _missing('size');
+    final rawHasSubfolders = json['has_subfolders'];
+    if (rawHasSubfolders != null && rawHasSubfolders is! bool) {
+      throw _missing('has_subfolders');
+    }
+    return ArtworkFolder(
+      id: _requiredString(json, 'folderid'),
+      kind: kind,
+      name: _requiredText(json, 'name'),
+      description: _requiredText(json, 'description'),
+      parentId: kind == FolderKind.gallery
+          ? _nullableRequiredText(json, 'parent')
+          : null,
+      size: size,
+      thumbnail: rawThumbnail == null ? null : artwork(rawThumbnail),
+      preloadedArtworks: List<Artwork>.unmodifiable(preloaded),
+      hasSubfolders: rawHasSubfolders == true,
+    );
+  }
+
   MediaAsset original(Map<String, Object?> json, String artworkId) {
     final uri = _requiredWebUri(json, 'src');
     final filename = _requiredString(json, 'filename');
@@ -210,6 +270,43 @@ String _requiredString(Map<String, Object?> json, String key) {
   return value;
 }
 
+String _requiredText(Map<String, Object?> json, String key) {
+  final value = json[key];
+  if (value is! String) throw _missing(key);
+  return value.trim();
+}
+
+String? _nullableRequiredText(Map<String, Object?> json, String key) {
+  if (!json.containsKey(key)) throw _missing(key);
+  final value = json[key];
+  if (value == null) return null;
+  if (value is! String) throw _missing(key);
+  return _emptyToNull(value.trim());
+}
+
+Map<String, Object?>? _nullableRequiredMap(
+  Map<String, Object?> json,
+  String key,
+) {
+  if (!json.containsKey(key)) throw _missing(key);
+  final value = json[key];
+  if (value == null) return null;
+  final mapped = _map(value);
+  if (mapped == null) throw _missing(key);
+  return mapped;
+}
+
+Uri? _nullableRequiredWebUri(Map<String, Object?> json, String key) {
+  if (!json.containsKey(key)) throw _missing(key);
+  final value = json[key];
+  if (value == null) return null;
+  final text = value is String ? value.trim() : null;
+  if (text != null && text.isEmpty) return null;
+  final uri = _webUri(value);
+  if (uri == null) throw _missing(key);
+  return uri;
+}
+
 Uri _requiredWebUri(Map<String, Object?> json, String key) {
   final value = _webUri(json[key]);
   if (value == null) throw _missing(key);
@@ -252,6 +349,8 @@ Map<String, Object?>? _map(Object? value) {
 List<Object?> _list(Object? value) => value is List ? value : const <Object?>[];
 
 String? _string(Object? value) => value is String ? value.trim() : null;
+
+String? _emptyToNull(String value) => value.isEmpty ? null : value;
 
 int? _integer(Object? value) => switch (value) {
   int number => number,

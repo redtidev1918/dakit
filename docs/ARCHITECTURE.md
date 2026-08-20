@@ -26,7 +26,7 @@ DAKit 为第三方 Flutter 客户端提供分层 SDK。公共层描述稳定的�
 ### `dakit_core`
 
 - 稳定领域模型与分页值；
-- `AccountRepository`、`ArtworkRepository`、`ArtworkContentRepository`、`GalleryRepository`、`MediaRepository`；
+- 账户、用户资料、作品、发现流、目录、正文、媒体、评论和社交操作仓库接口；
 - `AuthTokenProvider`、token/pending store 接口；
 - `TransferManager` 与任务快照；
 - `DAKitException`、故障分类和脱敏诊断事件。
@@ -38,7 +38,7 @@ DAKit 为第三方 Flutter 客户端提供分层 SDK。公共层描述稳定的�
 - PKCE 事务、回调验证、token exchange/refresh/revoke；
 - 可替换的 OAuth endpoint 与官方 API transport；
 - 环境、直连、显式 HTTP 代理和 Dio 注入；
-- 当前已实现的账户、作品、正文、浏览、画廊、收藏夹、原文件、评论和社交操作仓库；
+- 当前已实现的账户、用户资料、作品、正文、首页/搜索、每日精选、关注动态、标签、画廊/收藏夹目录、原文件、评论和社交操作仓库；
 - 上游 JSON 到稳定领域模型的私有映射。
 
 DTO 不从顶层库导出。官方响应新增未知字段不应破坏解析；必需字段消失时必须抛出明确 parsing failure。

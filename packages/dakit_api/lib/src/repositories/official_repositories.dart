@@ -19,6 +19,28 @@ final class OfficialAccountRepository implements AccountRepository {
   }
 }
 
+final class OfficialUserRepository implements UserRepository {
+  const OfficialUserRepository(this._transport);
+
+  final OfficialApiTransport _transport;
+  final DeviationMapper _mapper = const DeviationMapper();
+
+  @override
+  Future<UserProfileDetails> profile(String username) async {
+    _validateIdentifier(username, 'username');
+    final json = await _transport.getJson(
+      'user/profile/${Uri.encodeComponent(username.trim())}',
+      query: const <String, Object?>{
+        'ext_collections': false,
+        'ext_galleries': false,
+        'with_session': false,
+        'expand': 'user.details,user.geo,user.stats',
+      },
+    );
+    return _mapper.profile(json);
+  }
+}
+
 final class OfficialArtworkRepository implements ArtworkRepository {
   const OfficialArtworkRepository(this._transport);
 
@@ -132,6 +154,128 @@ final class OfficialGalleryRepository implements GalleryRepository {
       },
     );
     return _parsePage(json, _mapper.artwork);
+  }
+}
+
+final class OfficialDiscoveryRepository implements DiscoveryRepository {
+  const OfficialDiscoveryRepository(this._transport);
+
+  final OfficialApiTransport _transport;
+  final DeviationMapper _mapper = const DeviationMapper();
+
+  @override
+  Future<List<Artwork>> dailyDeviations({DateTime? date}) async {
+    final json = await _transport.getJson(
+      'browse/dailydeviations',
+      query: <String, Object?>{
+        if (date != null) 'date': _calendarDate(date),
+        'with_session': false,
+        'expand': 'user.watch',
+      },
+    );
+    final rawResults = json['results'];
+    if (rawResults is! List) throw _missingField('results');
+    return List<Artwork>.unmodifiable(
+      rawResults.map((item) => _mapper.artwork(_requiredItemMap(item))),
+    );
+  }
+
+  @override
+  Future<Page<Artwork>> watched(PageRequest request) async {
+    _validatePageRequest(request);
+    final json = await _transport.getJson(
+      'browse/deviantsyouwatch',
+      query: <String, Object?>{
+        'limit': request.limit,
+        'offset': _offset(request.cursor),
+        'with_session': false,
+      },
+    );
+    return _parsePage(json, _mapper.artwork);
+  }
+
+  @override
+  Future<Page<Artwork>> tag(String tag, PageRequest request) async {
+    final normalized = tag.trim();
+    if (normalized.isEmpty) {
+      throw const DAKitException(
+        kind: DAKitFailureKind.configuration,
+        code: 'api.tag.empty',
+        message: 'A tag must not be empty.',
+      );
+    }
+    _validatePageRequest(request);
+    final json = await _transport.getJson(
+      'browse/tags',
+      query: <String, Object?>{
+        'tag': normalized,
+        ..._tagPageQuery(request.cursor),
+        'limit': request.limit,
+        'with_session': false,
+        'expand': 'user.watch',
+      },
+    );
+    return _parseTagPage(json, _mapper.artwork);
+  }
+}
+
+final class OfficialFolderRepository implements FolderRepository {
+  const OfficialFolderRepository(this._transport);
+
+  final OfficialApiTransport _transport;
+  final DeviationMapper _mapper = const DeviationMapper();
+
+  @override
+  Future<Page<ArtworkFolder>> galleryFolders({
+    String? username,
+    PageRequest request = const PageRequest(),
+    FolderQueryOptions options = const FolderQueryOptions(),
+  }) => _folders(
+    'gallery/folders',
+    FolderKind.gallery,
+    username,
+    request,
+    options,
+  );
+
+  @override
+  Future<Page<ArtworkFolder>> collectionFolders({
+    String? username,
+    PageRequest request = const PageRequest(),
+    FolderQueryOptions options = const FolderQueryOptions(),
+  }) => _folders(
+    'collections/folders',
+    FolderKind.collection,
+    username,
+    request,
+    options,
+  );
+
+  Future<Page<ArtworkFolder>> _folders(
+    String path,
+    FolderKind kind,
+    String? username,
+    PageRequest request,
+    FolderQueryOptions options,
+  ) async {
+    final normalizedUsername = username?.trim();
+    if (normalizedUsername != null && normalizedUsername.isEmpty) {
+      _validateIdentifier('', 'username');
+    }
+    _validatePageRequest(request);
+    final json = await _transport.getJson(
+      path,
+      query: <String, Object?>{
+        'username': ?normalizedUsername,
+        'calculate_size': options.calculateSize,
+        'ext_preload': options.preloadArtworks,
+        'filter_empty_folder': options.filterEmpty,
+        'with_session': false,
+        'offset': _offset(request.cursor),
+        'limit': request.limit,
+      },
+    );
+    return _parsePage(json, (item) => _mapper.folder(item, kind));
   }
 }
 
@@ -384,6 +528,69 @@ Page<T> _parsePage<T>(
     hasMore: hasMore,
     nextCursor: hasMore ? nextCursor : null,
   );
+}
+
+Page<T> _parseTagPage<T>(
+  Map<String, Object?> json,
+  T Function(Map<String, Object?> item) parse,
+) {
+  final page = _parsePage(json, parse);
+  if (!page.hasMore) return page;
+  final rawCursor = json['next_cursor'];
+  if (rawCursor is String && rawCursor.isNotEmpty) {
+    return Page<T>(
+      items: page.items,
+      hasMore: true,
+      nextCursor: 'cursor:$rawCursor',
+    );
+  }
+  final offset = _optionalInteger(json['next_offset']);
+  if (offset == null || offset < 0 || offset > 50000) {
+    throw _missingField('next_offset');
+  }
+  return Page<T>(
+    items: page.items,
+    hasMore: true,
+    nextCursor: 'offset:$offset',
+  );
+}
+
+Map<String, Object?> _tagPageQuery(String? continuation) {
+  if (continuation == null) return const <String, Object?>{'offset': 0};
+  if (continuation.startsWith('cursor:')) {
+    final value = continuation.substring('cursor:'.length);
+    if (value.isNotEmpty) return <String, Object?>{'cursor': value};
+  }
+  if (continuation.startsWith('offset:')) {
+    return <String, Object?>{
+      'offset': _offset(continuation.substring('offset:'.length)),
+    };
+  }
+  final legacyOffset = int.tryParse(continuation);
+  if (legacyOffset != null) {
+    return <String, Object?>{'offset': _offset(continuation)};
+  }
+  if (continuation.isNotEmpty) return <String, Object?>{'cursor': continuation};
+  throw const DAKitException(
+    kind: DAKitFailureKind.configuration,
+    code: 'api.page.invalid_cursor',
+    message: 'The tag continuation cursor is invalid.',
+  );
+}
+
+String _calendarDate(DateTime value) =>
+    '${value.year.toString().padLeft(4, '0')}-'
+    '${value.month.toString().padLeft(2, '0')}-'
+    '${value.day.toString().padLeft(2, '0')}';
+
+void _validatePageRequest(PageRequest request) {
+  if (request.limit < 1 || request.limit > 50) {
+    throw const DAKitException(
+      kind: DAKitFailureKind.configuration,
+      code: 'api.page.invalid_limit',
+      message: 'The page limit must be between 1 and 50.',
+    );
+  }
 }
 
 int _offset(String? cursor) {

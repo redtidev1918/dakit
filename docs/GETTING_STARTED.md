@@ -94,9 +94,12 @@ final api = OfficialApiClient(
 );
 
 final accountRepository = OfficialAccountRepository(api);
+final userRepository = OfficialUserRepository(api);
 final artworkRepository = OfficialArtworkRepository(api);
+final discoveryRepository = OfficialDiscoveryRepository(api);
 final contentRepository = OfficialArtworkContentRepository(api);
 final galleryRepository = OfficialGalleryRepository(api);
+final folderRepository = OfficialFolderRepository(api);
 final mediaRepository = OfficialMediaRepository(api);
 final commentRepository = OfficialCommentRepository(api);
 final socialRepository = OfficialSocialRepository(api);

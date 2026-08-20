@@ -6,6 +6,10 @@ abstract interface class AccountRepository {
   Future<UserProfile> currentUser();
 }
 
+abstract interface class UserRepository {
+  Future<UserProfileDetails> profile(String username);
+}
+
 abstract interface class ArtworkRepository {
   Future<Artwork> getById(String id);
 
@@ -26,6 +30,29 @@ abstract interface class GalleryRepository {
   Future<Page<Artwork>> gallery(String username, PageRequest request);
 
   Future<Page<Artwork>> favourites(String username, PageRequest request);
+}
+
+/// Read-only feeds used by home, discovery, and tag screens.
+abstract interface class DiscoveryRepository {
+  Future<List<Artwork>> dailyDeviations({DateTime? date});
+
+  Future<Page<Artwork>> watched(PageRequest request);
+
+  Future<Page<Artwork>> tag(String tag, PageRequest request);
+}
+
+abstract interface class FolderRepository {
+  Future<Page<ArtworkFolder>> galleryFolders({
+    String? username,
+    PageRequest request = const PageRequest(),
+    FolderQueryOptions options = const FolderQueryOptions(),
+  });
+
+  Future<Page<ArtworkFolder>> collectionFolders({
+    String? username,
+    PageRequest request = const PageRequest(),
+    FolderQueryOptions options = const FolderQueryOptions(),
+  });
 }
 
 /// Resolves transferable media separately from artwork metadata.

@@ -31,7 +31,7 @@ flutter pub get
 ./tool/verify.sh
 ```
 
-脚本依次检查格式、静态分析，并运行 core、api、flutter 与示例应用测试。当前基线为 81 个测试。
+脚本依次检查格式、静态分析，并运行 core、api、flutter 与示例应用测试。当前基线为 85 个测试。
 
 真实 OAuth/API 测试不进入普通 CI，因为它需要用户授权并受 provider 内容影响。测试方法见 [LIVE_TESTING.md](LIVE_TESTING.md)。
 
@@ -65,7 +65,7 @@ dart run msix:create --build-windows false --install-certificate false
 
 `.github/workflows/ci.yml` 在 push、pull request 和手动触发时执行：
 
-- Ubuntu：格式、分析、81 个测试；
+- Ubuntu：格式、分析、85 个测试；
 - Ubuntu/Android：debug APK；
 - macOS：debug `.app`；
 - Windows：release runner 与带 `dakit` 协议的开发 MSIX；

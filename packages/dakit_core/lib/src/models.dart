@@ -16,6 +16,56 @@ final class UserProfile {
   final Uri? profileUri;
 }
 
+/// Counts exposed by a public DeviantArt profile.
+final class UserProfileStats {
+  const UserProfileStats({
+    required this.deviations,
+    required this.favourites,
+    required this.comments,
+    required this.pageViews,
+    required this.profileComments,
+  });
+
+  final int deviations;
+  final int favourites;
+  final int comments;
+  final int pageViews;
+  final int profileComments;
+}
+
+/// Full profile information returned by the dedicated profile endpoint.
+final class UserProfileDetails {
+  const UserProfileDetails({
+    required this.user,
+    required this.isWatching,
+    required this.profileUri,
+    required this.isArtist,
+    required this.stats,
+    this.artistLevel,
+    this.artistSpecialty,
+    this.realName,
+    this.tagline,
+    this.country,
+    this.website,
+    this.bio,
+    this.coverPhotoUri,
+  });
+
+  final UserProfile user;
+  final bool isWatching;
+  final Uri profileUri;
+  final bool isArtist;
+  final UserProfileStats stats;
+  final String? artistLevel;
+  final String? artistSpecialty;
+  final String? realName;
+  final String? tagline;
+  final String? country;
+  final String? website;
+  final String? bio;
+  final Uri? coverPhotoUri;
+}
+
 final class Artwork {
   const Artwork({
     required this.id,
@@ -165,4 +215,44 @@ final class WatchOptions {
   final bool scraps;
   final bool activity;
   final bool collections;
+}
+
+enum FolderKind { gallery, collection }
+
+/// A gallery or collection folder, optionally including provider-preloaded art.
+final class ArtworkFolder {
+  const ArtworkFolder({
+    required this.id,
+    required this.kind,
+    required this.name,
+    required this.description,
+    required this.preloadedArtworks,
+    this.parentId,
+    this.size,
+    this.thumbnail,
+    this.hasSubfolders = false,
+  });
+
+  final String id;
+  final FolderKind kind;
+  final String name;
+  final String description;
+  final String? parentId;
+  final int? size;
+  final Artwork? thumbnail;
+  final List<Artwork> preloadedArtworks;
+  final bool hasSubfolders;
+}
+
+/// Optional work requested from gallery and collection folder endpoints.
+final class FolderQueryOptions {
+  const FolderQueryOptions({
+    this.calculateSize = false,
+    this.preloadArtworks = false,
+    this.filterEmpty = false,
+  });
+
+  final bool calculateSize;
+  final bool preloadArtworks;
+  final bool filterEmpty;
 }

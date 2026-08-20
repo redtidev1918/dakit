@@ -10,3 +10,5 @@
 - Add the authentication-implementation-neutral `AuthTokenProvider` contract.
 - Add official OAuth scope constants plus platform-neutral comment, favourite,
   watch, and social repository contracts.
+- Add full user-profile statistics, discovery-feed, and gallery/collection folder
+  models and repository contracts without introducing provider DTOs.

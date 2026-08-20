@@ -4,8 +4,8 @@ Platform-neutral domain contracts for DAKit clients. This package has no Flutter
 
 It exports:
 
-- account, artwork, content, media, pagination, and transfer models;
-- repository interfaces for account, browse/search, galleries, favourites, content, original media, comments, and social actions;
+- account, full-profile, artwork, folder, content, media, pagination, and transfer models;
+- repository interfaces for accounts, profiles, discovery feeds, folders, galleries, favourites, content, original media, comments, and social actions;
 - OAuth token-provider and persistence boundaries;
 - structured diagnostics and typed `DAKitException` failures;
 - a platform-neutral `TransferManager` contract.

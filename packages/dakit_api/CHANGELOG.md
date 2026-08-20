@@ -25,3 +25,8 @@
   retries, plus typed artwork comments, favourite/unfavourite, and watch/unwatch
   repositories.
 - Preserve bounded provider API descriptions for actionable diagnostics.
+- Add official adapters for full user profiles, daily selections, watched-user
+  feeds, tag browsing, and gallery/collection folder listings with optional
+  artwork preload data.
+- Preserve opaque tag cursors separately from numeric offsets so either official
+  continuation mode can be resumed correctly.

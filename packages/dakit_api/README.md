@@ -2,7 +2,7 @@
 
 Dart-only OAuth PKCE, networking, diagnostics, and official DeviantArt API adapters for DAKit. It maps provider responses into `dakit_core` models and does not depend on Flutter.
 
-Implemented repositories cover the current account, artwork detail, rendered content, home browse/search, galleries, collection browsing, original-file metadata, artwork comments, favourites, and user watch state.
+Implemented repositories cover the current account, full user profiles, artwork detail, rendered content, home browse/search, daily selections, watched-user and tag feeds, gallery/collection folders, original-file metadata, artwork comments, favourites, and user watch state.
 
 ```dart
 final network = NetworkProfile.environment();
@@ -13,8 +13,13 @@ final transport = OfficialApiClient(
 );
 
 final account = await OfficialAccountRepository(transport).currentUser();
+final profile = await OfficialUserRepository(transport).profile('username');
 final page = await OfficialArtworkRepository(transport).browse(
   const PageRequest(limit: 24),
+);
+final daily = await OfficialDiscoveryRepository(transport).dailyDeviations();
+final folders = await OfficialFolderRepository(transport).galleryFolders(
+  username: 'username',
 );
 final comments = OfficialCommentRepository(transport);
 final social = OfficialSocialRepository(transport);

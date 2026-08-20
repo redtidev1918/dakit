@@ -135,6 +135,185 @@ void main() {
     expect(transport.requests.single.query['limit'], 24);
   });
 
+  test('loads a full user profile through a stable domain model', () async {
+    final transport = FixtureTransport(<Map<String, Object?>>[
+      <String, Object?>{
+        'user': <String, Object?>{
+          'userid': 'user-1',
+          'username': 'sample-user',
+          'usericon': 'https://images.example.test/avatar.png',
+        },
+        'is_watching': true,
+        'profile_url': 'https://www.deviantart.com/sample-user',
+        'user_is_artist': true,
+        'artist_level': 'Professional',
+        'artist_specialty': null,
+        'real_name': 'Sample Artist',
+        'tagline': 'Making examples',
+        'countryid': 1,
+        'country': 'Exampleland',
+        'website': '',
+        'bio': 'Profile biography',
+        'cover_photo': 'https://images.example.test/cover.jpg',
+        'last_status': null,
+        'stats': <String, Object?>{
+          'user_deviations': 12,
+          'user_favourites': 34,
+          'user_comments': 56,
+          'profile_pageviews': 78,
+          'profile_comments': 9,
+        },
+        'future_field': true,
+      },
+    ]);
+
+    final profile = await OfficialUserRepository(transport)
+        .profile('sample-user');
+
+    expect(profile.user.username, 'sample-user');
+    expect(profile.isWatching, isTrue);
+    expect(profile.stats.deviations, 12);
+    expect(profile.website, isNull);
+    expect(profile.coverPhotoUri?.host, 'images.example.test');
+    expect(transport.requests.single.path, 'user/profile/sample-user');
+    expect(
+      transport.requests.single.query['expand'],
+      'user.details,user.geo,user.stats',
+    );
+  });
+
+  test('loads daily, watched, and cursor-based tag discovery feeds', () async {
+    final artwork = await fixture('deviation.json');
+    final transport = FixtureTransport(<Map<String, Object?>>[
+      <String, Object?>{
+        'results': <Object?>[artwork],
+      },
+      <String, Object?>{
+        'results': <Object?>[artwork],
+        'has_more': true,
+        'next_offset': 20,
+      },
+      <String, Object?>{
+        'results': <Object?>[artwork],
+        'has_more': true,
+        'next_offset': 10,
+        'next_cursor': 'opaque-token',
+      },
+      <String, Object?>{
+        'results': <Object?>[artwork],
+        'has_more': false,
+        'next_offset': null,
+      },
+    ]);
+    final repository = OfficialDiscoveryRepository(transport);
+
+    final daily = await repository.dailyDeviations(
+      date: DateTime(2026, 8, 20, 23, 59),
+    );
+    final watched = await repository.watched(const PageRequest(limit: 20));
+    final firstTag = await repository.tag(
+      ' digital-art ',
+      const PageRequest(limit: 10),
+    );
+    await repository.tag(
+      'digital-art',
+      PageRequest(cursor: firstTag.nextCursor, limit: 10),
+    );
+
+    expect(daily.single.id, 'art-1');
+    expect(watched.nextCursor, '20');
+    expect(firstTag.nextCursor, 'cursor:opaque-token');
+    expect(transport.requests[0].query['date'], '2026-08-20');
+    expect(transport.requests[1].path, 'browse/deviantsyouwatch');
+    expect(transport.requests[2].query['offset'], 0);
+    expect(transport.requests[3].query['cursor'], 'opaque-token');
+    expect(transport.requests[3].query, isNot(contains('offset')));
+  });
+
+  test('falls back to a tagged offset when tag cursor is omitted', () async {
+    final artwork = await fixture('deviation.json');
+    final transport = FixtureTransport(<Map<String, Object?>>[
+      <String, Object?>{
+        'results': <Object?>[artwork],
+        'has_more': true,
+        'next_offset': 10,
+      },
+      <String, Object?>{
+        'results': <Object?>[],
+        'has_more': false,
+        'next_offset': null,
+      },
+    ]);
+    final repository = OfficialDiscoveryRepository(transport);
+
+    final first = await repository.tag('drawing', const PageRequest(limit: 10));
+    await repository.tag(
+      'drawing',
+      PageRequest(cursor: first.nextCursor, limit: 10),
+    );
+
+    expect(first.nextCursor, 'offset:10');
+    expect(transport.requests[1].query['offset'], 10);
+    expect(transport.requests[1].query, isNot(contains('cursor')));
+  });
+
+  test(
+    'maps gallery and collection folders with optional preload data',
+    () async {
+      final artwork = await fixture('deviation.json');
+      final transport = FixtureTransport(<Map<String, Object?>>[
+        <String, Object?>{
+          'results': <Object?>[
+            <String, Object?>{
+              'folderid': 'gallery-1',
+              'parent': null,
+              'name': 'Featured',
+              'description': 'Gallery description',
+              'size': 2,
+              'thumb': artwork,
+              'has_subfolders': true,
+              'deviations': <Object?>[artwork],
+            },
+          ],
+          'has_more': false,
+          'next_offset': null,
+        },
+        <String, Object?>{
+          'results': <Object?>[
+            <String, Object?>{
+              'folderid': 'collection-1',
+              'name': 'Inspiration',
+              'description': '',
+              'thumb': null,
+            },
+          ],
+          'has_more': false,
+          'next_offset': null,
+        },
+      ]);
+      final repository = OfficialFolderRepository(transport);
+
+      final galleries = await repository.galleryFolders(
+        username: 'sample-user',
+        options: const FolderQueryOptions(
+          calculateSize: true,
+          preloadArtworks: true,
+        ),
+      );
+      final collections = await repository.collectionFolders();
+
+      expect(galleries.items.single.kind, FolderKind.gallery);
+      expect(galleries.items.single.thumbnail?.id, 'art-1');
+      expect(galleries.items.single.preloadedArtworks.single.id, 'art-1');
+      expect(galleries.items.single.hasSubfolders, isTrue);
+      expect(collections.items.single.kind, FolderKind.collection);
+      expect(collections.items.single.thumbnail, isNull);
+      expect(transport.requests[0].query['calculate_size'], isTrue);
+      expect(transport.requests[0].query['ext_preload'], isTrue);
+      expect(transport.requests[1].query, isNot(contains('username')));
+    },
+  );
+
   test(
     'resolves original transfer metadata through the download endpoint',
     () async {
