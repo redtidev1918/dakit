@@ -27,7 +27,7 @@ promised after the rewrite.
 - [x] External browser launcher and complete OAuth coordinator.
 - [x] Android, macOS, and Windows custom-scheme callbacks.
 - [x] Secure token and resumable PKCE transaction storage.
-- [ ] Background transfer adapter and task recovery.
+- [x] Background transfer adapter and task recovery.
 - [ ] Proxy configuration and staged connectivity diagnostics.
 
 ### M3 — example client and live verification

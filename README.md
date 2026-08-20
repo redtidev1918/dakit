@@ -55,6 +55,9 @@ OAuth application registration and client integration are documented in
 The runnable host and its build commands live in
 [`apps/example_client`](apps/example_client/README.md).
 
+Original-file resolution, background recovery, and proxy behavior are documented
+in [`docs/TRANSFERS.md`](docs/TRANSFERS.md).
+
 ## Project rules
 
 - Core packages contain no widgets, Riverpod, Bloc, or concrete database.

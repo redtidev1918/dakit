@@ -15,9 +15,11 @@ same commit as every material milestone.
 
 ## Next actions
 
-1. Add native proxy selection, staged connectivity checks, and recoverable transfers.
+1. Add API proxy selection and staged DNS/connect/TLS/HTTP diagnostics.
 2. Add artwork detail and transfer controls to the example client.
-3. Add Dart, Android, macOS, and Windows CI jobs.
+3. Run representative live transfers for image, video, archive, literature, and
+   restricted cases.
+4. Add Dart, Android, macOS, and Windows CI jobs.
 
 ## Decisions already made
 
@@ -35,7 +37,7 @@ same commit as every material milestone.
 - Engine `5d53178869`
 - Dart 3.13.1
 - `flutter analyze`: no issues
-- Test suites: 30 passing
+- Test suites: 36 passing
 - Local builds: Android debug APK and macOS debug application succeed
 
 ## Latest milestone
@@ -59,13 +61,19 @@ same commit as every material milestone.
   forwards a callback to the existing instance and registers the protocol through
   its MSIX manifest.
 - Verified Android APK SHA-256 on this machine:
-  `bdc66ee8e0cf134279bb8aa973174416cb05d43dcbc03a2eafff16d972d791eb`.
+  `c2fc8f4ba217ea3e169bbb05b044ef136e6862d6eea96b389f9d1198aacbde9b`.
 - Startup restoration no longer waits for a callback when the app was opened
   normally, and a previous initial link cannot poison a new authorization attempt.
 - The generated counter was replaced by a responsive integration client with
   explicit configuration, authorization, loading, connected, and failure states.
   It automatically loads the account and home feed after a successful callback and
   renders the most recent structured diagnostics without sensitive values.
+- `BackgroundTransferManager` now maps the maintained native transfer plugin into
+  stable core contracts with persisted recovery, expected size, progress, retry,
+  pause/resume/cancel, safe filenames, and explicit transfer-proxy clearing.
+- Android and macOS still build after adding the native transfer plugin. Both macOS
+  entitlement files now include outbound network permission; without it, sandboxed
+  OAuth, API, and media requests would fail despite a successful build.
 
 ## Known external requirements
 

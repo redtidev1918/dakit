@@ -12,6 +12,7 @@ dependencies:
   app_links: ^7.2.1
   artrelay_api: ^0.1.0-dev.1
   artrelay_core: ^0.1.0-dev.1
+  background_downloader: ^9.5.8
   flutter:
     sdk: flutter
   flutter_secure_storage: ^10.0.0

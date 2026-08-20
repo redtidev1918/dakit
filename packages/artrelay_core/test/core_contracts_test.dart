@@ -33,4 +33,14 @@ void main() {
       throwsA(isA<AssertionError>()),
     );
   });
+
+  test('transfer completion is a final state', () {
+    const snapshot = TransferSnapshot(
+      id: 'task-1',
+      state: TransferState.completed,
+      progress: 1,
+    );
+
+    expect(snapshot.isFinal, isTrue);
+  });
 }

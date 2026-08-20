@@ -12,3 +12,7 @@ The package does not provide screens or require a state-management framework.
 For ordinary clients, `ArtRelayOAuthClient` assembles these adapters into a complete
 public-client login lifecycle. Advanced clients can replace any boundary without
 forking the SDK. See the workspace `docs/OAUTH.md` integration guide.
+
+`BackgroundTransferManager` adapts platform schedulers into the core transfer
+contract. It recovers tracked tasks after restart and supports progress, retry,
+pause, resume, cancel, and a media-specific proxy without exposing plugin types.

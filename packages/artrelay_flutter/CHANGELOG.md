@@ -3,3 +3,5 @@
 - Add system-browser, app-links, and secure-storage platform adapters.
 - Add the ready-to-use `ArtRelayOAuthClient` facade.
 - Persist pending PKCE transactions for process restart recovery.
+- Add native-scheduler background transfers with persistent recovery and proxy
+  configuration.

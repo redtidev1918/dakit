@@ -8,3 +8,4 @@ export 'src/media.dart';
 export 'src/models.dart';
 export 'src/pagination.dart';
 export 'src/repositories.dart';
+export 'src/transfer.dart';

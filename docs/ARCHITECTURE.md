@@ -74,12 +74,17 @@ parameters known to contain credentials are always redacted.
 ## Media transfers
 
 The core represents a media asset independently from the way it is transferred.
-Small or foreground consumers can use byte streams. Flutter hosts may install a
-background transfer implementation. No fixed chunk size is part of the public API.
+Flutter hosts use a native-scheduler-backed implementation with persisted recovery,
+progress, retry, pause, resume, and cancellation. No fixed chunk size is part of
+the public API.
 
 The SDK distinguishes preview, original, downloadable attachment, video, archive,
 literature, and restricted/unavailable assets. It never reports a preview as the
 original file.
+
+Transfer task headers do not contain access tokens. The official media repository
+resolves an HTTPS original URL first, then the transfer adapter persists only the
+task metadata needed by the platform scheduler.
 
 ## Upstream compatibility
 
@@ -94,4 +99,3 @@ original file.
 
 Packages use semantic versioning. Public API removals require a major release.
 Generated or upstream DTOs are not exported from the top-level core library.
-
