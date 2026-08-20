@@ -15,10 +15,10 @@ same commit as every material milestone.
 
 ## Next actions
 
-1. Implement the versioned Dio API transport and error/backoff policy.
-2. Add official API DTO fixtures and repository adapters.
-3. Configure the example app custom-scheme callback on all three platforms.
-4. Replace the generated counter screen with an integration diagnostics client.
+1. Add official API DTO fixtures and repository adapters.
+2. Configure the example app custom-scheme callback on all three platforms.
+3. Replace the generated counter screen with an integration diagnostics client.
+4. Add native proxy selection and staged connectivity checks.
 5. Add Dart, Android, macOS, and Windows CI jobs.
 
 ## Decisions already made
@@ -37,7 +37,7 @@ same commit as every material milestone.
 - Engine `5d53178869`
 - Dart 3.13.1
 - `flutter analyze`: no issues
-- Test suites: 13 passing
+- Test suites: 17 passing
 
 ## Known external requirements
 
