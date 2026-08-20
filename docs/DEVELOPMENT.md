@@ -101,7 +101,7 @@ dart pub publish --dry-run --directory packages/dakit_api
 flutter pub publish --dry-run --directory packages/dakit_flutter
 ```
 
-发布顺序为 core → api → flutter。正式发布前还需确认 pub.dev 上的包名可用、repository 链接、版本依赖和 changelog 一致。当前 README 使用 Git dependency，是因为尚未宣称已经发布到 pub.dev。完整发布流程见 [RELEASING.md](RELEASING.md)。
+发布顺序为 core → api → flutter。正式发布前还需确认 pub.dev 上的包名可用、repository 链接、版本依赖和 changelog 一致。当前三个公开包已发布为 `0.1.0`，完整发布流程见 [RELEASING.md](RELEASING.md)。
 
 ## 提交纪律
 

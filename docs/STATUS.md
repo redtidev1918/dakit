@@ -6,13 +6,13 @@
 
 - 分支：`main`；远端：`https://github.com/redtidev1918/dakit.git`；
 - 产品名：DAKit — DeviantArt Client SDK；
-- 版本阶段：`0.1.0-dev.1`，尚未发布 pub.dev；
+- 版本阶段：`0.1.0`，已发布到 pub.dev；
 - 运行时：Flutter 3.47.1 / Dart 3.13.1；
 - 平台：Android、macOS、Windows/MSIX；
-- 测试：格式与分析通过，91 个测试通过；
+- 测试：格式与分析通过，94 个测试通过；
 - 本机构建：Android debug APK、macOS debug app 通过；
 - CI：Linux 质量门及 Android/macOS/Windows 四个 job 通过；
-- 包发布检查：`dakit_core`、`dakit_api`、`dakit_flutter` dry-run 均为 0 warning；
+- 包发布：`dakit_core`、`dakit_api`、`dakit_flutter` 0.1.0 已成功上传 pub.dev；
 - 依赖策略：已忽略 `flutter_secure_storage` 的主版本升级，直到 Android 工具链支持 `compileSdk 37`（v11 与当前 Android API 36 / AGP 9.1.0 不兼容）；
 - 未完成：有效 Public OAuth 应用下的五类真实媒体矩阵。
 
@@ -51,7 +51,7 @@ macOS 实测已通过：安全保存 pending state → 启动系统浏览器 →
 2. 按 [LIVE_TESTING.md](LIVE_TESTING.md) 准备图片、视频、压缩包、文学、受限五类 UUID；
 3. 运行完整流式下载与 SHA-256 验收；
 4. 根据真实 provider 响应补契约测试，更新本文；
-5. 确认 pub.dev 包名并按 core → api → flutter 顺序发布首个开发版。
+5. 观察 pub.dev 上 `dakit_core` / `dakit_api` / `dakit_flutter` 0.1.0 的索引状态，并接入宿主应用验证依赖解析。
 
 ## 中断后恢复
 

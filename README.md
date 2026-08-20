@@ -44,24 +44,20 @@ DAKit 是面向 Dart 与 Flutter 的模块化 DeviantArt 客户端 SDK，为 And
 
 ## 安装
 
-首次发布到 pub.dev 前，从 Git 仓库引用。由于三个包尚未发布，需要把
-`dakit_flutter` 依赖的 `dakit_core` 与 `dakit_api` 一并显式声明，否则
-`pub` 无法解析传递依赖：
+包已发布到 pub.dev。完整 Flutter 集成只需依赖 `dakit_flutter`，它会自动解析
+`dakit_api` 与 `dakit_core`：
 
 ```yaml
 dependencies:
-  dakit_core:
-    git:
-      url: https://github.com/redtidev1918/dakit.git
-      path: packages/dakit_core
-  dakit_api:
-    git:
-      url: https://github.com/redtidev1918/dakit.git
-      path: packages/dakit_api
-  dakit_flutter:
-    git:
-      url: https://github.com/redtidev1918/dakit.git
-      path: packages/dakit_flutter
+  dakit_flutter: ^0.1.0
+```
+
+如果只需要纯 Dart 能力，也可以按需声明：
+
+```yaml
+dependencies:
+  dakit_core: ^0.1.0
+  dakit_api: ^0.1.0
 ```
 
 随后阅读[开始使用](docs/GETTING_STARTED.md)。直接在移动端或桌面端运行内置登录流程时，需要注册 **Public** OAuth 应用，并配置精确回调地址 `dakit://oauth/callback`。
