@@ -27,3 +27,7 @@ class ParseError(ApiError):
 
 class DownloadError(DeviantArtError):
     """An asset could not be resolved or persisted."""
+
+
+class MissingDependencyError(DeviantArtError):
+    """An optional feature dependency is not installed."""

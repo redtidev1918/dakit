@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator
 
-from .auth import Credentials
+from .auth import Credentials, CredentialStore
 from .downloads import DownloadService
 from .models import Artwork, ClientCapabilities, Page
-from .services import ArtworkService, BrowseService, UserService
+from .services import ArtworkService, AuthenticationService, BrowseService, UserService
 from .session import ClientSession
 from .store import AssetStore
 from .transport import AsyncTransport
@@ -19,9 +19,14 @@ class DAKit:
     capabilities = ClientCapabilities()
 
     def __init__(
-        self, *, transport: AsyncTransport | None = None, credentials: Credentials | None = None
+        self,
+        *,
+        transport: AsyncTransport | None = None,
+        credentials: Credentials | None = None,
+        credential_store: CredentialStore | None = None,
     ) -> None:
         self.session = ClientSession(transport, credentials)
+        self.auth = AuthenticationService(self.session, credential_store)
         self.artworks = ArtworkService(self.session)
         self.browse = BrowseService(self.session)
         self.users = UserService(self.session)

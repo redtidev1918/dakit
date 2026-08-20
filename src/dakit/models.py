@@ -110,6 +110,8 @@ class User:
 
 @dataclass(frozen=True, slots=True)
 class ClientCapabilities:
+    oauth_login: bool = True
+    session_persistence: bool = True
     artwork_details: bool = True
     gallery: bool = True
     favorites: bool = True

@@ -17,8 +17,10 @@ DAKit 是用于构建第三方 DeviantArt 客户端的异步 Python 内核。它
 
 ## 安装
 
+DAKit 尚未发布到 PyPI。当前请从 GitHub 安装：
+
 ```bash
-pip install dakit
+pip install 'dakit @ git+https://github.com/redtidev1918/dakit.git'
 ```
 
 开发环境：
@@ -62,7 +64,31 @@ asyncio.run(main())
 
 ## 登录与会话
 
-凭据由宿主应用管理。SDK 不会自行读取浏览器、用户目录或密码：
+DAKit 使用 DeviantArt 官方 OAuth2 Authorization Code Grant。系统浏览器负责登录、验证码和 2FA，SDK 不接收用户密码。第三方客户端需要先在 DeviantArt 开发者后台注册应用，并配置一个 localhost 回调地址，例如 `http://127.0.0.1:8765/callback`。
+
+```bash
+dakit login --client-id ID --client-secret SECRET \
+  --redirect-uri http://127.0.0.1:8765/callback
+dakit status
+```
+
+作为模块使用：
+
+```python
+from dakit import DAKit, JsonCredentialStore, OAuthConfig
+
+da = DAKit(credential_store=JsonCredentialStore())
+state = await da.auth.login_oauth(OAuthConfig(
+    client_id="your-client-id",
+    client_secret="your-client-secret",
+    redirect_uri="http://127.0.0.1:8765/callback",
+))
+print(state.authenticated, state.username)
+```
+
+`JsonCredentialStore` 将会话保存为仅当前用户可读的 `0600` 文件。移动端或桌面客户端应实现 `CredentialStore`，接入 Keychain、Keystore 或系统凭据保险库。
+
+也可以由宿主应用管理凭据并直接注入：
 
 ```python
 from dakit import Credentials, DAKit
@@ -139,6 +165,7 @@ Application / Flutter bridge / Web API
 | 全局与用户内搜索 | 可用 |
 | 图片、GIF、视频、文学媒体 | 可用 |
 | Cookie 会话与受限内容识别 | 可用 |
+| OAuth2 登录、状态检查与登出 | 可用（需要宿主应用 OAuth 凭据） |
 | 评论 | 尚未实现 |
 | 收藏/取消收藏、关注/取消关注 | 尚未实现 |
 | 首页推荐、关注动态、通知 | 尚未实现 |

@@ -1,6 +1,6 @@
 """Public API for DAKit."""
 
-from .auth import Credentials
+from .auth import AuthState, Credentials, CredentialStore, JsonCredentialStore, OAuthConfig
 from .client import DAKit, DeviantArtClient
 from .downloads import DownloadService
 from .errors import (
@@ -8,6 +8,7 @@ from .errors import (
     AuthenticationError,
     DeviantArtError,
     DownloadError,
+    MissingDependencyError,
     ParseError,
     TransportError,
 )
@@ -32,8 +33,10 @@ __all__ = [
     "AssetQuality",
     "AssetStore",
     "AsyncTransport",
+    "AuthState",
     "AuthenticationError",
     "ClientCapabilities",
+    "CredentialStore",
     "Credentials",
     "DAKit",
     "DeviantArtClient",
@@ -45,8 +48,11 @@ __all__ = [
     "DownloadedAsset",
     "FileSystemStore",
     "HttpxTransport",
+    "JsonCredentialStore",
     "MediaKind",
     "MediaVariant",
+    "MissingDependencyError",
+    "OAuthConfig",
     "Page",
     "ParseError",
     "Response",
@@ -54,4 +60,4 @@ __all__ = [
     "User",
 ]
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"

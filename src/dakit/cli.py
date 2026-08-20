@@ -7,8 +7,8 @@ import asyncio
 import os
 from pathlib import Path
 
-from .auth import Credentials
-from .client import DeviantArtClient
+from .auth import Credentials, JsonCredentialStore, OAuthConfig
+from .client import DAKit
 from .downloads import DownloadService
 from .errors import DeviantArtError
 from .models import AssetQuality
@@ -32,11 +32,41 @@ def build_parser() -> argparse.ArgumentParser:
     url = sub.add_parser("url", help="download one artwork URL")
     url.add_argument("url")
     url.add_argument("--quality", choices=[item.value for item in AssetQuality], default="full")
+    login = sub.add_parser("login", help="sign in with DeviantArt OAuth2")
+    login.add_argument("--timeout", type=float, default=300)
+    login.add_argument("--client-id", default=os.getenv("DAKIT_CLIENT_ID"))
+    login.add_argument("--client-secret", default=os.getenv("DAKIT_CLIENT_SECRET"))
+    login.add_argument("--redirect-uri", default=os.getenv("DAKIT_REDIRECT_URI"))
+    sub.add_parser("status", help="show authentication status")
+    sub.add_parser("logout", help="remove the saved session")
     return parser
 
 
 async def run(args: argparse.Namespace) -> int:
-    async with DeviantArtClient(credentials=Credentials(args.cookie)) as client:
+    store = JsonCredentialStore()
+    credentials = Credentials(args.cookie) if args.cookie else store.load()
+    async with DAKit(credentials=credentials, credential_store=store) as client:
+        if args.command == "login":
+            if not all((args.client_id, args.client_secret, args.redirect_uri)):
+                raise ValueError("login requires --client-id, --client-secret and --redirect-uri")
+            state = await client.auth.login_oauth(
+                OAuthConfig(args.client_id, args.client_secret, args.redirect_uri),
+                timeout=args.timeout,
+            )
+            print(f"logged in as {state.username or 'authenticated user'}")
+            return 0
+        if args.command == "status":
+            state = await client.auth.status()
+            print(
+                f"logged in as {state.username or 'authenticated user'}"
+                if state.authenticated
+                else "not logged in"
+            )
+            return 0 if state.authenticated else 1
+        if args.command == "logout":
+            await client.auth.logout()
+            print("logged out")
+            return 0
         if args.command == "search":
             page = await client.search(args.query, username=args.username, limit=args.limit)
             for item in page.items:

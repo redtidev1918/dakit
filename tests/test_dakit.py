@@ -12,6 +12,8 @@ from dakit import (
     DeviantArtClient,
     DownloadService,
     FileSystemStore,
+    JsonCredentialStore,
+    OAuthConfig,
     Response,
 )
 from dakit.parser import parse_deviation
@@ -68,6 +70,20 @@ class FakeTransport:
         self.closed = True
 
 
+class FakeAuthTransport(FakeTransport):
+    async def request(
+        self,
+        method: str,
+        url: str,
+        *,
+        params: Mapping[str, object] | None = None,
+        headers: Mapping[str, str] | None = None,
+        json: object | None = None,
+        data: Mapping[str, object] | None = None,
+    ) -> Response:
+        return Response(200, {}, b'{"isLoggedIn":true,"username":"alice"}')
+
+
 @pytest.mark.asyncio
 async def test_client_and_download_are_embeddable(tmp_path: Path) -> None:
     transport = FakeTransport()
@@ -83,6 +99,7 @@ async def test_client_and_download_are_embeddable(tmp_path: Path) -> None:
     assert client.browse is not None
     assert client.users is not None
     assert client.capabilities.comments is False
+    assert client.capabilities.oauth_login is True
 
 
 def test_parser_preserves_unknown_fields() -> None:
@@ -137,3 +154,30 @@ async def test_literature_is_saved_as_text(tmp_path: Path) -> None:
     result = await DownloadService(FakeTransport(), FileSystemStore(tmp_path)).download(item)
     assert Path(result.location).suffix == ".txt"
     assert Path(result.location).read_text() == "hello world"
+
+
+@pytest.mark.asyncio
+async def test_login_cookies_updates_and_persists_session(tmp_path: Path) -> None:
+    from dakit import DAKit
+
+    store = JsonCredentialStore(tmp_path / "session.json")
+    client = DAKit(transport=FakeAuthTransport(), credential_store=store)
+    state = await client.auth.login_cookies("auth=secret")
+    assert state.authenticated is True
+    assert state.username is None
+    assert store.load() is not None
+    assert (store.path.stat().st_mode & 0o777) == 0o600
+    await client.auth.logout()
+    assert store.load() is None
+
+
+def test_oauth_authorization_url_contains_state_and_scopes() -> None:
+    from dakit import DAKit
+
+    client = DAKit(transport=FakeTransport())
+    config = OAuthConfig("client", "secret", "http://127.0.0.1:8765/callback")
+    url = client.auth.authorization_url(config, state="csrf-state")
+    assert "response_type=code" in url
+    assert "client_id=client" in url
+    assert "state=csrf-state" in url
+    assert "scope=basic+browse" in url
