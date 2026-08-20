@@ -8,6 +8,7 @@
 build/
 coverage/
 doc/api/
+docs/api/
 pubspec_overrides.yaml
 packages/*/pubspec.lock
 

@@ -43,8 +43,12 @@ dart run melos run analyze
 dart run melos run test
 dart run melos run test:coverage
 dart run melos run graph
+dart run melos run doc
 dart run melos run publish:check
 ```
+
+`doc` 会把公开包的 API 文档生成到 `docs/api/<package>/`。该目录由脚本生成，不提交到
+Git；发布前用 `dart run melos run doc` 检查每个包能生成 0 warning / 0 error 的文档。
 
 真实 OAuth/API 测试不进入普通 CI，因为它需要用户授权并受 provider 内容影响。测试方法见 [LIVE_TESTING.md](LIVE_TESTING.md)。
 

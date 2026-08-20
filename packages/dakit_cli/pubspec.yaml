@@ -1,6 +1,6 @@
 name: dakit_cli
 description: Command-line client for DAKit.
-version: 0.1.0-dev.1
+version: 0.1.0
 publish_to: none
 
 environment:
@@ -15,8 +15,8 @@ executables:
 dependencies:
   args: ^2.7.0
   crypto: ^3.0.7
-  dakit_api: ^0.1.0-dev.1
-  dakit_core: ^0.1.0-dev.1
+  dakit_api: ^0.1.0
+  dakit_core: ^0.1.0
   dio: ^5.11.0
 
 dev_dependencies:

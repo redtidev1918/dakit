@@ -1,7 +1,7 @@
 name: dakit_workspace
 description: Workspace for the DAKit DeviantArt client SDK.
 publish_to: none
-version: 0.1.0-dev.1
+version: 0.1.0
 
 environment:
   sdk: ^3.13.1
@@ -36,6 +36,13 @@ melos:
     graph:
       run: dart run melos list --graph
       description: Print the workspace dependency graph.
+
+    doc:
+      run: |
+        dart doc --output docs/api/dakit_core packages/dakit_core
+        dart doc --output docs/api/dakit_api packages/dakit_api
+        dart doc --output docs/api/dakit_flutter packages/dakit_flutter
+      description: Generate API documentation for each public package.
 
     analyze:
       run: flutter analyze

@@ -19,12 +19,20 @@ DAKit 是一个 Dart workspace，公开包为 `dakit_core`、`dakit_api` 和
    ```
 
 4. 确认没有把 token、client secret、代理密码或真实服务报告提交进仓库。
+5. 生成并检查包级 API 文档：
+
+   ```shell
+   dart run melos run doc
+   ```
+
+   每个公开包应输出 `0 warnings and 0 errors`。
 
 ## 更新版本
 
-公开包遵循语义化版本。当前仍是 `0.1.0-dev.1`，正式发布前需要：
+公开包遵循语义化版本。正式发布前需要：
 
-1. 更新对应包的 `pubspec.yaml` `version`。
+1. 更新对应包的 `pubspec.yaml` `version`，并在正式发布前冻结为不带 `-dev` 后缀的
+   稳定版本，例如 `0.1.0`。
 2. 更新对应包的 `CHANGELOG.md`，使用 `Added` / `Changed` / `Fixed` /
    `Deprecated` / `Removed` / `Security` 分类。
 3. 如果依赖关系变化，按 `core → api → flutter` 的顺序更新。
