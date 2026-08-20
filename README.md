@@ -52,6 +52,9 @@ live in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and
 OAuth application registration and client integration are documented in
 [`docs/OAUTH.md`](docs/OAUTH.md).
 
+The runnable host and its build commands live in
+[`apps/example_client`](apps/example_client/README.md).
+
 ## Project rules
 
 - Core packages contain no widgets, Riverpod, Bloc, or concrete database.

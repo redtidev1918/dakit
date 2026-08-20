@@ -31,8 +31,8 @@ final oauth = ArtRelayOAuthClient(
   diagnostics: diagnostics,
 );
 
-final restored = await oauth.resumePending();
-runApp(MyApp(oauth: oauth, restored: restored));
+runApp(MyApp(oauth: oauth));
+await oauth.resumePending(); // Update application state if tokens are returned.
 ```
 
 Start an interactive authorization only from an explicit user action:
@@ -50,8 +50,10 @@ The coordinator performs these steps in order:
 5. Exchange the code without a client secret.
 6. Persist access and refresh tokens, then clear the pending transaction.
 
-Concurrent calls share one authorization operation. A process terminated while
-the browser is open can resume from secure storage. Callback timeouts, provider
+Concurrent calls share one authorization operation. Startup recovery returns
+immediately when the process was not opened by an OAuth callback, so stale pending
+state cannot hold the first frame. A process terminated while the browser is open
+can resume from secure storage. Callback timeouts, provider
 denials, browser launch failures, token failures, and storage failures have
 different diagnostic stages and error codes.
 

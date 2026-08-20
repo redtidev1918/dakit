@@ -77,10 +77,20 @@ final class OAuthAuthorizationCoordinator {
   ///
   /// Returns `null` when there is nothing to resume. Hosts should call this as
   /// early as practical after constructing their callback source.
-  Future<AuthTokens?> resumePending() async {
+  Future<AuthTokens?> resumePending({bool waitForCallback = false}) async {
     final pending = await _pendingStore.read();
     if (pending == null) return null;
-    return _singleFlight(() => _complete(pending));
+    Uri? initialCallback;
+    if (_callbacks case final InitialCallbackUriSource initialSource) {
+      final initial = await initialSource.initialUri();
+      if (initial != null && _flow.matchesRedirect(config, initial)) {
+        initialCallback = initial;
+      }
+    }
+    if (initialCallback == null && !waitForCallback) return null;
+    return _singleFlight(
+      () => _complete(pending, initialCallback: initialCallback),
+    );
   }
 
   Future<void> cancelPending() async {
@@ -147,7 +157,10 @@ final class OAuthAuthorizationCoordinator {
     );
   }
 
-  Future<AuthTokens> _complete(PendingAuthorization pending) async {
+  Future<AuthTokens> _complete(
+    PendingAuthorization pending, {
+    Uri? initialCallback,
+  }) async {
     final age = _now().toUtc().difference(pending.createdAt);
     if (age >= timeout) {
       await _pendingStore.clear();
@@ -157,13 +170,18 @@ final class OAuthAuthorizationCoordinator {
         message: 'The OAuth authorization transaction expired.',
       );
     }
-    return _waitForCallback(pending, remaining: timeout - age);
+    return _waitForCallback(
+      pending,
+      remaining: timeout - age,
+      initialCallback: initialCallback,
+    );
   }
 
   Future<AuthTokens> _waitForCallback(
     PendingAuthorization pending, {
     Duration? remaining,
     Future<void> Function()? afterListening,
+    Uri? initialCallback,
   }) async {
     final started = _now();
     _record(
@@ -177,6 +195,7 @@ final class OAuthAuthorizationCoordinator {
       final callbackUri = await _nextCallback(
         remaining ?? timeout,
         afterListening: afterListening,
+        initialCallback: initialCallback,
       );
       final callback = _flow.validateCallback(
         config: config,
@@ -242,6 +261,7 @@ final class OAuthAuthorizationCoordinator {
   Future<Uri> _nextCallback(
     Duration wait, {
     Future<void> Function()? afterListening,
+    Uri? initialCallback,
   }) async {
     final controller = StreamController<Uri>();
     late final StreamSubscription<Uri> subscription;
@@ -251,11 +271,8 @@ final class OAuthAuthorizationCoordinator {
       }
     }, onError: controller.addError);
     try {
-      if (_callbacks case final InitialCallbackUriSource initialSource) {
-        final initial = await initialSource.initialUri();
-        if (initial != null && _flow.matchesRedirect(config, initial)) {
-          controller.add(initial);
-        }
+      if (initialCallback != null) {
+        controller.add(initialCallback);
       }
       await afterListening?.call();
       return await controller.stream.first.timeout(wait);

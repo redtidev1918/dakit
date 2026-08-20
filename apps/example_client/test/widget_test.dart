@@ -1,30 +1,71 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
+import 'package:artrelay_flutter/artrelay_flutter.dart';
+import 'package:example_client/src/client_app.dart';
+import 'package:example_client/src/client_controller.dart';
+import 'package:example_client/src/diagnostic_log.dart';
+import 'package:flutter/foundation.dart' show Key;
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:example_client/main.dart';
-
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets(
+    'shows an actionable command instead of a blank configuration screen',
+    (tester) async {
+      final controller = ExampleClientController.unconfigured(
+        diagnostics: DiagnosticLog(),
+      );
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+      await tester.pumpWidget(ArtRelayExampleApp(controller: controller));
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+      expect(find.text('Client ID is not configured'), findsOneWidget);
+      expect(find.textContaining('ARTRELAY_CLIENT_ID'), findsOneWidget);
+      expect(find.textContaining('client secret'), findsOneWidget);
+    },
+  );
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
-  });
+  testWidgets(
+    'login updates the account and home content without manual refresh',
+    (tester) async {
+      final controller = ExampleClientController(
+        diagnostics: DiagnosticLog(),
+        resumeSession: ({waitForCallback = false}) async => null,
+        authorize: () async => tokens,
+        validTokens: ({forceRefresh = false}) async {
+          throw const ArtRelayException(
+            kind: ArtRelayFailureKind.authentication,
+            code: 'oauth.session.missing',
+            message: 'No session.',
+          );
+        },
+        logout: ({revoke = true}) async {},
+        loadAccount: () async => user,
+        loadHome: () async =>
+            Page<Artwork>(items: <Artwork>[artwork], hasMore: false),
+      );
+      await tester.pumpWidget(ArtRelayExampleApp(controller: controller));
+      await controller.initialize();
+      await tester.pump();
+
+      await tester.tap(find.byKey(const Key('login-button')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Connected'), findsOneWidget);
+      expect(find.text('@sample-user'), findsOneWidget);
+      expect(find.text('Example work'), findsOneWidget);
+    },
+  );
 }
+
+final tokens = AuthTokens(
+  accessToken: 'access',
+  tokenType: 'Bearer',
+  expiresAt: DateTime.utc(2026, 8, 20, 13),
+);
+
+const user = UserProfile(id: 'user-1', username: 'sample-user');
+
+final artwork = Artwork(
+  id: 'art-1',
+  title: 'Example work',
+  author: user,
+  pageUri: Uri.parse('https://example.test/art-1'),
+  media: const <MediaAsset>[],
+);

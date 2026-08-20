@@ -166,6 +166,34 @@ void main() {
     );
     expect(pendingStore.value, isNull);
   });
+
+  test(
+    'startup recovery returns promptly when no cold-start callback exists',
+    () async {
+      final pending = PendingAuthorization(
+        authorizationUri: Uri.https('www.deviantart.com', '/oauth2/authorize'),
+        state: 'persisted-state',
+        codeVerifier: 'persisted-verifier',
+        createdAt: DateTime.utc(2026, 8, 20, 11, 59),
+      );
+      final pendingStore = MemoryPendingStore(pending);
+      final coordinator = buildCoordinator(
+        config: config,
+        callbacks: FakeCallbackSource(),
+        pendingStore: pendingStore,
+        tokenStore: MemoryTokenStore(),
+        endpoint: FakeOAuthEndpoint(),
+        launcher: FakeLauncher((_) async {}),
+        now: now,
+      );
+
+      final result = await coordinator.resumePending();
+
+      expect(result, isNull);
+      expect(pendingStore.value, same(pending));
+      expect(coordinator.isAuthorizing, isFalse);
+    },
+  );
 }
 
 OAuthAuthorizationCoordinator buildCoordinator({

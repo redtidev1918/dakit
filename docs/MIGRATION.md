@@ -32,7 +32,8 @@ promised after the rewrite.
 
 ### M3 — example client and live verification
 
-- [ ] Minimal login/account/browse/detail UI.
+- [x] Minimal login/account/browse and diagnostic UI.
+- [ ] Artwork detail and transfer UI.
 - [ ] Download representative image, video, archive, literature, and restricted cases.
 - [ ] Android debug APK smoke test.
 - [ ] macOS smoke test.

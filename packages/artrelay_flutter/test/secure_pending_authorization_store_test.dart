@@ -1,4 +1,3 @@
-import 'package:artrelay_api/artrelay_api.dart';
 import 'package:artrelay_flutter/artrelay_flutter.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';

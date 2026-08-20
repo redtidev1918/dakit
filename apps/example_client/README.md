@@ -1,17 +1,25 @@
-# example_client
+# ArtRelay example client
 
-A new Flutter project.
+This application is an integration and diagnostics client, not a production UI.
+It proves that a host can consume the public Flutter facade without accessing
+private DTOs or platform implementation details.
 
-## Getting Started
+Register `artrelay://oauth/callback` exactly on a Public OAuth application, then
+run without committing the client ID:
 
-This project is a starting point for a Flutter application.
+```shell
+flutter run -d macos \
+  --dart-define=ARTRELAY_CLIENT_ID=YOUR_PUBLIC_CLIENT_ID
+```
 
-A few resources to get you started if this is your first Flutter project:
+The same define can be supplied to `flutter build apk` or `flutter build windows`.
+The app displays distinct configuration, session restore, browser callback, API,
+parsing, storage, and unexpected failure states. Its diagnostic list contains no
+tokens, authorization codes, cookies, or PKCE secrets.
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+Build-only smoke tests do not require an OAuth application:
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+```shell
+flutter build macos --debug
+flutter build apk --debug
+```

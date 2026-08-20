@@ -15,8 +15,8 @@ same commit as every material milestone.
 
 ## Next actions
 
-1. Replace the generated counter screen with an integration diagnostics client.
-2. Add native proxy selection, staged connectivity checks, and recoverable transfers.
+1. Add native proxy selection, staged connectivity checks, and recoverable transfers.
+2. Add artwork detail and transfer controls to the example client.
 3. Add Dart, Android, macOS, and Windows CI jobs.
 
 ## Decisions already made
@@ -35,7 +35,7 @@ same commit as every material milestone.
 - Engine `5d53178869`
 - Dart 3.13.1
 - `flutter analyze`: no issues
-- Test suites: 28 passing
+- Test suites: 30 passing
 - Local builds: Android debug APK and macOS debug application succeed
 
 ## Latest milestone
@@ -59,7 +59,13 @@ same commit as every material milestone.
   forwards a callback to the existing instance and registers the protocol through
   its MSIX manifest.
 - Verified Android APK SHA-256 on this machine:
-  `aa3a60f33fef360aa5d78f776eeb1042031878bbbdd4fbc7f52a957a3d317920`.
+  `bdc66ee8e0cf134279bb8aa973174416cb05d43dcbc03a2eafff16d972d791eb`.
+- Startup restoration no longer waits for a callback when the app was opened
+  normally, and a previous initial link cannot poison a new authorization attempt.
+- The generated counter was replaced by a responsive integration client with
+  explicit configuration, authorization, loading, connected, and failure states.
+  It automatically loads the account and home feed after a successful callback and
+  renders the most recent structured diagnostics without sensitive values.
 
 ## Known external requirements
 

@@ -58,7 +58,8 @@ final class ArtRelayOAuthClient {
 
   Future<AuthTokens> authorize() => authorization.authorize();
 
-  Future<AuthTokens?> resumePending() => authorization.resumePending();
+  Future<AuthTokens?> resumePending({bool waitForCallback = false}) =>
+      authorization.resumePending(waitForCallback: waitForCallback);
 
   Future<AuthTokens> validTokens({bool forceRefresh = false}) =>
       session.validTokens(forceRefresh: forceRefresh);
