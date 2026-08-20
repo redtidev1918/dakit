@@ -59,13 +59,19 @@ dependencies:
 
 不想先写 Flutter 界面时，可以用纯 Dart 的 `dakit_cli` 完成登录和单文件下载：
 
+使用前准备：
+
+1. 在 DeviantArt 注册 **Public** OAuth 应用；
+2. 把精确回调地址 `http://127.0.0.1:8765/callback` 加入应用白名单；
+3. 记录该应用的 `client_id`。
+
 ```shell
 dart run packages/dakit_cli/bin/dakit.dart status --proxy 127.0.0.1:7892
 dart run packages/dakit_cli/bin/dakit.dart login --client-id 你的_PUBLIC_CLIENT_ID --proxy 127.0.0.1:7892
 dart run packages/dakit_cli/bin/dakit.dart download 作品UUID --output downloads --proxy 127.0.0.1:7892
 ```
 
-`login` 会在本机 `8765` 端口起临时回调服务并打开系统浏览器，凭据保存到 `~/.config/dakit/credentials.json`（Windows 在 `%APPDATA%`）。CLI 的回调地址是 `http://127.0.0.1:8765/callback`，需要把它加入该 Public 应用的白名单。代理参数可省略，CLI 会遵循 `http_proxy` / `https_proxy` 环境变量。
+`login` 会在本机 `8765` 端口起临时回调服务并打开系统浏览器，凭据保存到 `~/.config/dakit/credentials.json`（Windows 在 `%APPDATA%`）。`download` 需要先完成一次登录，并传入作品 UUID。代理参数可省略，CLI 会遵循 `http_proxy` / `https_proxy` 环境变量；也可以运行 `dakit --help` 查看完整使用说明。
 
 ## 最小示例
 

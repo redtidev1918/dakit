@@ -13,6 +13,7 @@ const _usage = '''
 DAKit command-line client
 
 Usage:
+  dakit --help
   dakit login --client-id ID [--scopes basic,browse] [--proxy HOST:PORT]
   dakit whoami [--proxy HOST:PORT]
   dakit download UUID [--output DIR] [--proxy HOST:PORT]
@@ -23,8 +24,21 @@ Environment:
   http_proxy / https_proxy
 ''';
 
+const _prerequisites = '''
+Before `login`, prepare:
+  1. Register a Public OAuth application on DeviantArt.
+  2. Add this exact redirect URI to its whitelist:
+       http://127.0.0.1:8765/callback
+     If you pass --port, use that port instead.
+  3. Keep the application's client_id ready.
+
+Before `download`, run `dakit login` once and prepare an artwork UUID
+(shown in the example client's artwork detail view).
+''';
+
 Future<void> main(List<String> arguments) async {
   final parser = ArgParser()
+    ..addFlag('help', abbr: 'h', negatable: false)
     ..addCommand('login', _loginParser())
     ..addCommand('whoami', _proxyParser())
     ..addCommand('download', _downloadParser())
@@ -41,8 +55,11 @@ Future<void> main(List<String> arguments) async {
   }
 
   final command = results.command;
-  if (command == null) {
-    stdout.writeln(_usage);
+  final showHelp = command == null
+      ? results['help'] as bool
+      : command['help'] as bool;
+  if (command == null || showHelp) {
+    stdout.writeln(_help());
     return;
   }
 
@@ -65,6 +82,7 @@ Future<void> main(List<String> arguments) async {
 
 ArgParser _loginParser() {
   final parser = ArgParser()
+    ..addFlag('help', abbr: 'h', negatable: false)
     ..addOption('client-id', abbr: 'c', help: 'Public OAuth client ID.')
     ..addOption(
       'scopes',
@@ -77,21 +95,30 @@ ArgParser _loginParser() {
 }
 
 ArgParser _downloadParser() {
-  final parser = _proxyParser()
+  final parser = ArgParser()
+    ..addFlag('help', abbr: 'h', negatable: false)
+    ..addOption('proxy', help: 'HTTP proxy as HOST:PORT.')
     ..addOption('output', defaultsTo: 'downloads', help: 'Output directory.');
   return parser;
 }
 
 ArgParser _proxyParser() {
-  return ArgParser()..addOption('proxy', help: 'HTTP proxy as HOST:PORT.');
+  return ArgParser()
+    ..addFlag('help', abbr: 'h', negatable: false)
+    ..addOption('proxy', help: 'HTTP proxy as HOST:PORT.');
 }
+
+String _help() => '$_usage\n$_prerequisites';
 
 Future<int> _login(ArgResults arguments) async {
   final clientId =
       arguments['client-id'] as String? ??
       Platform.environment['DAKIT_CLIENT_ID'];
   if (clientId == null || clientId.trim().isEmpty) {
-    stderr.writeln('Provide --client-id or DAKIT_CLIENT_ID.');
+    stderr.writeln(
+      'Provide --client-id or DAKIT_CLIENT_ID.\n'
+      'Run `dakit login --help` for the full checklist.',
+    );
     return 64;
   }
 
@@ -107,6 +134,7 @@ Future<int> _login(ArgResults arguments) async {
   }
 
   final redirectUri = Uri.parse('http://127.0.0.1:$port/callback');
+  stdout.writeln('Required redirect URI whitelist: $redirectUri');
   final callbackSource = LoopbackCallbackSource(
     port: port,
     path: redirectUri.path,
