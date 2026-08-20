@@ -15,7 +15,7 @@
 - 包发布检查：`dakit_core`、`dakit_api`、`dakit_flutter` dry-run 均为 0 warning；
 - 未完成：有效 Public OAuth 应用下的五类真实媒体矩阵。
 
-最新完整 CI 为 [run 32364010294](https://github.com/redtidev1918/dakit/actions/runs/32364010294)：Analyze and test 46 秒、macOS 2 分 4 秒、Android APK 3 分 22 秒、Windows/MSIX 4 分 28 秒，所有 artifact 上传成功。该运行验证了文档重组、冗余文件删除和集中式忽略规则没有破坏任何平台构建。
+最新完整 CI 为 [run 32368334450](https://github.com/redtidev1918/dakit/actions/runs/32368334450)：Analyze and test 46 秒、macOS 2 分 34 秒、Android APK 2 分 42 秒、Windows/MSIX 3 分 41 秒，所有 artifact 上传成功。该运行验证了 92 项测试，以及用户资料/关系、发现流、目录内容和通知反馈中心等新增客户端 API 没有破坏任何平台构建。
 
 ## 已实现范围
 
