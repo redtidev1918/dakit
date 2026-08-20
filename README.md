@@ -73,7 +73,7 @@ dependencies:
 使用前准备：
 
 1. 在 DeviantArt 注册 **Public** OAuth 应用；
-2. 把精确回调地址 `http://127.0.0.1:8765/callback` 加入应用白名单；
+2. 把精确回调地址 `dakit://oauth/callback` 加入应用白名单；
 3. 记录该应用的 `client_id`。
 
 在仓库根目录，可以直接用短脚本运行，不用输入完整 Dart 路径：
@@ -94,7 +94,7 @@ dart run packages/dakit_cli/bin/dakit.dart search "digital art" --limit 24
 dart run packages/dakit_cli/bin/dakit.dart login validate
 ```
 
-`login` 会在本机 `8765` 端口起临时回调服务并打开系统浏览器，凭据保存到 `~/.config/dakit/credentials.json`（Windows 在 `%APPDATA%`）。批量命令需要先完成登录。代理参数可省略，CLI 会遵循 `http_proxy` / `https_proxy` 环境变量；也可以运行 `dakit --help` 查看完整使用说明。
+`login` 会打开系统浏览器；授权完成后，把浏览器地址栏里的完整回调 URL 粘贴回 CLI。凭据保存到 `~/.config/dakit/credentials.json`（Windows 在 `%APPDATA%`）。批量命令需要先完成登录。代理参数可省略，CLI 会遵循 `http_proxy` / `https_proxy` 环境变量；也可以运行 `dakit --help` 查看完整使用说明。
 
 所有 CLI 命令都支持 `--verbose` / `-v`，会把脱敏后的 DNS/TCP/TLS/HTTP 诊断事件输出到 `stderr`：
 

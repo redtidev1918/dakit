@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:dakit_api/dakit_api.dart';
@@ -107,5 +108,28 @@ final class LoopbackCallbackSource implements CallbackUriSource {
       '</body></html>',
     );
     await request.response.close();
+  }
+}
+
+final class StdinCallbackSource implements CallbackUriSource {
+  const StdinCallbackSource();
+
+  @override
+  Stream<Uri> get uris => _readCallbackUrls();
+
+  Stream<Uri> _readCallbackUrls() async* {
+    stdout.writeln(
+      'After authorizing, copy the full redirect URL from your browser '
+      'address bar and paste it here, then press Enter.',
+    );
+    final lines = stdin.transform(utf8.decoder).transform(const LineSplitter());
+    await for (final line in lines) {
+      final uri = Uri.tryParse(line.trim());
+      if (uri != null && uri.hasScheme) {
+        yield uri;
+        return;
+      }
+      stderr.writeln('Paste the full URL, including code and state.');
+    }
   }
 }

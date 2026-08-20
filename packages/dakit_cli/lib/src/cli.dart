@@ -37,9 +37,9 @@ Before `login`, prepare:
   1. Register a Public OAuth application on DeviantArt (not Confidential).
      DAKit client login never accepts a client_secret.
   2. Add this exact redirect URI to its whitelist:
-       http://127.0.0.1:8765/callback
-     If you pass --port, use that port instead.
+       dakit://oauth/callback
   3. Keep the application's client_id ready.
+     After authorizing, paste the full redirect URL when prompted.
 
 Before downloading (`url`, `artist`, `gallery`, `fav`, `search`), run
 `dakit login` once and prepare an artwork UUID or username as needed.
@@ -172,19 +172,24 @@ Future<int> _login(ArgResults arguments) async {
       .map((value) => value.trim())
       .where((value) => value.isNotEmpty)
       .toSet();
-  final port = int.tryParse(arguments['port'] as String) ?? 8765;
-  if (port < 1 || port > 65535) {
-    stderr.writeln('--port must be between 1 and 65535.');
-    return 64;
+  final useLoopback = arguments.rest.firstOrNull == 'loopback';
+  late final Uri redirectUri;
+  late final CallbackUriSource callbackSource;
+  if (useLoopback) {
+    final port = int.tryParse(arguments['port'] as String) ?? 8765;
+    if (port < 1 || port > 65535) {
+      stderr.writeln('--port must be between 1 and 65535.');
+      return 64;
+    }
+    redirectUri = Uri.parse('http://127.0.0.1:$port/callback');
+    final loopback = LoopbackCallbackSource(port: port, path: redirectUri.path);
+    await loopback.start();
+    callbackSource = loopback;
+  } else {
+    redirectUri = Uri.parse('dakit://oauth/callback');
+    callbackSource = const StdinCallbackSource();
   }
-
-  final redirectUri = Uri.parse('http://127.0.0.1:$port/callback');
   stdout.writeln('Required redirect URI whitelist: $redirectUri');
-  final callbackSource = LoopbackCallbackSource(
-    port: port,
-    path: redirectUri.path,
-  );
-  await callbackSource.start();
 
   final config = OAuthConfig(
     clientId: clientId.trim(),
@@ -229,7 +234,9 @@ Future<int> _login(ArgResults arguments) async {
     stdout.writeln('account=${user.username} id=${user.id}');
     return 0;
   } finally {
-    await callbackSource.close();
+    if (callbackSource case final LoopbackCallbackSource loopback) {
+      await loopback.close();
+    }
   }
 }
 
