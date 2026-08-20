@@ -26,6 +26,7 @@ DAKit 是面向 Dart 与 Flutter 的模块化 DeviantArt 客户端 SDK，为 And
 | `dakit_core` | 模型、错误、仓库接口、分页、诊断、传输契约 | 无 |
 | `dakit_api` | OAuth PKCE、网络配置、连通性检查、官方 API 实现 | 无 |
 | `dakit_flutter` | 系统浏览器、深链、安全存储、后台传输 | 有 |
+| `dakit_cli` | 纯 Dart 命令行登录、下载与诊断客户端 | 无 |
 | `example_client` | Android/macOS/Windows 集成与故障诊断客户端 | 应用 |
 
 依赖方向固定为 `dakit_flutter → dakit_api → dakit_core`。业务应用只依赖所需层；使用完整 Flutter 集成时依赖 `dakit_flutter` 即可。
@@ -53,6 +54,18 @@ dependencies:
 ```
 
 随后阅读[开始使用](docs/GETTING_STARTED.md)。直接在移动端或桌面端运行内置登录流程时，需要注册 **Public** OAuth 应用，并配置精确回调地址 `dakit://oauth/callback`。
+
+## 命令行客户端
+
+不想先写 Flutter 界面时，可以用纯 Dart 的 `dakit_cli` 完成登录和单文件下载：
+
+```shell
+dart run packages/dakit_cli/bin/dakit.dart status --proxy 127.0.0.1:7892
+dart run packages/dakit_cli/bin/dakit.dart login --client-id 你的_PUBLIC_CLIENT_ID --proxy 127.0.0.1:7892
+dart run packages/dakit_cli/bin/dakit.dart download 作品UUID --output downloads --proxy 127.0.0.1:7892
+```
+
+`login` 会在本机 `8765` 端口起临时回调服务并打开系统浏览器，凭据保存到 `~/.config/dakit/credentials.json`（Windows 在 `%APPDATA%`）。CLI 的回调地址是 `http://127.0.0.1:8765/callback`，需要把它加入该 Public 应用的白名单。代理参数可省略，CLI 会遵循 `http_proxy` / `https_proxy` 环境变量。
 
 ## 最小示例
 

@@ -10,6 +10,7 @@ workspace:
   - packages/dakit_core
   - packages/dakit_api
   - packages/dakit_flutter
+  - packages/dakit_cli
   - apps/example_client
 
 dev_dependencies:

@@ -18,6 +18,7 @@ GitHub Actions 使用同一 Flutter 版本。升级工具链时，应在一个�
 packages/dakit_core/       平台无关领域包
 packages/dakit_api/        Dart OAuth/HTTP 包
 packages/dakit_flutter/    Flutter 平台适配包
+packages/dakit_cli/        纯 Dart 命令行客户端
 apps/example_client/       三平台集成客户端
 tool/verify.sh             本地与 CI 共用质量门
 ```

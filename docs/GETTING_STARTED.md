@@ -59,6 +59,18 @@ Windows 需要安装 MSIX 才能由系统注册 `dakit` 协议；未打包的 EX
 
 示例应用跟随系统语言显示中文或英文。它用于验证登录、账户、浏览、作品详情、原文件解析、后台任务和诊断，不是生产 UI 模板。
 
+### 命令行客户端
+
+如果暂时不需要图形界面，可以直接使用 `dakit_cli`：
+
+```shell
+dart run packages/dakit_cli/bin/dakit.dart status --proxy 127.0.0.1:7892
+dart run packages/dakit_cli/bin/dakit.dart login --client-id 你的_PUBLIC_CLIENT_ID --proxy 127.0.0.1:7892
+dart run packages/dakit_cli/bin/dakit.dart download 作品UUID --output downloads --proxy 127.0.0.1:7892
+```
+
+CLI 登录使用 loopback 回调 `http://127.0.0.1:8765/callback`，需要在 Public 应用白名单中精确加入该地址。凭据会保存到本机 `~/.config/dakit/credentials.json`（Windows 为 `%APPDATA%/dakit/credentials.json`），下载完成后 CLI 会输出保存路径、字节数、SHA-256 和媒体类型。
+
 ## 3. 嵌入 Flutter 应用
 
 首次发布到 pub.dev 前，需要从 Git 仓库显式声明三个包；否则
