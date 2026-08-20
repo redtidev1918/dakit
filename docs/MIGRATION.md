@@ -16,11 +16,11 @@ promised after the rewrite.
 
 ### M1 — core and official API
 
-- [ ] Stable domain models and typed failures.
-- [ ] Repository, pagination, clock, transport, and diagnostic interfaces.
+- [x] Stable domain models and typed failures.
+- [x] Repository, pagination, transport, and diagnostic interfaces.
 - [x] Dio transport with timeouts, cancellation, redaction, and API versioning.
 - [x] OAuth PKCE transaction creation, callback validation, refresh, and logout.
-- [ ] Official API DTO mapping and fixture tests.
+- [x] Official API DTO mapping, repositories, and schema-derived fixture tests.
 
 ### M2 — platform integration
 

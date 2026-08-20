@@ -1,3 +1,4 @@
+import 'media.dart';
 import 'models.dart';
 import 'pagination.dart';
 
@@ -17,4 +18,13 @@ abstract interface class GalleryRepository {
   Future<Page<Artwork>> gallery(String username, PageRequest request);
 
   Future<Page<Artwork>> favourites(String username, PageRequest request);
+}
+
+/// Resolves transferable media separately from artwork metadata.
+///
+/// Providers commonly protect original files behind a dedicated endpoint. This
+/// contract keeps that provider-specific lookup out of download engines and UI
+/// code.
+abstract interface class MediaRepository {
+  Future<MediaAsset> originalFile(String artworkId);
 }

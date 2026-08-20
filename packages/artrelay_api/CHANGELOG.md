@@ -1,3 +1,6 @@
-## 1.0.0
+## 0.1.0-dev.1
 
-- Initial version.
+- Add public-client OAuth Authorization Code + S256 PKCE lifecycle.
+- Add versioned, retrying, authenticated official API transport.
+- Add account, artwork, gallery, collection, and original-media repositories.
+- Add tolerant DTO mapping and schema-derived contract fixtures.

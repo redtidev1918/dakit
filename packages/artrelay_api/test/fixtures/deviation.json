@@ -1,0 +1,36 @@
+{
+  "deviationid": "art-1",
+  "printid": null,
+  "url": "https://www.deviantart.com/sample-user/art/example-1",
+  "title": "Example work",
+  "is_deleted": false,
+  "author": {
+    "userid": "user-1",
+    "username": "sample-user",
+    "usericon": "https://images.example.test/avatar.png"
+  },
+  "published_time": "2026-08-20T03:04:05Z",
+  "content": {
+    "src": "https://images.example.test/content.jpg",
+    "width": 2400,
+    "height": 1600,
+    "filesize": 987654
+  },
+  "preview": {
+    "src": "https://images.example.test/preview.jpg",
+    "width": 800,
+    "height": 533
+  },
+  "videos": [
+    {
+      "src": "https://images.example.test/video.mp4",
+      "quality": "1080p",
+      "filesize": 12345678,
+      "duration": 42
+    }
+  ],
+  "excerpt": "A documented fixture.",
+  "is_mature": false,
+  "is_downloadable": true,
+  "future_additive_field": "ignored"
+}

@@ -1,3 +1,5 @@
-## 1.0.0
+## 0.1.0-dev.1
 
-- Initial version.
+- Add platform-neutral domain models, pagination, typed failures, and diagnostics.
+- Add account, artwork, gallery, media, token storage, browser, and callback
+  contracts.

@@ -9,5 +9,4 @@ export 'src/oauth/oauth_session.dart';
 export 'src/oauth/oauth_token_client.dart';
 export 'src/oauth/pkce.dart';
 export 'src/redaction.dart';
-
-// TODO: Export any libraries intended for clients of this package.
+export 'src/repositories/official_repositories.dart';

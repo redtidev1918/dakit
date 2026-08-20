@@ -1,0 +1,8 @@
+{
+  "userid": "user-1",
+  "username": "sample-user",
+  "usericon": "https://images.example.test/avatar.png",
+  "type": "regular",
+  "verified": true,
+  "future_additive_field": {"safe_to_ignore": true}
+}

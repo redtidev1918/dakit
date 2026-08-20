@@ -8,8 +8,16 @@ import 'api_config.dart';
 
 typedef Delay = Future<void> Function(Duration duration);
 
+abstract interface class OfficialApiTransport {
+  Future<Map<String, Object?>> getJson(
+    String path, {
+    Map<String, Object?> query = const <String, Object?>{},
+    CancelToken? cancelToken,
+  });
+}
+
 /// Versioned, authenticated transport for idempotent official API reads.
-final class OfficialApiClient {
+final class OfficialApiClient implements OfficialApiTransport {
   factory OfficialApiClient({
     required OAuthSession session,
     Dio? dio,
@@ -40,6 +48,7 @@ final class OfficialApiClient {
   final Delay _delay;
   final ApiConfig config;
 
+  @override
   Future<Map<String, Object?>> getJson(
     String path, {
     Map<String, Object?> query = const <String, Object?>{},

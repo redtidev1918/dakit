@@ -5,7 +5,7 @@ same commit as every material milestone.
 
 ## Current state
 
-- Phase: M1 — core and official API
+- Phase: M2 — platform integration
 - Branch: `main`
 - Last stable legacy tag: `python-preview-1.0.0a1`
 - Legacy remote: `legacy-origin`
@@ -15,10 +15,11 @@ same commit as every material milestone.
 
 ## Next actions
 
-1. Add official API DTO fixtures and repository adapters.
-2. Configure the example app custom-scheme callback on all three platforms.
+1. Add a Flutter OAuth coordinator around the browser, deep-link source, PKCE,
+   token exchange, and structured diagnostics.
+2. Configure the example app custom-scheme callback on Android, macOS, and Windows.
 3. Replace the generated counter screen with an integration diagnostics client.
-4. Add native proxy selection and staged connectivity checks.
+4. Add native proxy selection, staged connectivity checks, and recoverable transfers.
 5. Add Dart, Android, macOS, and Windows CI jobs.
 
 ## Decisions already made
@@ -37,7 +38,20 @@ same commit as every material milestone.
 - Engine `5d53178869`
 - Dart 3.13.1
 - `flutter analyze`: no issues
-- Test suites: 17 passing
+- Test suites: 23 passing
+
+## Latest milestone
+
+- Official account, artwork, home browse/search, gallery, favourites, and original
+  media repositories map API responses into core domain objects.
+- Page offsets are validated; gallery and collection requests honor the provider's
+  current maximum of 24 results.
+- Preview/content/video assets remain previews. The transferable original is only
+  produced by the dedicated download-metadata endpoint.
+- DTO mapping ignores additive upstream fields and raises a typed parsing failure
+  when a required domain field disappears.
+- Fixtures follow the official OpenAPI 3.1 definitions published with API version
+  `1.20240701`; no live account data or credentials are checked in.
 
 ## Known external requirements
 

@@ -1,0 +1,24 @@
+{
+  "has_more": true,
+  "next_offset": 24,
+  "results": [
+    {
+      "deviationid": "art-1",
+      "printid": null,
+      "url": "https://www.deviantart.com/sample-user/art/example-1",
+      "title": "Example work",
+      "is_deleted": false,
+      "author": {
+        "userid": "user-1",
+        "username": "sample-user"
+      },
+      "preview": {
+        "src": "https://images.example.test/preview.jpg",
+        "width": 800,
+        "height": 533
+      },
+      "is_mature": false,
+      "is_downloadable": true
+    }
+  ]
+}
