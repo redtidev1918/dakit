@@ -21,6 +21,8 @@ Usage:
   dakit gallery USERNAME [GALLERY_ID] [--limit N] [--delay S]
   dakit fav USERNAME [FOLDER_ID] [--limit N] [--delay S]
   dakit search QUERY [--limit N] [--delay S]
+  dakit home [--limit N]
+  dakit recommended [--limit N]
   dakit login --client-id ID [--scopes basic,browse] [--proxy HOST:PORT]
   dakit login validate
   dakit whoami [--proxy HOST:PORT]
@@ -53,6 +55,8 @@ Future<void> runCli(List<String> arguments) async {
     ..addCommand('gallery', _batchParser())
     ..addCommand('fav', _batchParser())
     ..addCommand('search', _batchParser())
+    ..addCommand('home', _listParser())
+    ..addCommand('recommended', _listParser())
     ..addCommand('login', _loginParser())
     ..addCommand('whoami', _proxyParser())
     ..addCommand('status', _proxyParser())
@@ -85,6 +89,8 @@ Future<void> runCli(List<String> arguments) async {
       'gallery' => _gallery(command),
       'fav' => _favourites(command),
       'search' => _search(command),
+      'home' => _home(command),
+      'recommended' => _recommended(command),
       'whoami' => _whoami(command),
       'status' => _status(command),
       'version' => _version(command),
@@ -141,6 +147,11 @@ ArgParser _batchParser() {
       defaultsTo: 'by_author',
       help: 'File layout: by_author or flat.',
     );
+}
+
+ArgParser _listParser() {
+  return _proxyParser()
+    ..addOption('limit', defaultsTo: '24', help: 'Maximum items to list.');
 }
 
 ArgParser _proxyParser() {
@@ -374,6 +385,32 @@ Future<int> _search(ArgResults arguments) async {
     query,
     (request) => artworkRepository.search(query, request),
   );
+}
+
+Future<int> _home(ArgResults arguments) async {
+  final context = await _session(arguments);
+  if (context == null) return 64;
+  final limit = positiveInt(arguments['limit'] as String, 24, '--limit');
+  final page = await OfficialArtworkRepository(context.transport)
+      .browse(PageRequest(limit: limit));
+  return _printArtworks(page.items);
+}
+
+Future<int> _recommended(ArgResults arguments) async {
+  final context = await _session(arguments);
+  if (context == null) return 64;
+  final items = await OfficialDiscoveryRepository(context.transport)
+      .dailyDeviations();
+  return _printArtworks(items);
+}
+
+int _printArtworks(List<Artwork> items) {
+  for (final artwork in items) {
+    stdout.writeln(
+      '${artwork.id} ${artwork.title} by ${artwork.author.username}',
+    );
+  }
+  return 0;
 }
 
 Future<int> _version(ArgResults arguments) async {
