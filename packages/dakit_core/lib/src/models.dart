@@ -107,11 +107,23 @@ final class Artwork {
   final UserProfile author;
   final Uri pageUri;
   final List<MediaAsset> media;
+
+  /// A short description of the artwork, if the provider returned one.
+  ///
+  /// DeviantArt's official API no longer populates this field, so it is
+  /// usually `null`. To read the author's full description, use
+  /// `ArtworkContentRepository.get()` and render `ArtworkContent.html`
+  /// (the `deviation/content` endpoint).
   final String? description;
   final DateTime? publishedAt;
   final bool isMature;
   final bool isDownloadable;
   final MediaAvailability downloadAvailability;
+
+  /// Structured text embedded in a deviation response, if any.
+  ///
+  /// DeviantArt's official API no longer populates this field, so it is
+  /// usually `null`. Prefer `ArtworkContentRepository.get()` for artwork text.
   final ArtworkTextContent? textContent;
 }
 
@@ -119,6 +131,9 @@ final class Artwork {
 ///
 /// [markup] is provider-authored data and must be rendered or sanitized by the
 /// host application according to its own trust boundary.
+///
+/// DeviantArt's official API no longer returns these values; hosts that need
+/// artwork text should fetch `ArtworkContent` instead.
 final class ArtworkTextContent {
   const ArtworkTextContent({
     required this.excerpt,

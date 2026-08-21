@@ -27,6 +27,25 @@ void main() {
     expect(asset.canTransfer, isFalse);
   });
 
+  test('media asset exposes an optional availability reason', () {
+    const withoutReason = MediaAsset(
+      id: 'asset-1',
+      kind: MediaKind.image,
+      role: MediaRole.original,
+      availability: MediaAvailability.unavailable,
+    );
+    const withReason = MediaAsset(
+      id: 'asset-2',
+      kind: MediaKind.image,
+      role: MediaRole.original,
+      availability: MediaAvailability.unavailable,
+      availabilityReason: 'Free download limit reached.',
+    );
+
+    expect(withoutReason.availabilityReason, isNull);
+    expect(withReason.availabilityReason, 'Free download limit reached.');
+  });
+
   test('artwork derives an honest original availability by default', () {
     final downloadable = Artwork(
       id: 'downloadable',

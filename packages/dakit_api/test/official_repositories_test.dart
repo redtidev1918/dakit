@@ -533,6 +533,26 @@ void main() {
     },
   );
 
+  test('carries the provider description through as availabilityReason', () async {
+    const failure = DAKitException(
+      kind: DAKitFailureKind.upstream,
+      code: 'api.provider.invalid_request',
+      message: 'Deviation not downloadable.',
+      details: <String, Object?>{
+        'provider_code': 2,
+        'provider_description': 'Free download limit reached.',
+      },
+    );
+
+    final asset = await OfficialMediaRepository(
+      const ThrowingTransport(failure),
+    ).originalFile('art-1');
+
+    expect(asset.availability, MediaAvailability.unavailable);
+    expect(asset.availabilityReason, 'Free download limit reached.');
+    expect(asset.uri, isNull);
+  });
+
   test('keeps unexpected transfer failures observable', () async {
     const failure = DAKitException(
       kind: DAKitFailureKind.network,
