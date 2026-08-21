@@ -13,7 +13,7 @@ final class OfficialAccountRepository implements AccountRepository {
   Future<UserProfile> currentUser() async {
     final json = await _transport.getJson(
       'user/whoami',
-      query: const <String, Object?>{'with_session': false},
+      query: const <String, Object?>{'mature_content': true},
     );
     return _mapper.user(json);
   }
@@ -33,7 +33,7 @@ final class OfficialUserRepository implements UserRepository {
       query: const <String, Object?>{
         'ext_collections': false,
         'ext_galleries': false,
-        'with_session': false,
+        'mature_content': true,
         'expand': 'user.details,user.geo,user.stats',
       },
     );
@@ -157,7 +157,7 @@ final class OfficialArtworkRepository implements ArtworkRepository {
     final json = await _transport.getJson(
       'deviation/${Uri.encodeComponent(id)}',
       query: const <String, Object?>{
-        'with_session': false,
+        'mature_content': true,
         'expand': 'deviation.fulltext',
       },
     );
@@ -221,7 +221,7 @@ final class OfficialArtworkContentRepository
       query: <String, Object?>{
         'deviationid': artworkId,
         'for_edit': forEditing,
-        'with_session': false,
+        'mature_content': true,
       },
     );
     return _mapper.content(json, artworkId);
@@ -273,7 +273,7 @@ final class OfficialDiscoveryRepository implements DiscoveryRepository {
       'browse/dailydeviations',
       query: <String, Object?>{
         if (date != null) 'date': _calendarDate(date),
-        'with_session': false,
+        'mature_content': true,
         'expand': 'user.watch',
       },
     );
@@ -292,7 +292,7 @@ final class OfficialDiscoveryRepository implements DiscoveryRepository {
       query: <String, Object?>{
         'limit': request.limit,
         'offset': _offset(request.cursor),
-        'with_session': false,
+        'mature_content': true,
       },
     );
     return _parsePage(json, _mapper.artwork);
@@ -315,7 +315,7 @@ final class OfficialDiscoveryRepository implements DiscoveryRepository {
         'tag': normalized,
         ..._hybridPageQuery(request.cursor),
         'limit': request.limit,
-        'with_session': false,
+        'mature_content': true,
         'expand': 'user.watch',
       },
     );
@@ -334,7 +334,7 @@ final class OfficialDiscoveryRepository implements DiscoveryRepository {
     }
     final json = await _transport.getJson(
       'browse/tags/search',
-      query: <String, Object?>{'tag_name': normalized, 'with_session': false},
+      query: <String, Object?>{'tag_name': normalized, 'mature_content': true},
     );
     final rawResults = json['results'];
     if (rawResults is! List) throw _missingField('results');
@@ -358,7 +358,7 @@ final class OfficialDiscoveryRepository implements DiscoveryRepository {
       query: <String, Object?>{
         ..._hybridPageQuery(request.cursor),
         'limit': request.limit,
-        'with_session': false,
+        'mature_content': true,
       },
     );
     return _parseHybridPage(json, _mapper.topic);
@@ -368,7 +368,7 @@ final class OfficialDiscoveryRepository implements DiscoveryRepository {
   Future<List<ArtworkTopic>> topTopics() async {
     final json = await _transport.getJson(
       'browse/toptopics',
-      query: const <String, Object?>{'with_session': false},
+      query: const <String, Object?>{'mature_content': true},
     );
     final rawResults = json['results'];
     if (rawResults is! List) throw _missingField('results');
@@ -394,7 +394,7 @@ final class OfficialDiscoveryRepository implements DiscoveryRepository {
         'topic': normalized,
         ..._hybridPageQuery(request.cursor),
         'limit': request.limit,
-        'with_session': false,
+        'mature_content': true,
         'expand': 'user.watch',
       },
     );
@@ -710,7 +710,7 @@ final class OfficialMessageRepository implements MessageRepository {
         'folderid': ?normalizedFolder,
         'stack': stacked,
         'cursor': ?normalizedCursor,
-        'with_session': false,
+        'mature_content': true,
       },
     );
     final items = _parseItems(json, _mapper.message);
@@ -792,7 +792,7 @@ final class OfficialMessageRepository implements MessageRepository {
         ...query,
         'offset': _offset(request.cursor),
         'limit': request.limit,
-        'with_session': false,
+        'mature_content': true,
       },
     );
     return _parsePage(json, _mapper.message);

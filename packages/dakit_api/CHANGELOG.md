@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.6
+
+### Fixed
+
+- Every official read endpoint now sends `mature_content: true` and no longer
+  forces `with_session: false`, so mature deviations appear consistently in
+  browse, search, tags, topics, gallery/folder/collection feeds, and messages
+  for signed-in users (the session is used for watch state too).
+
 ## 0.1.5
 
 ### Added

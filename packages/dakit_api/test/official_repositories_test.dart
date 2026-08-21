@@ -64,7 +64,7 @@ void main() {
       expect(transport.requests.single.query, <String, Object?>{
         'deviationid': 'art-1',
         'for_edit': false,
-        'with_session': false,
+        'mature_content': true,
       });
     },
   );
