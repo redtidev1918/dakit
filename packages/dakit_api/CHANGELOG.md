@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.5
+
+### Added
+
+- Export `DeviationMapper` so hosts can map raw official-API deviation JSON
+  (e.g. `user/profile/posts` journals) without a repository round-trip.
+
 ## 0.1.4
 
 ### Fixed

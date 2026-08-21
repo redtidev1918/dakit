@@ -1,6 +1,7 @@
 /// OAuth and official HTTP adapters for DAKit.
 library;
 
+export 'src/dto/deviation_mapper.dart';
 export 'src/http/api_config.dart';
 export 'src/http/connectivity_probe.dart';
 export 'src/http/network_adapter.dart' show createNetworkDio;
