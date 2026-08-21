@@ -32,6 +32,7 @@ final class MediaAsset {
     this.width,
     this.height,
     this.duration,
+    this.availabilityReason,
   });
 
   final String id;
@@ -45,6 +46,16 @@ final class MediaAsset {
   final int? width;
   final int? height;
   final Duration? duration;
+
+  /// A human-readable reason the asset is not [MediaAvailability.available].
+  ///
+  /// For example, when the official download endpoint declines a request this
+  /// carries the provider's `error_description` (e.g. "Deviation not
+  /// downloadable" versus "Free download limit reached"), so hosts can show a
+  /// more useful message than the generic [availability] alone.
+  ///
+  /// `null` when the asset is available or no reason was supplied.
+  final String? availabilityReason;
 
   bool get canTransfer =>
       availability == MediaAvailability.available && uri != null;

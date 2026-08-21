@@ -523,6 +523,7 @@ final class OfficialMediaRepository implements MediaRepository {
         kind: MediaKind.unknown,
         role: MediaRole.original,
         availability: availability,
+        availabilityReason: error.details['provider_description'] as String?,
       );
     }
   }
