@@ -19,6 +19,19 @@ ArtworkRepository
 
 原文件解析明确区分 `available`、`loginRequired`、`purchaseRequired`、`restricted`、`unavailable` 与 `missing`。登录、权限或不存在等预期拒绝会成为不可传输的领域值；网络中断、限流和响应结构损坏仍抛出类型化异常。SDK 不会在失败时偷偷回退到预览地址。
 
+当下载被预期拒绝时，`MediaAsset.availabilityReason` 会透传 provider 的
+`error_description`，供宿主向用户解释具体原因。例如同为 `unavailable`，原因可能是
+「Deviation not downloadable（作者禁止下载）」或「Free download limit reached
+（免费额度用完）」——前者永久、后者可通过等待或升级解决。宿主可以：
+
+```dart
+final asset = await mediaRepository.originalFile(artwork.id);
+if (asset.availability != MediaAvailability.available) {
+  final reason = asset.availabilityReason; // provider 的可读描述
+  // 用 reason 区分并提示，而不是只显示「不可下载」
+}
+```
+
 文学和日志正文通过内容仓库读取。HTML、CSS、字体信息与原始标记只作为字符串返回，SDK 不执行其中脚本，也不创建 WebView。宿主负责清理、渲染与内容安全策略。
 
 ## 后台传输

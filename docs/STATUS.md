@@ -6,13 +6,13 @@
 
 - 分支：`main`；远端：`https://github.com/redtidev1918/dakit.git`；
 - 产品名：DAKit — DeviantArt Client SDK；
-- 版本阶段：`0.1.0`，已发布到 pub.dev；
+- 版本阶段：`dakit_core` / `dakit_api` 为 `0.1.1`，`dakit_flutter` 为 `0.1.0`，均已发布到 pub.dev；
 - 运行时：Flutter 3.47.1 / Dart 3.13.1；
 - 平台：Android、macOS、Windows/MSIX；
 - 测试：格式与分析通过，94 个测试通过；
 - 本机构建：Android debug APK、macOS debug app 通过；
 - CI：Linux 质量门及 Android/macOS/Windows 四个 job 通过；
-- 包发布：`dakit_core`、`dakit_api`、`dakit_flutter` 0.1.0 已成功上传 pub.dev；
+- 包发布：`dakit_core`、`dakit_api` 0.1.1 与 `dakit_flutter` 0.1.0 已成功上传 pub.dev（通过 GitHub Actions OIDC 自动发布 + 本机手动发布两种路径验证）；
 - 依赖策略：已忽略 `flutter_secure_storage` 的主版本升级，直到 Android 工具链支持 `compileSdk 37`（v11 与当前 Android API 36 / AGP 9.1.0 不兼容）；
 - 未完成：有效 Public OAuth 应用下的五类真实媒体矩阵。
 
@@ -30,7 +30,7 @@
 - 通知/反馈消息流、mentions、堆栈展开与显式删除；
 - 统一的 authenticated form mutation transport；POST 仅在 401 后刷新重放，不会对 429/5xx 自动重复非幂等操作；
 - 环境/直连/显式 HTTP 代理、自定义 Dio、DNS/TCP/TLS/HTTP 探针；
-- 原文件可用性分类，不以 preview 冒充 original；
+- 原文件可用性分类，不以 preview 冒充 original；`MediaAsset.availabilityReason` 透传 provider 拒绝原因（区分「作者禁止下载」与「免费额度用完」）；
 - Flutter 后台任务恢复、进度、重试、暂停/继续/取消及独立代理；
 - 中英文示例客户端和脱敏诊断面板；
 - 纯 Dart `dakit_cli`：loopback OAuth 登录、单作品/画师/画廊/收藏夹/搜索批量下载、账户查询与连通性诊断；
