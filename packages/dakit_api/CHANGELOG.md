@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.1
+
+### Changed
+
+- `OfficialMediaRepository.originalFile` now populates
+  `MediaAsset.availabilityReason` from the provider `error_description` when a
+  download is declined, so hosts can distinguish "Deviation not downloadable"
+  from "Free download limit reached".
+
 ## 0.1.0
 
 ### Added
