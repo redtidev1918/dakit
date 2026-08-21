@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.1
+
+### Fixed
+
+- `DAKitOAuthClient.logout` no longer aborts when clearing the pending PKCE
+  transaction fails (e.g. macOS keychain access denied for an unsigned host).
+  Logout now always clears the token store, so a subsequent sign-in can request
+  fresh scopes.
+
 ## 0.1.0
 
 ### Added

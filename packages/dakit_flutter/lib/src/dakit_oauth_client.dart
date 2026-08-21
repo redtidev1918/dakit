@@ -79,7 +79,15 @@ final class DAKitOAuthClient {
       session.validTokens(forceRefresh: forceRefresh);
 
   Future<void> logout({bool revoke = true}) async {
-    await authorization.cancelPending();
+    // The pending PKCE transaction is only a cold-start callback backup; a
+    // failure to clear it (e.g. the macOS keychain denies access to an
+    // unsigned host) must not block logout, otherwise the token store is left
+    // intact and the user can never request fresh scopes on re-login.
+    try {
+      await authorization.cancelPending();
+    } on DAKitException {
+      // Continue to clear the session below.
+    }
     await session.logout(revoke: revoke);
   }
 }
