@@ -59,3 +59,37 @@ Client type 取决于凭据保存位置，而不是功能多少：
 | storage failure | 安全存储不可用 | 系统凭据库权限、设备锁屏设置、原生状态字段 |
 
 认证故障和网络故障不会合并成“登录失败”一个模糊提示。需要自定义展示时，以 `DAKitException.kind` 与稳定 `code` 做本地化映射，不要向用户直接展示底层异常全文。
+
+## OAuth scope 与功能
+
+DAKit 在 `OAuthScope` 里集中维护了常量。功能与必需 scope 的对应关系：
+
+| 功能 | 必需 scope | 缺少时的典型表现 |
+| --- | --- | --- |
+| 读取账号 / 用户资料 / 关注列表 | `user` | 401 |
+| 收藏 / 取消收藏 | `collection` | 401 |
+| 关注 / 取消关注用户 | `user.manage` | **403**（只有 `user` 不够） |
+| 画廊 / 收藏夹目录 | `gallery` | 401 |
+| 关注动态（deviantsyouwatch） | `feed` | 401 |
+| 首页 / 搜索 / 每日推荐 | `browse` | 401 |
+| 通知 / 反馈 / mentions | `message` | 401 |
+
+授权时缺少的 scope 不会在 token exchange 阶段报错，而是表现为后续调用返回
+401/403。排查“某个功能总是被拒”时，先核对 token 实际拿到了哪些 scope
+（`AuthTokens.scopes`），而不是只检查是否“已登录”。
+
+## Flutter：复用网页会话完成授权
+
+DeviantArt 的网页登录态和 OAuth 是两套凭据。若客户端内嵌了一个已经登录
+`deviantart.com` 的 WebView，可以把 OAuth 授权 URL 加载到**同一个** WebView 里：
+因为 WebView 拥有网页会话 Cookie，用户无需重新输入密码，只确认授权页即可。
+
+实现要点：
+
+1. 自定义 `ExternalUriLauncher`，把授权 URL 转发给 WebView（而不是系统浏览器）；
+2. WebView 拦截 `dakit://oauth/callback`，通过自定义 `CallbackUriSource` 交回协调器；
+3. 用 `MergedCallbackUriSource` 把「系统 app-links 回调」和「WebView 回调」并发合并
+   ——不要用顺序 `yield*`，app-links 流永不关闭，会饿死 WebView 回调；
+4. 用户可能只在网页里登录而没有 OAuth token，或反之。宿主应把这两条状态向用户
+   清晰呈现，或引导用户完成缺失的一步。
+

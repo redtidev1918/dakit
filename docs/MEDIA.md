@@ -15,6 +15,10 @@ ArtworkRepository
 
 `ArtworkRepository` 返回的图片或视频 URL 可能只是预览。只有 `MediaRepository.originalFile` 调用专用下载元数据接口后返回、且 `availability == available` 的 `MediaAsset` 才能交给传输器。
 
+## 首页与个性化推荐
+
+`OfficialArtworkRepository.browse` 走官方 `browse/home`，返回的是**通用首页**，不是账号的个性化推荐。DeviantArt 网页端的个性化首页（`rfy/deviations`）由**网页会话（Cookie + CSRF）**驱动，官方 OAuth API 不提供等价接口，也不在 DAKit 的稳定 API 范围内。需要个性化首页的客户端需自行通过网页会话获取该私有接口，DAKit 不会抓取或适配它。
+
 ## 可用性
 
 原文件解析明确区分 `available`、`loginRequired`、`purchaseRequired`、`restricted`、`unavailable` 与 `missing`。登录、权限或不存在等预期拒绝会成为不可传输的领域值；网络中断、限流和响应结构损坏仍抛出类型化异常。SDK 不会在失败时偷偷回退到预览地址。

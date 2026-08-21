@@ -1,3 +1,5 @@
+import 'dart:async';
+
 abstract final class OAuthScope {
   static const String basic = 'basic';
   static const String browse = 'browse';
@@ -63,4 +65,45 @@ abstract interface class CallbackUriSource {
 /// Callback source that can recover the URI which cold-started an application.
 abstract interface class InitialCallbackUriSource implements CallbackUriSource {
   Future<Uri?> initialUri();
+}
+
+/// Merges several callback sources so any of them can deliver the OAuth
+/// redirect.
+///
+/// Useful when a client accepts callbacks from more than one channel — for
+/// example the OS app-links plus an in-app WebView. [initial] also supplies the
+/// cold-start URI; the remaining [others] only contribute their [CallbackUriSource.uris].
+///
+/// The streams are merged concurrently: a source whose stream never closes
+/// (such as an OS app-links stream) must not starve the others. A sequential
+/// `yield*` over the sources would block forever on the first non-closing
+/// stream and never observe later callbacks.
+final class MergedCallbackUriSource implements InitialCallbackUriSource {
+  MergedCallbackUriSource({
+    required this.initial,
+    List<CallbackUriSource> others = const <CallbackUriSource>[],
+  }) : others = List<CallbackUriSource>.unmodifiable(others);
+
+  final InitialCallbackUriSource initial;
+  final List<CallbackUriSource> others;
+
+  @override
+  Future<Uri?> initialUri() => initial.initialUri();
+
+  @override
+  Stream<Uri> get uris => Stream<Uri>.multi((controller) {
+    void onData(Uri uri) => controller.add(uri);
+    void onError(Object error, StackTrace stack) =>
+        controller.addError(error, stack);
+
+    final subscriptions = <StreamSubscription<Uri>>[
+      initial.uris.listen(onData, onError: onError),
+      for (final source in others) source.uris.listen(onData, onError: onError),
+    ];
+    controller.onCancel = () async {
+      for (final subscription in subscriptions) {
+        await subscription.cancel();
+      }
+    };
+  });
 }
