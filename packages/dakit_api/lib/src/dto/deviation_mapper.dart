@@ -85,6 +85,8 @@ final class DeviationMapper {
       publishedAt: _dateTime(json['published_time']),
       isMature: json['is_mature'] == true,
       isDownloadable: json['is_downloadable'] == true,
+      isFavourited: json['is_favourited'] == true,
+      isMultiMedia: json['is_multi_media'] == true,
       downloadAvailability: _downloadAvailability(json),
       textContent: _textContent(json),
       tags: _tags(json),

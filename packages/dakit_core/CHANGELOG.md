@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.4
+
+### Added
+
+- `Artwork.isFavourited` and `Artwork.isMultiMedia` so hosts can reflect favourite state and multi-image galleries without extra provider calls.
+
 ## 0.1.3
 
 ### Added

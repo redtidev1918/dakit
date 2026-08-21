@@ -94,6 +94,8 @@ final class Artwork {
     this.publishedAt,
     this.isMature = false,
     this.isDownloadable = false,
+    this.isFavourited = false,
+    this.isMultiMedia = false,
     MediaAvailability? downloadAvailability,
     this.textContent,
     this.tags = const <String>[],
@@ -119,6 +121,12 @@ final class Artwork {
   final DateTime? publishedAt;
   final bool isMature;
   final bool isDownloadable;
+
+  /// Whether the signed-in user has favourited this artwork.
+  final bool isFavourited;
+
+  /// Whether this deviation is a multi-image gallery (has additional pages).
+  final bool isMultiMedia;
   final MediaAvailability downloadAvailability;
 
   /// Structured text embedded in a deviation response, if any.

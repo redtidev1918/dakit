@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.3
+
+### Added
+
+- `DeviationMapper` maps `is_favourited` and `is_multi_media` into `Artwork`.
+
 ## 0.1.2
 
 ### Added
