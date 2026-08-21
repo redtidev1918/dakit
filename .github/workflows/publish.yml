@@ -1,25 +1,24 @@
 name: Publish to pub.dev
 
-# Publishes the three public DAKit packages to pub.dev when a matching
-# version tag is pushed. Authentication uses pub.dev's GitHub Actions OIDC
-# integration (no long-lived token/secret), so automated publishing must be
-# enabled once per package in the pub.dev web UI:
+# Publishes the three public DAKit packages to pub.dev. Authentication uses
+# pub.dev's GitHub Actions OIDC integration (no long-lived token/secret).
 #
+# One-time per-package setup in the pub.dev web UI:
 #   pub.dev/packages/<package>/admin  ->  Automated publishing
 #     repository:  redtidev1918/dakit
 #     tag pattern: <package>-v{{version}}
+#     check "Enable publishing from push events"
+#     (optionally "Enable publishing from workflow_dispatch events" for the
+#      button-triggered mode below)
 #
-# One-time prerequisites (per package): the package must already be published
-# at least once, and the tag's version must match `version:` in its pubspec.
+# Two ways to publish (both require the version already bumped in pubspec.yaml):
+#   1. Push a tag:  git tag dakit_core-v0.2.0 && git push origin dakit_core-v0.2.0
+#   2. Run this workflow manually (Actions -> Publish -> Run workflow) and pick
+#      the package to publish from its current main-branch version.
+#
 # Dependency order matters: publish dakit_core, then dakit_api, then
-# dakit_flutter, e.g.:
-#
-#   git tag dakit_core-v0.2.0    && git push origin dakit_core-v0.2.0
-#   git tag dakit_api-v0.2.0     && git push origin dakit_api-v0.2.0
-#   git tag dakit_flutter-v0.2.0 && git push origin dakit_flutter-v0.2.0
-#
-# Each version on pub.dev is immutable, so only tag versions that have not
-# been published before.
+# dakit_flutter. Each version on pub.dev is immutable, so only publish versions
+# that have not been published before.
 
 on:
   push:
@@ -27,26 +26,37 @@ on:
       - 'dakit_core-v[0-9]+.[0-9]+.[0-9]+'
       - 'dakit_api-v[0-9]+.[0-9]+.[0-9]+'
       - 'dakit_flutter-v[0-9]+.[0-9]+.[0-9]+'
+  workflow_dispatch:
+    inputs:
+      package:
+        description: 'Package to publish'
+        required: true
+        type: choice
+        options: [dakit_core, dakit_api, dakit_flutter]
 
 permissions:
   id-token: write
   contents: read
 
+concurrency:
+  group: publish-${{ github.event_name }}-${{ github.ref }}-${{ github.event.inputs.package }}
+  cancel-in-progress: false
+
 jobs:
   dakit_core:
-    if: startsWith(github.ref, 'refs/tags/dakit_core-v')
+    if: startsWith(github.ref, 'refs/tags/dakit_core-v') || (github.event_name == 'workflow_dispatch' && github.event.inputs.package == 'dakit_core')
     uses: dart-lang/setup-dart/.github/workflows/publish.yml@v1
     with:
       working-directory: packages/dakit_core
 
   dakit_api:
-    if: startsWith(github.ref, 'refs/tags/dakit_api-v')
+    if: startsWith(github.ref, 'refs/tags/dakit_api-v') || (github.event_name == 'workflow_dispatch' && github.event.inputs.package == 'dakit_api')
     uses: dart-lang/setup-dart/.github/workflows/publish.yml@v1
     with:
       working-directory: packages/dakit_api
 
   dakit_flutter:
-    if: startsWith(github.ref, 'refs/tags/dakit_flutter-v')
+    if: startsWith(github.ref, 'refs/tags/dakit_flutter-v') || (github.event_name == 'workflow_dispatch' && github.event.inputs.package == 'dakit_flutter')
     uses: dart-lang/setup-dart/.github/workflows/publish.yml@v1
     with:
       working-directory: packages/dakit_flutter

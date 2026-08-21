@@ -79,6 +79,8 @@ publisher 的 admin）：
    - tag pattern：`<package>-v{{version}}`（例如
      `dakit_core-v{{version}}`、`dakit_api-v{{version}}`、
      `dakit_flutter-v{{version}}`）。
+   - 勾选 **Enable publishing from push events**（tag 触发）。
+   - 如需按钮发版，再勾选 **Enable publishing from workflow_dispatch events**。
 
 > 自动发布只适用于**已发布过的包**；首次发布仍须用 `dart pub publish` 手动完成。
 
@@ -99,6 +101,13 @@ publisher 的 admin）：
 
 注意：tag 里的版本号必须与对应包 `pubspec.yaml` 的 `version` 完全一致；pub.dev
 上的版本**不可变**，同一个版本只能发布一次，重复打 tag 会失败。
+
+### 按钮发版（workflow_dispatch，可选）
+
+版本号已 bump 并推到 main 后，也可以不用打 tag，直接在
+**Actions → Publish to pub.dev → Run workflow** 里选择要发布的包即可。它会发布
+该包在 main 分支当前的版本。前置条件是在 pub.dev 上勾选了
+**Enable publishing from workflow_dispatch events**。
 
 ## 手动发布（备用）
 
