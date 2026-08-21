@@ -254,7 +254,7 @@ final class OfficialGalleryRepository implements GalleryRepository {
         'username': username,
         'offset': _offset(request.cursor),
         'limit': request.limit.clamp(1, 24),
-        'with_session': false,
+        'mature_content': true,
       },
     );
     return _parsePage(json, _mapper.artwork);
@@ -467,7 +467,7 @@ final class OfficialFolderRepository implements FolderRepository {
         'calculate_size': options.calculateSize,
         'ext_preload': options.preloadArtworks,
         'filter_empty_folder': options.filterEmpty,
-        'with_session': false,
+        'mature_content': true,
         'offset': _offset(request.cursor),
         'limit': request.limit,
       },
@@ -493,7 +493,7 @@ final class OfficialFolderRepository implements FolderRepository {
         'username': ?normalizedUsername,
         'offset': _offset(request.cursor),
         'limit': request.limit,
-        'with_session': false,
+        'mature_content': true,
         'expand': 'user.watch',
       },
     );

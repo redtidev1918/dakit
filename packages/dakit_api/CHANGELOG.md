@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.1.4
+
+### Fixed
+
+- Gallery, folder, and collection requests now send `mature_content: true` and
+  stop forcing `with_session: false`, so folders/galleries full of mature
+  deviations no longer render as empty for signed-in users.
+
+### Added
+
+- `DeviationMapper` maps a literature deviation's embedded `thumbs` images into
+  `Artwork.media`, so journals with inline art render their images.
+
 ## 0.1.3
 
 ### Added

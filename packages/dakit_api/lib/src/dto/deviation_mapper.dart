@@ -35,6 +35,27 @@ final class DeviationMapper {
     addImage('preview');
     addImage('social_preview');
 
+    // Literature/journal deviations carry their embedded images in `thumbs`
+    // (a list of sized thumbnails) rather than `content`/`preview`.
+    final thumbs = _list(json['thumbs']);
+    for (var index = 0; index < thumbs.length; index += 1) {
+      final thumb = _map(thumbs[index]);
+      if (thumb == null) continue;
+      final uri = _webUri(thumb['src']);
+      if (uri == null || !seen.add(uri)) continue;
+      media.add(
+        MediaAsset(
+          id: '$id:thumb:$index',
+          kind: MediaKind.image,
+          role: MediaRole.preview,
+          availability: MediaAvailability.available,
+          uri: uri,
+          width: _integer(thumb['width']),
+          height: _integer(thumb['height']),
+        ),
+      );
+    }
+
     final videos = _list(json['videos']);
     for (var index = 0; index < videos.length; index += 1) {
       final video = _map(videos[index]);
