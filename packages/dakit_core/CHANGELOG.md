@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.3
+
+### Added
+
+- `Artwork.tags` — the searchable tag names attached to a deviation.
+
 ## 0.1.2
 
 ### Added

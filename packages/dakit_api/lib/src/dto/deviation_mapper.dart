@@ -87,6 +87,7 @@ final class DeviationMapper {
       isDownloadable: json['is_downloadable'] == true,
       downloadAvailability: _downloadAvailability(json),
       textContent: _textContent(json),
+      tags: _tags(json),
     );
   }
 
@@ -339,6 +340,18 @@ final class DeviationMapper {
       markup: markup,
       features: features,
     );
+  }
+
+  static List<String> _tags(Map<String, Object?> json) {
+    final rawTags = json['tags'];
+    if (rawTags is! List) return const <String>[];
+    final tags = <String>[];
+    for (final value in rawTags) {
+      if (value is! Map) continue;
+      final name = _string(value['tag_name']) ?? _string(value['name']);
+      if (name != null && name.isNotEmpty) tags.add(name);
+    }
+    return List<String>.unmodifiable(tags);
   }
 
   static MediaAvailability _downloadAvailability(Map<String, Object?> json) {

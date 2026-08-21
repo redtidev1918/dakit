@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.2
+
+### Added
+
+- `DeviationMapper` now maps a deviation's `tags` into `Artwork.tags`.
+
 ## 0.1.1
 
 ### Changed

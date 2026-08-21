@@ -96,6 +96,7 @@ final class Artwork {
     this.isDownloadable = false,
     MediaAvailability? downloadAvailability,
     this.textContent,
+    this.tags = const <String>[],
   }) : downloadAvailability =
            downloadAvailability ??
            (isDownloadable
@@ -125,6 +126,9 @@ final class Artwork {
   /// DeviantArt's official API no longer populates this field, so it is
   /// usually `null`. Prefer `ArtworkContentRepository.get()` for artwork text.
   final ArtworkTextContent? textContent;
+
+  /// Searchable tag names attached to the artwork (e.g. `["belly", "comic"]`).
+  final List<String> tags;
 }
 
 /// Structured text embedded in a deviation response.
