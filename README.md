@@ -4,6 +4,8 @@ DAKit 是面向 Dart 与 Flutter 的模块化 DeviantArt 客户端 SDK，为 And
 
 本项目由社区独立维护，与 DeviantArt 没有隶属或背书关系。“DeviantArt”仅用于说明 SDK 所连接的服务。
 
+> **参考实现 / Reference app**：完整的第三方客户端 [DAViewer](https://github.com/redtidev1918/daviewer) 就是基于 DAKit 构建的 —— 因 DeviantArt 官方放弃其 App 而诞生，是查看 DAKit 实际用法的最佳范例。
+
 ## 能做什么
 
 - 使用系统浏览器完成 Authorization Code + PKCE 登录；
