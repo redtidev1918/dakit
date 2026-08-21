@@ -1,5 +1,7 @@
 # DAKit — DeviantArt 客户端 SDK
 
+**语言 / Language:** 中文 · [English](README.en.md)
+
 [![GitHub stars](https://img.shields.io/github/stars/redtidev1918/dakit?style=flat&color=yellow)](https://github.com/redtidev1918/dakit/stargazers)
 [![GitHub license](https://img.shields.io/github/license/redtidev1918/dakit?style=flat)](LICENSE)
 [![pub.dev](https://img.shields.io/pub/v/dakit_flutter?label=dakit_flutter&style=flat)](https://pub.dev/packages/dakit_flutter)
