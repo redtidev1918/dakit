@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.2
+
+### Added
+
+- `MergedCallbackUriSource` to merge multiple callback sources concurrently,
+  so a non-closing stream (e.g. the OS app-links stream) cannot starve a later
+  source (e.g. an in-app WebView callback).
+
 ## 0.1.1
 
 ### Added
