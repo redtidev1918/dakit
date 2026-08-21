@@ -1,5 +1,11 @@
 # DAKit — DeviantArt 客户端 SDK
 
+[![GitHub stars](https://img.shields.io/github/stars/redtidev1918/dakit?style=flat&color=yellow)](https://github.com/redtidev1918/dakit/stargazers)
+[![GitHub license](https://img.shields.io/github/license/redtidev1918/dakit?style=flat)](LICENSE)
+[![pub.dev](https://img.shields.io/pub/v/dakit_flutter?label=dakit_flutter&style=flat)](https://pub.dev/packages/dakit_flutter)
+[![pub.dev](https://img.shields.io/pub/v/dakit_api?label=dakit_api&style=flat)](https://pub.dev/packages/dakit_api)
+[![pub.dev](https://img.shields.io/pub/v/dakit_core?label=dakit_core&style=flat)](https://pub.dev/packages/dakit_core)
+
 DAKit 是面向 Dart 与 Flutter 的模块化 DeviantArt 客户端 SDK，为 Android、macOS 与 Windows 应用提供认证、官方 API、领域模型、诊断和后台传输能力。它既可以支撑完整的第三方客户端，也可以只作为其中一个功能模块使用。
 
 本项目由社区独立维护，与 DeviantArt 没有隶属或背书关系。“DeviantArt”仅用于说明 SDK 所连接的服务。
@@ -170,3 +176,11 @@ final account = await OfficialAccountRepository(transport).currentUser();
 ## 许可证
 
 [MIT](LICENSE)
+
+## 社区 / Community
+
+- [贡献指南](CONTRIBUTING.md)
+- [安全策略](SECURITY.md)
+- [行为准则](CODE_OF_CONDUCT.md)
+
+如果 DAKit 帮到了你，**点个 ⭐ Star** 能让更多需要它的人看到。
