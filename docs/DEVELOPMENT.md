@@ -33,7 +33,7 @@ dart pub get
 ```
 
 `tool/verify.sh` 会先拉取依赖，再通过 melos 依次检查格式、静态分析，并运行
-core、api、flutter 与示例应用测试。当前基线为 100 个测试。
+core、api、flutter 与示例应用测试。当前基线为 101 个测试。
 
 更细粒度的 melos 命令：
 
@@ -82,7 +82,7 @@ dart run msix:create --build-windows false --install-certificate false
 
 `.github/workflows/ci.yml` 在 push、pull request 和手动触发时执行：
 
-- Ubuntu：格式、分析、100 个测试；
+- Ubuntu：格式、分析、101 个测试；
 - Ubuntu：生成并上传 `coverage/lcov.info`；
 - Ubuntu/Android：debug APK；
 - macOS：debug `.app`；
