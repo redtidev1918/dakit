@@ -67,6 +67,35 @@ void main() {
     expect(previewOnly.downloadAvailability, MediaAvailability.unavailable);
   });
 
+  test('artwork copyWith replaces only the requested fields', () {
+    final artwork = Artwork(
+      id: 'art-1',
+      title: 'Title',
+      author: user,
+      pageUri: Uri.parse('https://example.test/art-1'),
+      media: const <MediaAsset>[],
+      description: 'desc',
+      isMature: true,
+      isDownloadable: true,
+      isFavourited: false,
+      isMultiMedia: true,
+      tags: const <String>['a', 'b'],
+    );
+
+    final favourited = artwork.copyWith(isFavourited: true);
+
+    expect(favourited.isFavourited, isTrue);
+    expect(favourited.id, 'art-1');
+    expect(favourited.title, 'Title');
+    expect(favourited.author.username, 'sample-user');
+    expect(favourited.description, 'desc');
+    expect(favourited.isMature, isTrue);
+    expect(favourited.isDownloadable, isTrue);
+    expect(favourited.isMultiMedia, isTrue);
+    expect(favourited.tags, <String>['a', 'b']);
+    expect(artwork.isFavourited, isFalse);
+  });
+
   test('page with more results requires a cursor', () {
     expect(
       () => Page<String>(items: const <String>[], hasMore: true),

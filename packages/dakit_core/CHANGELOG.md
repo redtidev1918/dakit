@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.7
+
+### Added
+
+- `Artwork.copyWith` so hosts can derive a changed artwork (e.g. flipping `isFavourited`) without reconstructing every field.
+
 ## 0.1.6
 
 ### Added

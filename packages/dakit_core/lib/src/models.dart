@@ -137,6 +137,41 @@ final class Artwork {
 
   /// Searchable tag names attached to the artwork (e.g. `["belly", "comic"]`).
   final List<String> tags;
+
+  /// Returns a copy of this artwork with the given fields replaced.
+  Artwork copyWith({
+    String? id,
+    String? title,
+    UserProfile? author,
+    Uri? pageUri,
+    List<MediaAsset>? media,
+    String? description,
+    DateTime? publishedAt,
+    bool? isMature,
+    bool? isDownloadable,
+    bool? isFavourited,
+    bool? isMultiMedia,
+    MediaAvailability? downloadAvailability,
+    ArtworkTextContent? textContent,
+    List<String>? tags,
+  }) {
+    return Artwork(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      author: author ?? this.author,
+      pageUri: pageUri ?? this.pageUri,
+      media: media ?? this.media,
+      description: description ?? this.description,
+      publishedAt: publishedAt ?? this.publishedAt,
+      isMature: isMature ?? this.isMature,
+      isDownloadable: isDownloadable ?? this.isDownloadable,
+      isFavourited: isFavourited ?? this.isFavourited,
+      isMultiMedia: isMultiMedia ?? this.isMultiMedia,
+      downloadAvailability: downloadAvailability ?? this.downloadAvailability,
+      textContent: textContent ?? this.textContent,
+      tags: tags ?? this.tags,
+    );
+  }
 }
 
 /// Structured text embedded in a deviation response.
