@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.5
+
+### Added
+
+- `MasonryGridView` / `SliverMasonryGrid` — a lazy, balanced masonry (waterfall) layout for variable-height grid content (e.g. image galleries).
+
 ## 0.1.4
 
 ### Added

@@ -10,3 +10,4 @@ export 'src/background_transfer_manager.dart' show BackgroundTransferManager;
 export 'src/secure_pending_authorization_store.dart';
 export 'src/secure_token_store.dart';
 export 'src/system_uri_launcher.dart';
+export 'src/widgets/masonry.dart';
