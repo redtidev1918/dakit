@@ -252,9 +252,10 @@ final class BackgroundTransferManager implements TransferManager {
     }
     try {
       final record = await _backend.recordForId(id);
-      final filePath = record == null
-          ? null
-          : await _backend.filePath(record.task);
+      final task = record?.task;
+      final filePath = task is bg.DownloadTask
+          ? await _backend.filePath(task)
+          : null;
       if (filePath != null && filePath.isNotEmpty) {
         paths.add(filePath);
       }

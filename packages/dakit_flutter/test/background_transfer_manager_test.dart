@@ -159,43 +159,52 @@ void main() {
     await manager.dispose();
   });
 
-  test('retains record metadata when a downloaded file cannot be deleted', () async {
-    final backend = FakeTransferBackend();
-    final task = bg.DownloadTask(
-      taskId: 'task-1',
-      url: 'https://files.example.test/file.bin',
-      filename: 'file.bin',
-      group: BackgroundTransferManager.group,
-    );
-    backend.stored['task-1'] = bg.TaskRecord(
-      task,
-      bg.TaskStatus.complete,
-      1.0,
-      1000,
-    );
-    backend.resolvedPaths['task-1'] = '/private/file.bin';
-    backend.existingPaths.add('/private/file.bin');
-    backend.deleteFailures.add('/private/file.bin');
-    final manager = createBackgroundTransferManagerForTesting(backend: backend);
-    await manager.initialize();
+  test(
+    'retains record metadata when a downloaded file cannot be deleted',
+    () async {
+      final backend = FakeTransferBackend();
+      final task = bg.DownloadTask(
+        taskId: 'task-1',
+        url: 'https://files.example.test/file.bin',
+        filename: 'file.bin',
+        group: BackgroundTransferManager.group,
+      );
+      backend.stored['task-1'] = bg.TaskRecord(
+        task,
+        bg.TaskStatus.complete,
+        1.0,
+        1000,
+      );
+      backend.resolvedPaths['task-1'] = '/private/file.bin';
+      backend.existingPaths.add('/private/file.bin');
+      backend.deleteFailures.add('/private/file.bin');
+      final manager = createBackgroundTransferManagerForTesting(
+        backend: backend,
+      );
+      await manager.initialize();
 
-    await expectLater(
-      manager.remove('task-1'),
-      throwsA(
-        isA<DAKitException>()
-            .having((error) => error.code, 'code', 'transfer.remove.file_failed')
-            .having((error) => error.retryable, 'retryable', isTrue),
-      ),
-    );
+      await expectLater(
+        manager.remove('task-1'),
+        throwsA(
+          isA<DAKitException>()
+              .having(
+                (error) => error.code,
+                'code',
+                'transfer.remove.file_failed',
+              )
+              .having((error) => error.retryable, 'retryable', isTrue),
+        ),
+      );
 
-    expect(backend.removed, isEmpty);
-    expect(backend.stored, contains('task-1'));
+      expect(backend.removed, isEmpty);
+      expect(backend.stored, contains('task-1'));
 
-    backend.deleteFailures.clear();
-    await manager.remove('task-1');
-    expect(backend.removed, <String>['task-1']);
-    await manager.dispose();
-  });
+      backend.deleteFailures.clear();
+      await manager.remove('task-1');
+      expect(backend.removed, <String>['task-1']);
+      await manager.dispose();
+    },
+  );
 
   test('configures and explicitly clears the transfer proxy', () async {
     final backend = FakeTransferBackend();
@@ -405,7 +414,9 @@ final class FakeTransferBackend implements BackgroundTransferBackend {
 
   @override
   Future<void> deleteFile(String path) async {
-    if (deleteFailures.contains(path)) throw FileSystemException('denied', path);
+    if (deleteFailures.contains(path)) {
+      throw FileSystemException('denied', path);
+    }
     existingPaths.remove(path);
     deletedPaths.add(path);
   }
