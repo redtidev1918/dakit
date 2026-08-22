@@ -1,0 +1,75 @@
+{
+  "seed": "art-1",
+  "author": {
+    "userid": "user-1",
+    "username": "sample-user"
+  },
+  "more_from_artist": [
+    {
+      "deviationid": "art-1",
+      "url": "https://www.deviantart.com/sample-user/art/example-1",
+      "title": "Seed repeat",
+      "author": {
+        "userid": "user-1",
+        "username": "sample-user"
+      },
+      "preview": {
+        "src": "https://images.example.test/seed-repeat.jpg",
+        "width": 800,
+        "height": 533
+      },
+      "is_mature": false,
+      "is_downloadable": false
+    },
+    {
+      "deviationid": "art-2",
+      "url": "https://www.deviantart.com/sample-user/art/example-2",
+      "title": "Related from artist",
+      "author": {
+        "userid": "user-1",
+        "username": "sample-user"
+      },
+      "preview": {
+        "src": "https://images.example.test/artist-2.jpg",
+        "width": 900,
+        "height": 600
+      },
+      "is_mature": false,
+      "is_downloadable": true
+    }
+  ],
+  "more_from_da": [
+    {
+      "deviationid": "art-3",
+      "url": "https://www.deviantart.com/other-user/art/example-3",
+      "title": "Related from DA",
+      "author": {
+        "userid": "user-2",
+        "username": "other-user"
+      },
+      "preview": {
+        "src": "https://images.example.test/da-3.jpg",
+        "width": 640,
+        "height": 640
+      },
+      "is_mature": false,
+      "is_downloadable": false
+    },
+    {
+      "deviationid": "art-2",
+      "url": "https://www.deviantart.com/sample-user/art/example-2",
+      "title": "Duplicate of artist",
+      "author": {
+        "userid": "user-1",
+        "username": "sample-user"
+      },
+      "preview": {
+        "src": "https://images.example.test/artist-2.jpg",
+        "width": 900,
+        "height": 600
+      },
+      "is_mature": false,
+      "is_downloadable": true
+    }
+  ]
+}

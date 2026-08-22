@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.11
+
+### Fixed
+
+- `OfficialDiscoveryRepository.moreLikeThis` now calls the real
+  `browse/morelikethis/preview` endpoint (the old `browse/morelikethis` page
+  endpoint no longer exists) and flattens `more_from_artist` +
+  `more_from_da` into a de-duplicated artwork list, excluding the seed.
+
 ## 0.1.10
 
 ### Added

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.9
+
+### Changed
+
+- `DiscoveryRepository.moreLikeThis` now returns a flat, de-duplicated
+  `List<Artwork>` instead of a `Page<Artwork>` — the official
+  `browse/morelikethis/preview` endpoint is not paginated.
+
 ## 0.1.8
 
 ### Added

@@ -157,25 +157,23 @@ void main() {
     });
   });
 
-  test('requests more-like-this with a seed deviation id', () async {
+  test('requests more-like-this preview and flattens related deviations', () async {
     final transport = FixtureTransport(<Map<String, Object?>>[
-      await fixture('gallery_page.json'),
+      await fixture('more_like_this_preview.json'),
     ]);
     final repository = OfficialDiscoveryRepository(transport);
 
-    final page = await repository.moreLikeThis(
-      'art-1',
-      const PageRequest(limit: 12),
-    );
+    final items = await repository.moreLikeThis('art-1');
 
-    expect(page.items.single.id, 'art-1');
-    expect(transport.requests.single.path, 'browse/morelikethis');
-    expect(transport.requests.single.query, <String, Object?>{
-      'seed': 'art-1',
-      'limit': 12,
-      'offset': 0,
-      'mature_content': true,
-    });
+    expect(transport.requests.single.path, 'browse/morelikethis/preview');
+    expect(transport.requests.single.query, <String, Object?>{'seed': 'art-1'});
+    // "More from DA" first, then "More from artist", de-duplicated and without
+    // the seed itself.
+    expect(items.map((artwork) => artwork.id), <String>['art-3', 'art-2']);
+    expect(
+      items.singleWhere((artwork) => artwork.id == 'art-3').media,
+      isNotEmpty,
+    );
   });
 
   test('clamps gallery limit to the provider maximum of 24', () async {

@@ -402,7 +402,7 @@ final class OfficialDiscoveryRepository implements DiscoveryRepository {
   }
 
   @override
-  Future<Page<Artwork>> moreLikeThis(String seed, PageRequest request) async {
+  Future<List<Artwork>> moreLikeThis(String seed) async {
     final normalized = seed.trim();
     if (normalized.isEmpty) {
       throw const DAKitException(
@@ -411,17 +411,36 @@ final class OfficialDiscoveryRepository implements DiscoveryRepository {
         message: 'A seed deviation id must not be empty.',
       );
     }
-    _validatePageRequest(request);
+    // The official endpoint is `browse/morelikethis/preview`; it returns a
+    // fixed (non-paginated) bundle of related deviations rather than a page,
+    // so the older `browse/morelikethis` page shape no longer exists.
     final json = await _transport.getJson(
-      'browse/morelikethis',
-      query: <String, Object?>{
-        'seed': normalized,
-        'limit': request.limit,
-        'offset': _offset(request.cursor),
-        'mature_content': true,
-      },
+      'browse/morelikethis/preview',
+      query: <String, Object?>{'seed': normalized},
     );
-    return _parsePage(json, _mapper.artwork);
+    final fromArtist = _deviationList(json, 'more_from_artist');
+    final fromDa = _deviationList(json, 'more_from_da');
+
+    final seen = <String>{normalized};
+    final items = <Artwork>[];
+    // "More from DeviantArt" first, then "More from <artist>", de-duplicated
+    // and excluding the seed itself so the section never repeats the artwork.
+    for (final deviation in <Map<String, Object?>>[...fromDa, ...fromArtist]) {
+      final artwork = _mapper.artwork(deviation);
+      if (seen.add(artwork.id)) items.add(artwork);
+    }
+    return List<Artwork>.unmodifiable(items);
+  }
+
+  static List<Map<String, Object?>> _deviationList(
+    Map<String, Object?> json,
+    String field,
+  ) {
+    final raw = json[field];
+    if (raw is! List) throw _missingField(field);
+    return List<Map<String, Object?>>.unmodifiable(
+      raw.map((item) => _requiredItemMap(item)),
+    );
   }
 }
 

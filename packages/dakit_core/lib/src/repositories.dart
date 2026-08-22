@@ -60,8 +60,10 @@ abstract interface class DiscoveryRepository {
 
   Future<Page<Artwork>> topic(String canonicalName, PageRequest request);
 
-  /// Deviations related to [seed] (the "More Like This" browse endpoint).
-  Future<Page<Artwork>> moreLikeThis(String seed, PageRequest request);
+  /// Deviations related to [seed], flattened and de-duplicated from the
+  /// official "More Like This" preview endpoint (which is not paginated, so no
+  /// [PageRequest] is used).
+  Future<List<Artwork>> moreLikeThis(String seed);
 }
 
 abstract interface class FolderRepository {
