@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.7
+
+### Fixed
+
+- `OfficialMediaRepository.originalFile` now maps a 4xx from the download
+  endpoint to `MediaAvailability.unavailable` instead of rethrowing, so hosts
+  show a "not downloadable" hint rather than a full-screen error. 5xx errors
+  still bubble up for a retry.
+
 ## 0.1.6
 
 ### Fixed

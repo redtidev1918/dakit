@@ -842,8 +842,25 @@ MediaAvailability? _expectedMediaAvailability(DAKitException error) {
     DAKitFailureKind.authentication => MediaAvailability.loginRequired,
     DAKitFailureKind.authorization => MediaAvailability.restricted,
     DAKitFailureKind.notFound => MediaAvailability.missing,
+    // A 4xx from the download endpoint means the deviation exists but its
+    // download was rejected (not downloadable, premium, limit reached…); a 5xx
+    // is a transient server error and keeps bubbling up for a retry.
+    DAKitFailureKind.upstream => _upstreamDownloadAvailability(error),
     _ => null,
   };
+}
+
+MediaAvailability? _upstreamDownloadAvailability(DAKitException error) {
+  final rawStatus = error.details['status'];
+  final status = switch (rawStatus) {
+    int value => value,
+    num value => value.toInt(),
+    _ => null,
+  };
+  if (status != null && status >= 400 && status < 500) {
+    return MediaAvailability.unavailable;
+  }
+  return null;
 }
 
 Page<T> _parsePage<T>(
