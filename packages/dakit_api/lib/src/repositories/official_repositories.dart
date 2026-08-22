@@ -432,8 +432,14 @@ final class OfficialDiscoveryRepository implements DiscoveryRepository {
     }
     return MoreLikeThisResult(
       artworks: List<Artwork>.unmodifiable(artworks),
-      featuredInCollections: _collectionGroups(json, 'featured_in_collections'),
-      suggestedCollections: _collectionGroups(json, 'suggested_collections'),
+      featuredInCollections: _tolerantCollectionGroups(
+        json,
+        'featured_in_collections',
+      ),
+      suggestedCollections: _tolerantCollectionGroups(
+        json,
+        'suggested_collections',
+      ),
     );
   }
 
@@ -446,6 +452,21 @@ final class OfficialDiscoveryRepository implements DiscoveryRepository {
     return List<Map<String, Object?>>.unmodifiable(
       raw.map((item) => _requiredItemMap(item)),
     );
+  }
+
+  /// Collections are the most volatile part of the preview response. If the
+  /// provider changes or drops their shape, degrade to an empty list so the
+  /// related artworks still render; contract tests against recorded fixtures
+  /// surface the drift at build time.
+  List<CollectionWithDeviations> _tolerantCollectionGroups(
+    Map<String, Object?> json,
+    String field,
+  ) {
+    try {
+      return _collectionGroups(json, field);
+    } on Object {
+      return const <CollectionWithDeviations>[];
+    }
   }
 
   List<CollectionWithDeviations> _collectionGroups(

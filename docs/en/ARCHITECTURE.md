@@ -95,7 +95,10 @@ Regular users should not use the CLI to log in directly; final clients use the s
 4. Accept newly added fields, and produce diagnosable failures for missing required fields;
 5. Use contract tests with fixtures derived from official schemas;
 6. Use optional real-service tests to detect authorization, policy, and schema drift;
-7. If a web-compatibility layer is added in the future, it must be an independent optional adapter and must not pollute the official API package.
+7. If a web-compatibility layer is added in the future, it must be an independent optional adapter and must not pollute the official API package;
+8. Parse volatile response sub-bundles tolerantly: degrade to empty on shape drift
+   (e.g. the collection groups in `morelikethis/preview`), so secondary data never
+   takes down the primary content; contract tests surface the drift.
 
 ## Security Boundaries
 

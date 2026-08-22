@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.13
+
+### Fixed
+
+- `OfficialDiscoveryRepository.moreLikeThis` now degrades to empty
+  `featured_in_collections` / `suggested_collections` when their shape drifts,
+  so a provider change to the volatile collection groups no longer drops the
+  related artworks.
+
 ## 0.1.12
 
 ### Added

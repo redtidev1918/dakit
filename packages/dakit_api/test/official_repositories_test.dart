@@ -187,6 +187,38 @@ void main() {
     expect(result.suggestedCollections.single.deviations.single.id, 'art-5');
   });
 
+  test('degrades to empty collections when their shape drifts', () async {
+    final transport = FixtureTransport(<Map<String, Object?>>[
+      <String, Object?>{
+        'seed': 'art-1',
+        'author': <String, Object?>{'userid': 'u', 'username': 'u'},
+        'more_from_artist': <Object?>[],
+        'more_from_da': <Object?>[
+          <String, Object?>{
+            'deviationid': 'art-3',
+            'title': 'T',
+            'url': 'https://www.deviantart.com/u/art/t-3',
+            'author': <String, Object?>{'userid': 'u', 'username': 'u'},
+            'preview': <String, Object?>{
+              'src': 'https://images.example.test/3.jpg',
+            },
+          },
+        ],
+        'featured_in_collections': <String, Object?>{'not': 'a list'},
+        'suggested_collections': 'garbage',
+      },
+    ]);
+
+    final result = await OfficialDiscoveryRepository(transport)
+        .moreLikeThis('art-1');
+
+    // The related artwork still renders even though the collection groups are
+    // malformed (graceful degradation instead of a hard parse failure).
+    expect(result.artworks.single.id, 'art-3');
+    expect(result.featuredInCollections, isEmpty);
+    expect(result.suggestedCollections, isEmpty);
+  });
+
   test('clamps gallery limit to the provider maximum of 24', () async {
     final transport = FixtureTransport(<Map<String, Object?>>[
       await fixture('gallery_page.json'),
