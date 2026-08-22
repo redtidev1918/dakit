@@ -420,8 +420,11 @@ final class OfficialDiscoveryRepository implements DiscoveryRepository {
       ApiRoutes.moreLikeThisPreview,
       query: <String, Object?>{'seed': normalized},
     );
-    final fromArtist = _tolerantRelatedArtworks(json, 'more_from_artist');
-    final fromDa = _tolerantRelatedArtworks(json, 'more_from_da');
+    final fromDa = await _tolerantRelatedArtworks(json, 'more_from_da');
+    final fromArtist = await _tolerantRelatedArtworks(
+      json,
+      'more_from_artist',
+    );
 
     final seen = <String>{normalized};
     final artworks = <Artwork>[];
@@ -446,21 +449,64 @@ final class OfficialDiscoveryRepository implements DiscoveryRepository {
   /// Related-deviation arrays occasionally contain deleted, restricted, or
   /// partially shaped entries. One bad sibling must not discard every usable
   /// recommendation in the response.
-  List<Artwork> _tolerantRelatedArtworks(
+  Future<List<Artwork>> _tolerantRelatedArtworks(
     Map<String, Object?> json,
     String field,
-  ) {
+  ) async {
     final raw = json[field];
     if (raw is! List) return const <Artwork>[];
     final artworks = <Artwork>[];
+    final sparseIds = <String>[];
     for (final item in raw) {
+      final entry = item is Map
+          ? item.map<String, Object?>(
+              (key, value) => MapEntry(key.toString(), value),
+            )
+          : null;
+      if (entry == null || entry['is_deleted'] == true) continue;
       try {
-        artworks.add(_mapper.artwork(_requiredItemMap(item)));
+        artworks.add(_mapper.artwork(entry));
       } on Object {
-        // A malformed/deleted recommendation is local to that entry. Network
-        // and top-level request failures still throw before parsing reaches
-        // this point, so genuine outages remain retryable by the host.
+        // The current public schema guarantees only deviationid, printid and
+        // is_deleted. Hydrate a legitimate sparse preview item through the
+        // canonical deviation endpoint instead of discarding the whole rail.
+        final id = entry['deviationid'];
+        if (id is String && id.trim().isNotEmpty) sparseIds.add(id.trim());
       }
+    }
+
+    // Keep the fallback bounded so a provider response containing many sparse
+    // entries cannot fan out an unbounded number of requests. Four concurrent
+    // hydrations keep the section responsive without causing an API burst.
+    Object? hydrationError;
+    for (var offset = 0; offset < sparseIds.length; offset += 4) {
+      final end = offset + 4 < sparseIds.length
+          ? offset + 4
+          : sparseIds.length;
+      final hydrated = await Future.wait<Artwork?>(
+        sparseIds.sublist(offset, end).map((id) async {
+          try {
+            final detail = await _transport.getJson(
+              ApiRoutes.deviation(id),
+              query: const <String, Object?>{
+                'mature_content': true,
+                'expand': 'deviation.fulltext',
+              },
+            );
+            return _mapper.artwork(detail);
+          } on Object catch (error) {
+            hydrationError ??= error;
+            return null;
+          }
+        }),
+      );
+      artworks.addAll(hydrated.whereType<Artwork>());
+    }
+
+    // If the provider gave us real candidates but none could be rendered,
+    // surface the transport/shape failure so hosts can show a retry state.
+    if (artworks.isEmpty && sparseIds.isNotEmpty && hydrationError != null) {
+      throw hydrationError!;
     }
     return List<Artwork>.unmodifiable(artworks);
   }

@@ -220,6 +220,68 @@ void main() {
   });
 
   test(
+    'hydrates sparse more-like-this entries allowed by the schema',
+    () async {
+      final hydrated = await fixture('deviation.json')
+        ..['deviationid'] = 'sparse-art';
+      final transport = FixtureTransport(<Map<String, Object?>>[
+        <String, Object?>{
+          'seed': 'art-1',
+          'author': <String, Object?>{'userid': 'u', 'username': 'u'},
+          'more_from_da': <Object?>[
+            <String, Object?>{
+              'deviationid': 'sparse-art',
+              'printid': null,
+              'is_deleted': false,
+            },
+          ],
+          'more_from_artist': <Object?>[],
+        },
+        hydrated,
+      ]);
+
+      final result = await OfficialDiscoveryRepository(transport)
+          .moreLikeThis('art-1');
+
+      expect(result.artworks.single.id, 'sparse-art');
+      expect(result.artworks.single.media, isNotEmpty);
+      expect(transport.requests, hasLength(2));
+      expect(transport.requests.last.path, 'deviation/sparse-art');
+      expect(transport.requests.last.query, <String, Object?>{
+        'mature_content': true,
+        'expand': 'deviation.fulltext',
+      });
+    },
+  );
+
+  test('surfaces sparse hydration failure when no item remains', () async {
+    final transport = FixtureTransport(<Map<String, Object?>>[
+      <String, Object?>{
+        'seed': 'art-1',
+        'author': <String, Object?>{'userid': 'u', 'username': 'u'},
+        'more_from_da': <Object?>[
+          <String, Object?>{
+            'deviationid': 'still-sparse',
+            'printid': null,
+            'is_deleted': false,
+          },
+        ],
+        'more_from_artist': <Object?>[],
+      },
+      <String, Object?>{
+        'deviationid': 'still-sparse',
+        'printid': null,
+        'is_deleted': false,
+      },
+    ]);
+
+    await expectLater(
+      OfficialDiscoveryRepository(transport).moreLikeThis('art-1'),
+      throwsA(isA<DAKitException>()),
+    );
+  });
+
+  test(
     'skips malformed related entries without dropping valid siblings',
     () async {
       final transport = FixtureTransport(<Map<String, Object?>>[

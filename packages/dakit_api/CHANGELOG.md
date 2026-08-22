@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.16
+
+### Fixed
+
+- `OfficialDiscoveryRepository.moreLikeThis` now hydrates sparse related
+  deviations through `deviation/{id}` in bounded batches. This matches the
+  current public schema, which only guarantees identifiers and deletion state
+  in preview entries, instead of silently dropping every valid recommendation.
+- If every sparse recommendation fails to hydrate, the repository surfaces the
+  failure so hosts can present a retry state rather than an unexplained empty
+  section.
+
 ## 0.1.15
 
 ### Fixed
