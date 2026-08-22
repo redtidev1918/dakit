@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.4
+
+### Added
+
+- `BackgroundTransferManager.remove` clears a finished transfer from the persisted records (the file is left in place).
+
 ## 0.1.3
 
 ### Fixed

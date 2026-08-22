@@ -23,6 +23,8 @@ abstract interface class BackgroundTransferBackend {
 
   Future<bool> cancel(String id);
 
+  Future<void> remove(String id);
+
   Future<String?> moveToSharedStorage(
     bg.DownloadTask task,
     bg.SharedStorage destination,
@@ -62,6 +64,9 @@ final class FileDownloaderBackend implements BackgroundTransferBackend {
 
   @override
   Future<bool> cancel(String id) => _downloader.cancelTaskWithId(id);
+
+  @override
+  Future<void> remove(String id) => _downloader.database.deleteRecordWithId(id);
 
   @override
   Future<String?> moveToSharedStorage(
@@ -216,6 +221,15 @@ final class BackgroundTransferManager implements TransferManager {
   Future<void> cancel(String id) async {
     _ensureReady();
     if (!await _backend.cancel(id)) throw _operationFailure('cancel');
+  }
+
+  @override
+  Future<void> remove(String id) async {
+    _ensureReady();
+    await _backend.remove(id);
+    _latest.remove(id);
+    _movedPaths.remove(id);
+    await _persistMovedPaths();
   }
 
   @override

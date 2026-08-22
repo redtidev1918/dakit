@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.6
+
+### Added
+
+- `TransferManager.remove` so hosts can clear a finished transfer from the persisted records without deleting the downloaded file.
+
 ## 0.1.5
 
 ### Added

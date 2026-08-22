@@ -222,6 +222,9 @@ final class MemoryTransferManager implements TransferManager {
   Future<void> cancel(String id) async => cancelled.add(id);
 
   @override
+  Future<void> remove(String id) async {}
+
+  @override
   Future<String?> moveToSharedStorage(
     String id,
     TransferSharedStorage destination,

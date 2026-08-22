@@ -120,6 +120,30 @@ void main() {
     },
   );
 
+  test('removes a record without touching the file', () async {
+    final backend = FakeTransferBackend();
+    final task = bg.DownloadTask(
+      taskId: 'task-1',
+      url: 'https://files.example.test/file.bin',
+      filename: 'file.bin',
+      group: BackgroundTransferManager.group,
+    );
+    backend.stored['task-1'] = bg.TaskRecord(
+      task,
+      bg.TaskStatus.complete,
+      1.0,
+      1000,
+    );
+    final manager = createBackgroundTransferManagerForTesting(backend: backend);
+    await manager.initialize();
+
+    await manager.remove('task-1');
+
+    expect(backend.removed, <String>['task-1']);
+    expect(backend.stored, isEmpty);
+    await manager.dispose();
+  });
+
   test('configures and explicitly clears the transfer proxy', () async {
     final backend = FakeTransferBackend();
     final manager = createBackgroundTransferManagerForTesting(backend: backend);
@@ -266,6 +290,7 @@ final class FakeTransferBackend implements BackgroundTransferBackend {
   final List<String> paused = <String>[];
   final List<String> resumed = <String>[];
   final List<String> cancelled = <String>[];
+  final List<String> removed = <String>[];
   final List<ProxyConfiguration?> proxies = <ProxyConfiguration?>[];
 
   @override
@@ -305,6 +330,12 @@ final class FakeTransferBackend implements BackgroundTransferBackend {
   Future<bool> cancel(String id) async {
     cancelled.add(id);
     return true;
+  }
+
+  @override
+  Future<void> remove(String id) async {
+    removed.add(id);
+    stored.remove(id);
   }
 
   @override
