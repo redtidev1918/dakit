@@ -1,7 +1,10 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 
 import 'package:dakit_core/dakit_core.dart';
 import 'package:background_downloader/background_downloader.dart' as bg;
+import 'package:path_provider/path_provider.dart';
 
 abstract interface class BackgroundTransferBackend {
   Stream<bg.TaskUpdate> get updates;
@@ -109,6 +112,7 @@ final class BackgroundTransferManager implements TransferManager {
     _ensureOpen();
     if (_initialized) return;
     await _backend.start();
+    await _loadMovedPaths();
     _initialized = true;
     _record('transfer.manager.ready', DiagnosticLevel.info);
   }
@@ -227,6 +231,7 @@ final class BackgroundTransferManager implements TransferManager {
     );
     if (newPath == null || newPath.isEmpty) return null;
     _movedPaths[id] = newPath;
+    await _persistMovedPaths();
     final previous = _latest[id];
     if (previous != null) {
       _emit(
@@ -368,6 +373,37 @@ final class BackgroundTransferManager implements TransferManager {
       failureCode: record.exception?.exceptionType,
       failureMessage: record.exception?.description,
     );
+  }
+
+  Future<File> _movedPathsFile() async {
+    final dir = await getApplicationSupportDirectory();
+    await dir.create(recursive: true);
+    return File('${dir.path}${Platform.pathSeparator}dakit_moved_paths.json');
+  }
+
+  Future<void> _loadMovedPaths() async {
+    try {
+      final file = await _movedPathsFile();
+      if (!await file.exists()) return;
+      final decoded = jsonDecode(await file.readAsString());
+      if (decoded is! Map) return;
+      _movedPaths
+        ..clear()
+        ..addAll(
+          decoded.map((key, value) => MapEntry(key.toString(), '$value')),
+        );
+    } on Object {
+      // A corrupt or unreadable file must not block the manager.
+    }
+  }
+
+  Future<void> _persistMovedPaths() async {
+    try {
+      final file = await _movedPathsFile();
+      await file.writeAsString(jsonEncode(_movedPaths), flush: true);
+    } on Object {
+      // Best effort; the in-memory map still serves the current session.
+    }
   }
 
   void _emit(TransferSnapshot snapshot) {

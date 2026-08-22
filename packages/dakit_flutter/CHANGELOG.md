@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.3
+
+### Fixed
+
+- Persist moved shared-storage paths (`moveToSharedStorage`) so the download
+  list reports the correct location after an app restart instead of a stale
+  private path.
+
 ## 0.1.2
 
 ### Added
