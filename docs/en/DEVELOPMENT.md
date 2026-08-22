@@ -32,7 +32,7 @@ dart pub get
 ./tool/verify.sh
 ```
 
-`tool/verify.sh` first pulls the dependencies, then uses melos to run the format and static analysis checks in sequence, and runs the core, api, flutter, and example-app tests. The current baseline is 104 tests.
+`tool/verify.sh` first pulls the dependencies, then uses melos to run the format and static analysis checks in sequence, and runs the core, api, flutter, and example-app tests. The current baseline is 105 tests.
 
 Finer-grained melos commands:
 
@@ -80,7 +80,7 @@ These are all integration smoke builds, not store release packages. For formal d
 
 `.github/workflows/ci.yml` runs on push, pull request, and manual triggers:
 
-- Ubuntu: formatting, analysis, 104 tests;
+- Ubuntu: formatting, analysis, 105 tests;
 - Ubuntu: generate and upload `coverage/lcov.info`;
 - Ubuntu/Android: debug APK;
 - macOS: debug `.app`;
