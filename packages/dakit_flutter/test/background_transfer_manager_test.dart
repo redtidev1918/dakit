@@ -120,7 +120,7 @@ void main() {
     },
   );
 
-  test('removes a record without touching the file', () async {
+  test('removes a record and its file paths', () async {
     final backend = FakeTransferBackend();
     final task = bg.DownloadTask(
       taskId: 'task-1',

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.6
+
+### Changed
+
+- `BackgroundTransferManager.remove` now also deletes the downloaded file (both the moved shared-storage copy and the app-private original), not just the persisted record.
+
 ## 0.1.5
 
 ### Added

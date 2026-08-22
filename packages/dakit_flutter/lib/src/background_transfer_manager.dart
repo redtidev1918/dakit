@@ -226,6 +226,35 @@ final class BackgroundTransferManager implements TransferManager {
   @override
   Future<void> remove(String id) async {
     _ensureReady();
+    // "Delete" should free disk space, not just drop the record. Delete the
+    // moved shared-storage copy (if any) and the task's app-private file.
+    final movedPath = _movedPaths[id];
+    if (movedPath != null && movedPath.isNotEmpty) {
+      try {
+        final file = File(movedPath);
+        if (await file.exists()) await file.delete();
+      } on Object catch (error) {
+        _record(
+          'transfer.remove.moved',
+          DiagnosticLevel.warning,
+          attributes: <String, Object?>{'error': '$error'},
+        );
+      }
+    }
+    try {
+      final record = await _backend.recordForId(id);
+      final filePath = await record?.task.filePath();
+      if (filePath != null && filePath.isNotEmpty) {
+        final file = File(filePath);
+        if (await file.exists()) await file.delete();
+      }
+    } on Object catch (error) {
+      _record(
+        'transfer.remove.task',
+        DiagnosticLevel.warning,
+        attributes: <String, Object?>{'error': '$error'},
+      );
+    }
     await _backend.remove(id);
     _latest.remove(id);
     _movedPaths.remove(id);
