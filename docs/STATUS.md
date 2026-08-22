@@ -6,17 +6,17 @@
 
 - 分支：`main`；远端：`https://github.com/redtidev1918/dakit.git`；
 - 产品名：DAKit — DeviantArt Client SDK；
-- 版本阶段：`dakit_core` / `dakit_api` 为 `0.1.1`，`dakit_flutter` 为 `0.1.0`，均已发布到 pub.dev；
+- 版本阶段：`dakit_core` 0.1.5、`dakit_api` 0.1.8、`dakit_flutter` 0.1.3，均已发布到 pub.dev；
 - 运行时：Flutter 3.47.1 / Dart 3.13.1；
 - 平台：Android、macOS、Windows/MSIX；
-- 测试：格式与分析通过，94 个测试通过；
+- 测试：格式与分析通过，100 个测试通过；
 - 本机构建：Android debug APK、macOS debug app 通过；
 - CI：Linux 质量门及 Android/macOS/Windows 四个 job 通过；
-- 包发布：`dakit_core`、`dakit_api` 0.1.1 与 `dakit_flutter` 0.1.0 已成功上传 pub.dev（通过 GitHub Actions OIDC 自动发布 + 本机手动发布两种路径验证）；
+- 包发布：`dakit_core` 0.1.5、`dakit_api` 0.1.8 与 `dakit_flutter` 0.1.3 已成功上传 pub.dev（通过 GitHub Actions OIDC 自动发布 + 本机手动发布两种路径验证）；
 - 依赖策略：已忽略 `flutter_secure_storage` 的主版本升级，直到 Android 工具链支持 `compileSdk 37`（v11 与当前 Android API 36 / AGP 9.1.0 不兼容）；
 - 未完成：有效 Public OAuth 应用下的五类真实媒体矩阵。
 
-最新完整 CI 为 [run 32378467539](https://github.com/redtidev1918/dakit/actions/runs/32378467539)：Analyze and test 1 分 2 秒、macOS 2 分 3 秒、Android APK 2 分 47 秒、Windows/MSIX 4 分 4 秒，所有 artifact 上传成功。该运行验证了 91 项测试，并确认依赖升级后的客户端 API 没有破坏任何平台构建。
+完整 CI 覆盖 Linux 质量门（analyze / format / test）与 Android APK、macOS app、Windows/MSIX 构建。此前 example_client 的测试桩未实现 `dakit_core` 0.1.5 新增的 `TransferManager.moveToSharedStorage`，导致质量门失败；该测试桩已补齐，本地验证 100 项测试全部通过。
 
 ## 已实现范围
 
@@ -50,8 +50,7 @@ macOS 实测已通过：安全保存 pending state → 启动系统浏览器 →
 1. 使用有效 Public 应用完成系统浏览器登录；
 2. 按 [LIVE_TESTING.md](LIVE_TESTING.md) 准备图片、视频、压缩包、文学、受限五类 UUID；
 3. 运行完整流式下载与 SHA-256 验收；
-4. 根据真实 provider 响应补契约测试，更新本文；
-5. 观察 pub.dev 上 `dakit_core` / `dakit_api` / `dakit_flutter` 0.1.0 的索引状态，并接入宿主应用验证依赖解析。
+4. 根据真实 provider 响应补契约测试，更新本文。
 
 ## 中断后恢复
 

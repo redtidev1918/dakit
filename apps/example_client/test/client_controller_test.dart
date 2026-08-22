@@ -222,6 +222,12 @@ final class MemoryTransferManager implements TransferManager {
   Future<void> cancel(String id) async => cancelled.add(id);
 
   @override
+  Future<String?> moveToSharedStorage(
+    String id,
+    TransferSharedStorage destination,
+  ) async => null;
+
+  @override
   Future<void> configureProxy(ProxyConfiguration? proxy) async {
     this.proxy = proxy;
   }

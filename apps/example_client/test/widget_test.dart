@@ -191,6 +191,12 @@ final class FakeTransferManager implements TransferManager {
   Future<void> cancel(String id) async {}
 
   @override
+  Future<String?> moveToSharedStorage(
+    String id,
+    TransferSharedStorage destination,
+  ) async => null;
+
+  @override
   Future<void> configureProxy(ProxyConfiguration? proxy) async {}
 
   @override

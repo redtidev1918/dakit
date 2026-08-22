@@ -6,17 +6,17 @@ This file records only the verifiable current state and next steps, to avoid mix
 
 - Branch: `main`; remote: `https://github.com/redtidev1918/dakit.git`;
 - Product name: DAKit — DeviantArt Client SDK;
-- Version stage: `dakit_core` / `dakit_api` at `0.1.1`, `dakit_flutter` at `0.1.0`, all published to pub.dev;
+- Version stage: `dakit_core` 0.1.5, `dakit_api` 0.1.8, and `dakit_flutter` 0.1.3, all published to pub.dev;
 - Runtime: Flutter 3.47.1 / Dart 3.13.1;
 - Platforms: Android, macOS, Windows/MSIX;
-- Tests: formatting and analysis pass, 94 tests pass;
+- Tests: formatting and analysis pass, 100 tests pass;
 - Local builds: Android debug APK and macOS debug app pass;
 - CI: the Linux quality gate and the four Android/macOS/Windows jobs pass;
-- Package publishing: `dakit_core` and `dakit_api` 0.1.1, and `dakit_flutter` 0.1.0, have been successfully uploaded to pub.dev (verified via both paths: GitHub Actions OIDC automated publishing and local manual publishing);
+- Package publishing: `dakit_core` 0.1.5, `dakit_api` 0.1.8, and `dakit_flutter` 0.1.3 have been successfully uploaded to pub.dev (verified via both paths: GitHub Actions OIDC automated publishing and local manual publishing);
 - Dependency policy: the major upgrade of `flutter_secure_storage` is being ignored until the Android toolchain supports `compileSdk 37` (v11 is incompatible with the current Android API 36 / AGP 9.1.0);
 - Not done: the five-category real media matrix under a valid Public OAuth application.
 
-The latest full CI run is [run 32378467539](https://github.com/redtidev1918/dakit/actions/runs/32378467539): Analyze and test 1m 2s, macOS 2m 3s, Android APK 2m 47s, Windows/MSIX 4m 4s, with all artifacts uploaded successfully. That run verified 91 tests and confirmed that the client API after the dependency upgrade did not break any platform build.
+Full CI covers the Linux quality gate (analyze / format / test) and the Android APK, macOS app, and Windows/MSIX builds. The quality gate previously failed because the example_client test fakes did not implement `TransferManager.moveToSharedStorage` added in `dakit_core` 0.1.5; those fakes have been filled in, and all 100 tests pass locally.
 
 ## Implemented Scope
 
@@ -50,8 +50,7 @@ The next real login must create a new Public application, allowlist exactly `dak
 1. Complete a system-browser login using a valid Public application;
 2. Prepare the five categories of UUIDs — image, video, archive, literature, and restricted — following [LIVE_TESTING.md](LIVE_TESTING.md);
 3. Run the full streaming download and SHA-256 acceptance;
-4. Add contract tests based on real provider responses, and update this document;
-5. Observe the indexing status of `dakit_core` / `dakit_api` / `dakit_flutter` 0.1.0 on pub.dev, and integrate a host application to verify dependency resolution.
+4. Add contract tests based on real provider responses, and update this document.
 
 ## Resuming After Interruption
 
