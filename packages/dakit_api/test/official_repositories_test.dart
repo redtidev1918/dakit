@@ -507,6 +507,15 @@ void main() {
         ),
         (
           const DAKitException(
+            kind: DAKitFailureKind.upstream,
+            code: 'api.http.400',
+            message: 'Download not available.',
+            details: <String, Object?>{'status': 400},
+          ),
+          MediaAvailability.unavailable,
+        ),
+        (
+          const DAKitException(
             kind: DAKitFailureKind.authorization,
             code: 'api.http.403',
             message: 'Restricted.',
@@ -561,6 +570,22 @@ void main() {
       kind: DAKitFailureKind.network,
       code: 'network.connection',
       message: 'Offline.',
+    );
+
+    expect(
+      () =>
+          OfficialMediaRepository(const ThrowingTransport(failure))
+              .originalFile('art-1'),
+      throwsA(same(failure)),
+    );
+  });
+
+  test('keeps 5xx transfer failures observable for a retry', () async {
+    const failure = DAKitException(
+      kind: DAKitFailureKind.upstream,
+      code: 'api.http.500',
+      message: 'Server error.',
+      details: <String, Object?>{'status': 500},
     );
 
     expect(
