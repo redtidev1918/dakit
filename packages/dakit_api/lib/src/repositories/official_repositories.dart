@@ -421,10 +421,7 @@ final class OfficialDiscoveryRepository implements DiscoveryRepository {
       query: <String, Object?>{'seed': normalized},
     );
     final fromDa = await _tolerantRelatedArtworks(json, 'more_from_da');
-    final fromArtist = await _tolerantRelatedArtworks(
-      json,
-      'more_from_artist',
-    );
+    final fromArtist = await _tolerantRelatedArtworks(json, 'more_from_artist');
 
     final seen = <String>{normalized};
     final artworks = <Artwork>[];
@@ -480,9 +477,7 @@ final class OfficialDiscoveryRepository implements DiscoveryRepository {
     // hydrations keep the section responsive without causing an API burst.
     Object? hydrationError;
     for (var offset = 0; offset < sparseIds.length; offset += 4) {
-      final end = offset + 4 < sparseIds.length
-          ? offset + 4
-          : sparseIds.length;
+      final end = offset + 4 < sparseIds.length ? offset + 4 : sparseIds.length;
       final hydrated = await Future.wait<Artwork?>(
         sparseIds.sublist(offset, end).map((id) async {
           try {
