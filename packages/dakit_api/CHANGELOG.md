@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.9
+
+### Changed
+
+- `DeviationMapper` now marks the full-size `content` image with the same availability as the download (premium/paid content is `purchaseRequired`), while `preview`/`social_preview` thumbnails stay available so hosts can still render an accessible thumbnail.
+
 ## 0.1.8
 
 ### Fixed

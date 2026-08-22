@@ -9,10 +9,14 @@ final class DeviationMapper {
     final pageUri = _requiredWebUri(json, 'url');
     final authorJson = _requiredMap(json, 'author');
     final author = user(authorJson);
+    final downloadAvailability = _downloadAvailability(json);
     final media = <MediaAsset>[];
     final seen = <Uri>{};
 
-    void addImage(String field) {
+    void addImage(
+      String field, {
+      MediaAvailability availability = MediaAvailability.available,
+    }) {
       final value = _map(json[field]);
       if (value == null) return;
       final uri = _webUri(value['src']);
@@ -22,7 +26,7 @@ final class DeviationMapper {
           id: '$id:$field',
           kind: MediaKind.image,
           role: MediaRole.preview,
-          availability: MediaAvailability.available,
+          availability: availability,
           uri: uri,
           byteLength: _integer(value['filesize']),
           width: _integer(value['width']),
@@ -31,7 +35,10 @@ final class DeviationMapper {
       );
     }
 
-    addImage('content');
+    // The full-size `content` image follows the download availability (premium/
+    // paid content is gated); `preview`/`social_preview` thumbnails stay
+    // available so hosts can still render a low-res preview.
+    addImage('content', availability: downloadAvailability);
     addImage('preview');
     addImage('social_preview');
 
@@ -108,7 +115,7 @@ final class DeviationMapper {
       isDownloadable: json['is_downloadable'] == true,
       isFavourited: json['is_favourited'] == true,
       isMultiMedia: json['is_multi_media'] == true,
-      downloadAvailability: _downloadAvailability(json),
+      downloadAvailability: downloadAvailability,
       textContent: _textContent(json),
       tags: _tags(json),
     );

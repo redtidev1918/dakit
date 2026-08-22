@@ -108,6 +108,25 @@ void main() {
 
       expect(paid.downloadAvailability, MediaAvailability.purchaseRequired);
       expect(blocked.downloadAvailability, MediaAvailability.restricted);
+
+      // The full-size `content` image is gated alongside the download, but the
+      // `preview` thumbnail stays available so hosts can still show a preview.
+      expect(
+        paid.media.any(
+          (asset) =>
+              asset.kind == MediaKind.image &&
+              asset.availability == MediaAvailability.purchaseRequired,
+        ),
+        isTrue,
+      );
+      expect(
+        paid.media.any(
+          (asset) =>
+              asset.kind == MediaKind.image &&
+              asset.availability == MediaAvailability.available,
+        ),
+        isTrue,
+      );
     },
   );
 
