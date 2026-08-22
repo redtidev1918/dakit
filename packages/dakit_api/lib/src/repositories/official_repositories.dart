@@ -1,5 +1,6 @@
 import 'package:dakit_core/dakit_core.dart';
 
+import '../api_routes.dart';
 import '../dto/deviation_mapper.dart';
 import '../http/official_api_client.dart';
 
@@ -12,7 +13,7 @@ final class OfficialAccountRepository implements AccountRepository {
   @override
   Future<UserProfile> currentUser() async {
     final json = await _transport.getJson(
-      'user/whoami',
+      ApiRoutes.whoami,
       query: const <String, Object?>{'mature_content': true},
     );
     return _mapper.user(json);
@@ -29,7 +30,7 @@ final class OfficialUserRepository implements UserRepository {
   Future<UserProfileDetails> profile(String username) async {
     _validateIdentifier(username, 'username');
     final json = await _transport.getJson(
-      'user/profile/${Uri.encodeComponent(username.trim())}',
+      ApiRoutes.profile(username.trim()),
       query: const <String, Object?>{
         'ext_collections': false,
         'ext_galleries': false,
@@ -44,13 +45,13 @@ final class OfficialUserRepository implements UserRepository {
   Future<Page<UserRelationship>> friends(
     String username,
     PageRequest request,
-  ) => _relationships('user/friends', username, request);
+  ) => _relationships(ApiRoutes.friends, username, request);
 
   @override
   Future<Page<UserRelationship>> watchers(
     String username,
     PageRequest request,
-  ) => _relationships('user/watchers', username, request);
+  ) => _relationships(ApiRoutes.watchers, username, request);
 
   Future<Page<UserRelationship>> _relationships(
     String path,
@@ -74,7 +75,7 @@ final class OfficialUserRepository implements UserRepository {
   Future<bool> isWatching(String username) async {
     _validateIdentifier(username, 'username');
     final json = await _transport.getJson(
-      'user/friends/watching/${Uri.encodeComponent(username.trim())}',
+      ApiRoutes.isWatching(username.trim()),
     );
     return _requiredResponseBoolean(json, 'watching');
   }
@@ -97,7 +98,7 @@ final class OfficialUserRepository implements UserRepository {
       _validateIdentifier('', 'username');
     }
     final json = await _transport.getJson(
-      'user/friends/search',
+      ApiRoutes.friendsSearch,
       query: <String, Object?>{
         'username': ?normalizedUsername,
         'query': normalizedQuery,
@@ -134,7 +135,7 @@ final class OfficialUserLookupRepository implements UserLookupRepository {
       );
     }
     final json = await _transport.postFormJson(
-      'user/whois',
+      ApiRoutes.whois,
       form: <String, Object?>{'usernames': normalized},
     );
     final rawResults = json['results'];
@@ -155,7 +156,7 @@ final class OfficialArtworkRepository implements ArtworkRepository {
   Future<Artwork> getById(String id) async {
     _validateIdentifier(id, 'artwork id');
     final json = await _transport.getJson(
-      'deviation/${Uri.encodeComponent(id)}',
+      ApiRoutes.deviation(id),
       query: const <String, Object?>{
         'mature_content': true,
         'expand': 'deviation.fulltext',
@@ -166,7 +167,7 @@ final class OfficialArtworkRepository implements ArtworkRepository {
 
   @override
   Future<Page<Artwork>> browse(PageRequest request) =>
-      _page('browse/home', request);
+      _page(ApiRoutes.browseHome, request);
 
   @override
   Future<Page<Artwork>> search(String query, PageRequest request) {
@@ -177,7 +178,7 @@ final class OfficialArtworkRepository implements ArtworkRepository {
         message: 'A search query must not be empty.',
       );
     }
-    return _page('browse/home', request, query: query.trim());
+    return _page(ApiRoutes.browseHome, request, query: query.trim());
   }
 
   Future<Page<Artwork>> _page(
@@ -217,7 +218,7 @@ final class OfficialArtworkContentRepository
   }) async {
     _validateIdentifier(artworkId, 'artwork id');
     final json = await _transport.getJson(
-      'deviation/content',
+      ApiRoutes.deviationContent,
       query: <String, Object?>{
         'deviationid': artworkId,
         'for_edit': forEditing,
@@ -236,11 +237,11 @@ final class OfficialGalleryRepository implements GalleryRepository {
 
   @override
   Future<Page<Artwork>> gallery(String username, PageRequest request) =>
-      _fetch('gallery/all', username, request);
+      _fetch(ApiRoutes.galleryAll, username, request);
 
   @override
   Future<Page<Artwork>> favourites(String username, PageRequest request) =>
-      _fetch('collections/all', username, request);
+      _fetch(ApiRoutes.collectionsAll, username, request);
 
   Future<Page<Artwork>> _fetch(
     String path,
@@ -270,7 +271,7 @@ final class OfficialDiscoveryRepository implements DiscoveryRepository {
   @override
   Future<List<Artwork>> dailyDeviations({DateTime? date}) async {
     final json = await _transport.getJson(
-      'browse/dailydeviations',
+      ApiRoutes.dailyDeviations,
       query: <String, Object?>{
         if (date != null) 'date': _calendarDate(date),
         'mature_content': true,
@@ -288,7 +289,7 @@ final class OfficialDiscoveryRepository implements DiscoveryRepository {
   Future<Page<Artwork>> watched(PageRequest request) async {
     _validatePageRequest(request);
     final json = await _transport.getJson(
-      'browse/deviantsyouwatch',
+      ApiRoutes.deviantsYouWatch,
       query: <String, Object?>{
         'limit': request.limit,
         'offset': _offset(request.cursor),
@@ -310,7 +311,7 @@ final class OfficialDiscoveryRepository implements DiscoveryRepository {
     }
     _validatePageRequest(request);
     final json = await _transport.getJson(
-      'browse/tags',
+      ApiRoutes.browseTags,
       query: <String, Object?>{
         'tag': normalized,
         ..._hybridPageQuery(request.cursor),
@@ -333,7 +334,7 @@ final class OfficialDiscoveryRepository implements DiscoveryRepository {
       );
     }
     final json = await _transport.getJson(
-      'browse/tags/search',
+      ApiRoutes.browseTagSearch,
       query: <String, Object?>{'tag_name': normalized, 'mature_content': true},
     );
     final rawResults = json['results'];
@@ -354,7 +355,7 @@ final class OfficialDiscoveryRepository implements DiscoveryRepository {
   Future<Page<ArtworkTopic>> topics(PageRequest request) async {
     _validatePageLimit(request, 10);
     final json = await _transport.getJson(
-      'browse/topics',
+      ApiRoutes.browseTopics,
       query: <String, Object?>{
         ..._hybridPageQuery(request.cursor),
         'limit': request.limit,
@@ -367,7 +368,7 @@ final class OfficialDiscoveryRepository implements DiscoveryRepository {
   @override
   Future<List<ArtworkTopic>> topTopics() async {
     final json = await _transport.getJson(
-      'browse/toptopics',
+      ApiRoutes.topTopics,
       query: const <String, Object?>{'mature_content': true},
     );
     final rawResults = json['results'];
@@ -389,7 +390,7 @@ final class OfficialDiscoveryRepository implements DiscoveryRepository {
     }
     _validatePageLimit(request, 24);
     final json = await _transport.getJson(
-      'browse/topic',
+      ApiRoutes.browseTopic,
       query: <String, Object?>{
         'topic': normalized,
         ..._hybridPageQuery(request.cursor),
@@ -416,7 +417,7 @@ final class OfficialDiscoveryRepository implements DiscoveryRepository {
     // groups rather than a page, so the older `browse/morelikethis` page shape
     // no longer exists.
     final json = await _transport.getJson(
-      'browse/morelikethis/preview',
+      ApiRoutes.moreLikeThisPreview,
       query: <String, Object?>{'seed': normalized},
     );
     final fromArtist = _deviationList(json, 'more_from_artist');
@@ -511,7 +512,7 @@ final class OfficialFolderRepository implements FolderRepository {
     PageRequest request = const PageRequest(),
     FolderQueryOptions options = const FolderQueryOptions(),
   }) => _folders(
-    'gallery/folders',
+    ApiRoutes.galleryFolders,
     FolderKind.gallery,
     username,
     request,
@@ -524,7 +525,7 @@ final class OfficialFolderRepository implements FolderRepository {
     PageRequest request = const PageRequest(),
     FolderQueryOptions options = const FolderQueryOptions(),
   }) => _folders(
-    'collections/folders',
+    ApiRoutes.collectionFolders,
     FolderKind.collection,
     username,
     request,
@@ -536,14 +537,14 @@ final class OfficialFolderRepository implements FolderRepository {
     String folderId, {
     String? username,
     PageRequest request = const PageRequest(),
-  }) => _contents('gallery', folderId, username, request);
+  }) => _contents(ApiRoutes.gallery, folderId, username, request);
 
   @override
   Future<Page<Artwork>> collectionContents(
     String folderId, {
     String? username,
     PageRequest request = const PageRequest(),
-  }) => _contents('collections', folderId, username, request);
+  }) => _contents(ApiRoutes.collections, folderId, username, request);
 
   Future<Page<ArtworkFolder>> _folders(
     String path,
@@ -609,7 +610,7 @@ final class OfficialMediaRepository implements MediaRepository {
     _validateIdentifier(artworkId, 'artwork id');
     try {
       final json = await _transport.getJson(
-        'deviation/download/${Uri.encodeComponent(artworkId)}',
+        ApiRoutes.deviationDownload(artworkId),
       );
       return _mapper.original(json, artworkId);
     } on DAKitException catch (error) {
@@ -641,7 +642,7 @@ final class OfficialCommentRepository implements CommentRepository {
     _validateCommentPage(request);
     final commentId = request.commentId?.trim();
     final json = await _transport.getJson(
-      'comments/deviation/${Uri.encodeComponent(artworkId)}',
+      ApiRoutes.commentsFor(artworkId),
       query: <String, Object?>{
         'offset': request.offset,
         'limit': request.limit,
@@ -693,7 +694,7 @@ final class OfficialCommentRepository implements CommentRepository {
       );
     }
     final json = await _transport.postFormJson(
-      'comments/post/deviation/${Uri.encodeComponent(artworkId)}',
+      ApiRoutes.postComment(artworkId),
       form: <String, Object?>{'body': body, 'commentid': ?parent},
     );
     return _mapper.comment(json);
@@ -710,7 +711,7 @@ final class OfficialSocialRepository implements SocialRepository {
     String artworkId, {
     List<String> collectionFolderIds = const <String>[],
   }) => _setFavourite(
-    'collections/fave',
+    ApiRoutes.favourite,
     artworkId,
     collectionFolderIds,
     expected: true,
@@ -721,7 +722,7 @@ final class OfficialSocialRepository implements SocialRepository {
     String artworkId, {
     List<String> collectionFolderIds = const <String>[],
   }) => _setFavourite(
-    'collections/unfave',
+    ApiRoutes.unfavourite,
     artworkId,
     collectionFolderIds,
     expected: false,
@@ -762,7 +763,7 @@ final class OfficialSocialRepository implements SocialRepository {
   }) async {
     _validateIdentifier(username, 'username');
     final json = await _transport.postFormJson(
-      'user/friends/watch/${Uri.encodeComponent(username)}',
+      ApiRoutes.watchUser(username),
       form: <String, Object?>{
         'watch[friend]': options.friend,
         'watch[deviations]': options.deviations,
@@ -774,16 +775,14 @@ final class OfficialSocialRepository implements SocialRepository {
         'watch[collections]': options.collections,
       },
     );
-    _requireSuccess(json, 'user/friends/watch');
+    _requireSuccess(json, ApiRoutes.watch);
   }
 
   @override
   Future<void> unwatch(String username) async {
     _validateIdentifier(username, 'username');
-    final json = await _transport.getJson(
-      'user/friends/unwatch/${Uri.encodeComponent(username)}',
-    );
-    _requireSuccess(json, 'user/friends/unwatch');
+    final json = await _transport.getJson(ApiRoutes.unwatchUser(username));
+    _requireSuccess(json, ApiRoutes.unwatch);
   }
 }
 
@@ -802,7 +801,7 @@ final class OfficialMessageRepository implements MessageRepository {
     final normalizedCursor = _optionalIdentifier(cursor, 'message cursor');
     final normalizedFolder = _optionalIdentifier(folderId, 'folder id');
     final json = await _transport.getJson(
-      'messages/feed',
+      ApiRoutes.messagesFeed,
       query: <String, Object?>{
         'folderid': ?normalizedFolder,
         'stack': stacked,
@@ -830,7 +829,7 @@ final class OfficialMessageRepository implements MessageRepository {
     String? folderId,
     bool stacked = true,
   }) => _offsetMessages(
-    'messages/feedback',
+    ApiRoutes.messagesFeedback,
     request,
     query: <String, Object?>{
       'type': type.name,
@@ -845,7 +844,7 @@ final class OfficialMessageRepository implements MessageRepository {
     String? folderId,
     bool stacked = true,
   }) => _offsetMessages(
-    'messages/mentions',
+    ApiRoutes.messagesMentions,
     request,
     query: <String, Object?>{
       'folderid': ?_optionalIdentifier(folderId, 'folder id'),
@@ -857,13 +856,13 @@ final class OfficialMessageRepository implements MessageRepository {
   Future<Page<ProviderMessage>> feedbackStack(
     String stackId,
     PageRequest request,
-  ) => _stack('messages/feedback', stackId, request);
+  ) => _stack(ApiRoutes.messagesFeedback, stackId, request);
 
   @override
   Future<Page<ProviderMessage>> mentionStack(
     String stackId,
     PageRequest request,
-  ) => _stack('messages/mentions', stackId, request);
+  ) => _stack(ApiRoutes.messagesMentions, stackId, request);
 
   Future<Page<ProviderMessage>> _stack(
     String path,
@@ -912,14 +911,14 @@ final class OfficialMessageRepository implements MessageRepository {
       );
     }
     final json = await _transport.postFormJson(
-      'messages/delete',
+      ApiRoutes.messagesDelete,
       form: <String, Object?>{
         'folderid': ?folder,
         'messageid': ?message,
         'stackid': ?stack,
       },
     );
-    _requireSuccess(json, 'messages/delete');
+    _requireSuccess(json, ApiRoutes.messagesDelete);
   }
 }
 

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.14
+
+### Changed
+
+- Centralized every official API endpoint path into `ApiRoutes` (internal),
+  with a contract test pinning the routes, so a provider endpoint rename is a
+  one-line edit. No behavior change.
+
 ## 0.1.13
 
 ### Fixed
