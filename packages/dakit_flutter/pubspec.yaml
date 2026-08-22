@@ -1,6 +1,6 @@
 name: dakit_flutter
 description: Flutter platform integrations for the DAKit DeviantArt client SDK.
-version: 0.1.6
+version: 0.1.7
 repository: https://github.com/redtidev1918/dakit/tree/main/packages/dakit_flutter
 resolution: workspace
 

@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.7
+
+### Added
+
+- `clientSecureStorage(serviceName:)` — builds a Keychain-backed
+  `FlutterSecureStorage` whose macOS keychain item is labelled with a
+  user-facing product name (instead of the plugin default
+  `flutter_secure_storage_service`), so macOS's authorization prompt no longer
+  reads like the host is reaching for arbitrary secrets. Keeps
+  `usesDataProtectionKeychain: false` so unsigned builds still work.
+
 ## 0.1.6
 
 ### Changed
