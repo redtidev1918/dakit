@@ -157,23 +157,34 @@ void main() {
     });
   });
 
-  test('requests more-like-this preview and flattens related deviations', () async {
+  test('requests more-like-this preview and maps related deviations and collections', () async {
     final transport = FixtureTransport(<Map<String, Object?>>[
       await fixture('more_like_this_preview.json'),
     ]);
     final repository = OfficialDiscoveryRepository(transport);
 
-    final items = await repository.moreLikeThis('art-1');
+    final result = await repository.moreLikeThis('art-1');
 
     expect(transport.requests.single.path, 'browse/morelikethis/preview');
     expect(transport.requests.single.query, <String, Object?>{'seed': 'art-1'});
     // "More from DA" first, then "More from artist", de-duplicated and without
     // the seed itself.
-    expect(items.map((artwork) => artwork.id), <String>['art-3', 'art-2']);
+    expect(result.artworks.map((artwork) => artwork.id), <String>[
+      'art-3',
+      'art-2',
+    ]);
     expect(
-      items.singleWhere((artwork) => artwork.id == 'art-3').media,
+      result.artworks.singleWhere((artwork) => artwork.id == 'art-3').media,
       isNotEmpty,
     );
+    // Collection groups keep their owner and the deviations inside them.
+    final featured = result.featuredInCollections.single;
+    expect(featured.collection.folderId, 111);
+    expect(featured.collection.name, 'Curated picks');
+    expect(featured.collection.owner.username, 'curator');
+    expect(featured.deviations.single.id, 'art-4');
+    expect(result.suggestedCollections.single.collection.folderId, 222);
+    expect(result.suggestedCollections.single.deviations.single.id, 'art-5');
   });
 
   test('clamps gallery limit to the provider maximum of 24', () async {

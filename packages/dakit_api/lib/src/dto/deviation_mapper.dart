@@ -255,6 +255,16 @@ final class DeviationMapper {
     );
   }
 
+  /// Maps a `gallection` object from the "More Like This" preview endpoint:
+  /// a numeric collection/folder id, its display name, and its owner.
+  CollectionSummary collectionSummary(Map<String, Object?> json) {
+    return CollectionSummary(
+      folderId: _requiredInteger(json, 'folderid'),
+      name: _requiredText(json, 'name'),
+      owner: user(_requiredMap(json, 'owner')),
+    );
+  }
+
   ProviderMessage message(Map<String, Object?> json) {
     final subject = _map(json['subject']);
 

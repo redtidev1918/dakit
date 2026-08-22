@@ -402,7 +402,7 @@ final class OfficialDiscoveryRepository implements DiscoveryRepository {
   }
 
   @override
-  Future<List<Artwork>> moreLikeThis(String seed) async {
+  Future<MoreLikeThisResult> moreLikeThis(String seed) async {
     final normalized = seed.trim();
     if (normalized.isEmpty) {
       throw const DAKitException(
@@ -412,8 +412,9 @@ final class OfficialDiscoveryRepository implements DiscoveryRepository {
       );
     }
     // The official endpoint is `browse/morelikethis/preview`; it returns a
-    // fixed (non-paginated) bundle of related deviations rather than a page,
-    // so the older `browse/morelikethis` page shape no longer exists.
+    // fixed (non-paginated) bundle of related deviations plus collection
+    // groups rather than a page, so the older `browse/morelikethis` page shape
+    // no longer exists.
     final json = await _transport.getJson(
       'browse/morelikethis/preview',
       query: <String, Object?>{'seed': normalized},
@@ -422,14 +423,18 @@ final class OfficialDiscoveryRepository implements DiscoveryRepository {
     final fromDa = _deviationList(json, 'more_from_da');
 
     final seen = <String>{normalized};
-    final items = <Artwork>[];
+    final artworks = <Artwork>[];
     // "More from DeviantArt" first, then "More from <artist>", de-duplicated
     // and excluding the seed itself so the section never repeats the artwork.
     for (final deviation in <Map<String, Object?>>[...fromDa, ...fromArtist]) {
       final artwork = _mapper.artwork(deviation);
-      if (seen.add(artwork.id)) items.add(artwork);
+      if (seen.add(artwork.id)) artworks.add(artwork);
     }
-    return List<Artwork>.unmodifiable(items);
+    return MoreLikeThisResult(
+      artworks: List<Artwork>.unmodifiable(artworks),
+      featuredInCollections: _collectionGroups(json, 'featured_in_collections'),
+      suggestedCollections: _collectionGroups(json, 'suggested_collections'),
+    );
   }
 
   static List<Map<String, Object?>> _deviationList(
@@ -440,6 +445,35 @@ final class OfficialDiscoveryRepository implements DiscoveryRepository {
     if (raw is! List) throw _missingField(field);
     return List<Map<String, Object?>>.unmodifiable(
       raw.map((item) => _requiredItemMap(item)),
+    );
+  }
+
+  List<CollectionWithDeviations> _collectionGroups(
+    Map<String, Object?> json,
+    String field,
+  ) {
+    final raw = json[field];
+    if (raw == null) return const <CollectionWithDeviations>[];
+    if (raw is! List) throw _missingField(field);
+    return List<CollectionWithDeviations>.unmodifiable(
+      raw.map((entry) {
+        final group = _requiredItemMap(entry);
+        final collection = _mapper.collectionSummary(
+          _requiredItemMap(group['collection']),
+        );
+        final rawDeviations = group['deviations'];
+        final deviations = rawDeviations is List
+            ? List<Artwork>.unmodifiable(
+                rawDeviations.map(
+                  (item) => _mapper.artwork(_requiredItemMap(item)),
+                ),
+              )
+            : const <Artwork>[];
+        return CollectionWithDeviations(
+          collection: collection,
+          deviations: deviations,
+        );
+      }),
     );
   }
 }

@@ -349,6 +349,51 @@ final class ArtworkTopic {
   final List<Artwork> exampleArtworks;
 }
 
+/// A lightweight collection reference returned by the "More Like This" preview
+/// endpoint: the collection's numeric folder id, display name, and owner.
+final class CollectionSummary {
+  const CollectionSummary({
+    required this.folderId,
+    required this.name,
+    required this.owner,
+  });
+
+  final int folderId;
+  final String name;
+  final UserProfile owner;
+}
+
+/// A collection paired with the deviations the provider listed inside it.
+final class CollectionWithDeviations {
+  const CollectionWithDeviations({
+    required this.collection,
+    required this.deviations,
+  });
+
+  final CollectionSummary collection;
+  final List<Artwork> deviations;
+}
+
+/// The full "More Like This" preview for a seed deviation: the related
+/// deviations plus the collections this deviation is featured in and the
+/// collections the provider suggests.
+final class MoreLikeThisResult {
+  const MoreLikeThisResult({
+    required this.artworks,
+    this.featuredInCollections = const <CollectionWithDeviations>[],
+    this.suggestedCollections = const <CollectionWithDeviations>[],
+  });
+
+  /// Related deviations (flattened and de-duplicated, excluding the seed).
+  final List<Artwork> artworks;
+
+  /// Collections that feature the seed deviation.
+  final List<CollectionWithDeviations> featuredInCollections;
+
+  /// Collections the provider suggests for the seed deviation.
+  final List<CollectionWithDeviations> suggestedCollections;
+}
+
 /// A notification or feedback item from the provider message center.
 ///
 /// [html] is provider-authored markup. Hosts must sanitize it before rendering.

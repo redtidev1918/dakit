@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.10
+
+### Added
+
+- `MoreLikeThisResult`, `CollectionSummary`, and `CollectionWithDeviations`
+  models, and `DiscoveryRepository.moreLikeThis` now returns the full preview
+  bundle: related artworks plus `featured_in_collections` and
+  `suggested_collections`.
+
 ## 0.1.9
 
 ### Changed

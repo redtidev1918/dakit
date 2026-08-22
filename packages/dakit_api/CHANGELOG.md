@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.12
+
+### Added
+
+- `OfficialDiscoveryRepository.moreLikeThis` now also maps
+  `featured_in_collections` and `suggested_collections` (each a collection
+  `folderid`/name/owner plus its listed deviations) into `MoreLikeThisResult`.
+
 ## 0.1.11
 
 ### Fixed

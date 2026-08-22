@@ -71,5 +71,65 @@
       "is_mature": false,
       "is_downloadable": true
     }
+  ],
+  "featured_in_collections": [
+    {
+      "collection": {
+        "folderid": 111,
+        "name": "Curated picks",
+        "owner": {
+          "userid": "user-9",
+          "username": "curator"
+        }
+      },
+      "deviations": [
+        {
+          "deviationid": "art-4",
+          "url": "https://www.deviantart.com/curator/art/example-4",
+          "title": "Featured entry",
+          "author": {
+            "userid": "user-9",
+            "username": "curator"
+          },
+          "preview": {
+            "src": "https://images.example.test/featured-4.jpg",
+            "width": 400,
+            "height": 300
+          },
+          "is_mature": false,
+          "is_downloadable": false
+        }
+      ]
+    }
+  ],
+  "suggested_collections": [
+    {
+      "collection": {
+        "folderid": 222,
+        "name": "Similar vibes",
+        "owner": {
+          "userid": "user-8",
+          "username": "collector"
+        }
+      },
+      "deviations": [
+        {
+          "deviationid": "art-5",
+          "url": "https://www.deviantart.com/collector/art/example-5",
+          "title": "Suggested entry",
+          "author": {
+            "userid": "user-8",
+            "username": "collector"
+          },
+          "preview": {
+            "src": "https://images.example.test/suggested-5.jpg",
+            "width": 500,
+            "height": 500
+          },
+          "is_mature": false,
+          "is_downloadable": false
+        }
+      ]
+    }
   ]
 }
