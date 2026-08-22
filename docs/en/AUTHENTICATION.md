@@ -36,6 +36,8 @@ The app should create `DAKitOAuthClient` early in startup, call `resumePending()
 
 The default adapter uses `flutter_secure_storage`: Android uses the system secure storage, Windows uses the credential store, and macOS uses the Keychain. On macOS it defaults to `first_unlock_this_device` without enabling Data Protection Keychain, so ordinary unsigned development builds need no Keychain Sharing entitlement; hosts with enterprise signing policies can inject their own `TokenStore` and `PendingAuthorizationStore`.
 
+macOS shows the Keychain item's `kSecAttrService` name verbatim in its "…wants to use confidential information stored in …" authorization prompt; the default name `flutter_secure_storage_service` can read like the app is reaching for arbitrary secrets. Hosts should inject storage built with `clientSecureStorage(serviceName: '<product name>')` so the item is labelled with a user-facing product name.
+
 No log should contain access tokens, refresh tokens, authorization codes, cookies, the PKCE verifier, proxy passwords, or signed media URLs. DAKit diagnostics keep only the stage, stable error code, elapsed time, and filtered attributes.
 
 ## Platform Callbacks

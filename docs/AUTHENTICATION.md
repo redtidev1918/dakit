@@ -36,6 +36,8 @@ Client type 取决于凭据保存位置，而不是功能多少：
 
 默认适配器使用 `flutter_secure_storage`：Android 使用系统安全存储，Windows 使用凭据存储，macOS 使用 Keychain。macOS 默认选择 `first_unlock_this_device` 且不启用 Data Protection Keychain，因此普通未签名开发构建无需 Keychain Sharing entitlement；有企业签名策略的宿主可注入自己的 `TokenStore` 和 `PendingAuthorizationStore`。
 
+macOS 会把 Keychain 条目的 `kSecAttrService` 名直接显示在「…想要使用钥匙串中的机密信息」授权弹窗里；默认名 `flutter_secure_storage_service` 会让用户误以为应用在读取任意机密。宿主应改用 `clientSecureStorage(serviceName: '<产品名>')` 构建的存储，把条目命名为面向用户的产品名。
+
 任何日志都不应包含 access token、refresh token、授权码、Cookie、PKCE verifier、代理密码或带签名的媒体 URL。DAKit 诊断只保留阶段、稳定错误码、耗时和经过筛选的属性。
 
 ## 平台回调
