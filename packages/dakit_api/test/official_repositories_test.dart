@@ -46,6 +46,21 @@ void main() {
     expect(transport.requests.single.query['expand'], 'deviation.fulltext');
   });
 
+  test('maps formatted_excerpt when excerpt is absent', () async {
+    final transport = FixtureTransport(<Map<String, Object?>>[
+      <String, Object?>{
+        'deviationid': 'art-1',
+        'title': 'T',
+        'url': 'https://www.deviantart.com/u/art/t-1',
+        'author': <String, Object?>{'userid': 'u-1', 'username': 'u'},
+        'formatted_excerpt': 'Formatted description.',
+      },
+    ]);
+
+    final artwork = await OfficialArtworkRepository(transport).getById('art-1');
+    expect(artwork.description, 'Formatted description.');
+  });
+
   test(
     'loads rendered literature without executing provider HTML or CSS',
     () async {

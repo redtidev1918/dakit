@@ -102,7 +102,7 @@ final class DeviationMapper {
       pageUri: pageUri,
       media: List<MediaAsset>.unmodifiable(media),
       description:
-          _string(json['excerpt']) ?? _string(json['formatted_exerpt']),
+          _string(json['excerpt']) ?? _string(json['formatted_excerpt']),
       publishedAt: _dateTime(json['published_time']),
       isMature: json['is_mature'] == true,
       isDownloadable: json['is_downloadable'] == true,

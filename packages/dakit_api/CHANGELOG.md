@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.8
+
+### Fixed
+
+- `DeviationMapper` now reads the correct `formatted_excerpt` field (the
+  previous `formatted_exerpt` typo meant the HTML-excerpt fallback never
+  matched, so `Artwork.description` only ever used the plain `excerpt`).
+
 ## 0.1.7
 
 ### Fixed
