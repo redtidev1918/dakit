@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.5
+
+### Added
+
+- `TransferSharedStorage` and `TransferManager.moveToSharedStorage` so hosts can
+  move a completed transfer into a system shared-storage location (e.g. the
+  public Downloads folder) without duplicating the file.
+
 ## 0.1.4
 
 ### Added

@@ -20,6 +20,11 @@ abstract interface class BackgroundTransferBackend {
 
   Future<bool> cancel(String id);
 
+  Future<String?> moveToSharedStorage(
+    bg.DownloadTask task,
+    bg.SharedStorage destination,
+  );
+
   Future<List<(String, String)>> configureProxy(ProxyConfiguration? proxy);
 }
 
@@ -56,6 +61,12 @@ final class FileDownloaderBackend implements BackgroundTransferBackend {
   Future<bool> cancel(String id) => _downloader.cancelTaskWithId(id);
 
   @override
+  Future<String?> moveToSharedStorage(
+    bg.DownloadTask task,
+    bg.SharedStorage destination,
+  ) => _downloader.moveToSharedStorage(task, destination);
+
+  @override
   Future<List<(String, String)>> configureProxy(ProxyConfiguration? proxy) =>
       _downloader.configure(
         globalConfig: proxy == null
@@ -84,6 +95,7 @@ final class BackgroundTransferManager implements TransferManager {
   final StreamController<TransferSnapshot> _updates =
       StreamController<TransferSnapshot>.broadcast();
   final Map<String, TransferSnapshot> _latest = <String, TransferSnapshot>{};
+  final Map<String, String> _movedPaths = <String, String>{};
   late final StreamSubscription<bg.TaskUpdate> _subscription;
   Future<void> _updateTail = Future<void>.value();
   bool _initialized = false;
@@ -203,6 +215,35 @@ final class BackgroundTransferManager implements TransferManager {
   }
 
   @override
+  Future<String?> moveToSharedStorage(
+    String id,
+    TransferSharedStorage destination,
+  ) async {
+    _ensureReady();
+    final task = await _task(id);
+    final newPath = await _backend.moveToSharedStorage(
+      task,
+      _sharedStorage(destination),
+    );
+    if (newPath == null || newPath.isEmpty) return null;
+    _movedPaths[id] = newPath;
+    final previous = _latest[id];
+    if (previous != null) {
+      _emit(
+        TransferSnapshot(
+          id: previous.id,
+          state: previous.state,
+          progress: previous.progress,
+          filename: previous.filename,
+          localPath: newPath,
+          expectedBytes: previous.expectedBytes,
+        ),
+      );
+    }
+    return newPath;
+  }
+
+  @override
   Future<void> configureProxy(ProxyConfiguration? proxy) async {
     _ensureReady();
     if (proxy != null &&
@@ -319,7 +360,7 @@ final class BackgroundTransferManager implements TransferManager {
       progress: record.progress.clamp(0, 1),
       filename: record.task.filename,
       localPath: state == TransferState.completed
-          ? await record.task.filePath()
+          ? _movedPaths[record.taskId] ?? await record.task.filePath()
           : null,
       expectedBytes: record.expectedFileSize >= 0
           ? record.expectedFileSize
@@ -396,6 +437,15 @@ final class BackgroundTransferManager implements TransferManager {
         TransferDirectory.applicationSupport =>
           bg.BaseDirectory.applicationSupport,
         TransferDirectory.temporary => bg.BaseDirectory.temporary,
+      };
+
+  static bg.SharedStorage _sharedStorage(TransferSharedStorage destination) =>
+      switch (destination) {
+        TransferSharedStorage.downloads => bg.SharedStorage.downloads,
+        TransferSharedStorage.images => bg.SharedStorage.images,
+        TransferSharedStorage.video => bg.SharedStorage.video,
+        TransferSharedStorage.audio => bg.SharedStorage.audio,
+        TransferSharedStorage.files => bg.SharedStorage.files,
       };
 
   static TransferState _state(bg.TaskStatus state) => switch (state) {

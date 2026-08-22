@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.2
+
+### Added
+
+- `BackgroundTransferManager.moveToSharedStorage` moves a completed download
+  into a system shared-storage location (e.g. the public Downloads folder) and
+  re-emits the snapshot with the updated path.
+
 ## 0.1.1
 
 ### Fixed

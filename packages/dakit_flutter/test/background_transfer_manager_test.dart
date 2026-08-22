@@ -308,6 +308,12 @@ final class FakeTransferBackend implements BackgroundTransferBackend {
   }
 
   @override
+  Future<String?> moveToSharedStorage(
+    bg.DownloadTask task,
+    bg.SharedStorage destination,
+  ) async => '/downloads/${task.filename}';
+
+  @override
   Future<List<(String, String)>> configureProxy(
     ProxyConfiguration? proxy,
   ) async {

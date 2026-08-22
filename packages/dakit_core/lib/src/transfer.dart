@@ -13,6 +13,10 @@ enum TransferState {
 
 enum TransferDirectory { applicationDocuments, applicationSupport, temporary }
 
+/// A system shared-storage destination a completed transfer can be moved into
+/// (e.g. the public Downloads folder or the photo/video gallery).
+enum TransferSharedStorage { downloads, images, video, audio, files }
+
 final class TransferRequest {
   const TransferRequest({
     required this.id,
@@ -86,6 +90,15 @@ abstract interface class TransferManager {
   Future<void> resume(String id);
 
   Future<void> cancel(String id);
+
+  /// Moves a completed transfer into a system shared-storage location (e.g. the
+  /// public Downloads folder) without duplicating it, and re-emits the snapshot
+  /// with the new [TransferSnapshot.localPath]. Returns the new path, or `null`
+  /// when the move failed or is unsupported on this platform.
+  Future<String?> moveToSharedStorage(
+    String id,
+    TransferSharedStorage destination,
+  );
 
   Future<void> configureProxy(ProxyConfiguration? proxy);
 
