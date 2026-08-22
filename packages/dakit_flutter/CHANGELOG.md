@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.8
+
+### Fixed
+
+- `BackgroundTransferManager.remove` now deletes unique known file paths before
+  removing the persisted record. File/path failures throw retryable typed
+  storage errors and retain metadata, preventing silent orphan files.
+
 ## 0.1.7
 
 ### Added
@@ -27,7 +35,9 @@
 
 ### Added
 
-- `BackgroundTransferManager.remove` clears a finished transfer from the persisted records (the file is left in place).
+- `BackgroundTransferManager.remove` added finished-transfer cleanup. Its
+  original record-only behavior was superseded by destructive removal in
+  0.1.6 and fail-closed removal in 0.1.8.
 
 ## 0.1.3
 

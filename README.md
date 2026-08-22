@@ -20,11 +20,11 @@ DAKit 是面向 Dart 与 Flutter 的模块化 DeviantArt 客户端 SDK，为 And
 - 安全保存 OAuth 会话，并在进程重启后恢复回调；
 - 读取当前账户、用户资料与关系、作品详情与正文、首页/搜索、每日精选和关注动态；
 - 浏览标签、标签补全、主题导航、画廊与收藏夹目录及目录内容；
-- 读取「更多类似作品」预览（相关作品 + 被收录/建议收藏集）；
+- 读取「更多类似作品」预览；单条失效/畸形推荐不会拖垮其余结果；
 - 读取/发布作品评论，收藏/取消收藏作品，关注/取消关注用户；
 - 读取通知、反馈和 mentions，展开或删除消息堆栈；
 - 从专用接口解析原文件，不把缩略图冒充原图；
-- 在 Flutter 端排队、恢复、暂停和取消后台传输；
+- 在 Flutter 端排队、恢复、暂停、取消后台传输，并以失败保留记录的方式安全删除文件；
 - 分别配置 API 与媒体代理，并定位 DNS、TCP、TLS、HTTP、OAuth、解析和存储故障；
 - 通过稳定领域接口替换网络层、登录层、存储层或传输层。
 
@@ -60,15 +60,15 @@ DAKit 是面向 Dart 与 Flutter 的模块化 DeviantArt 客户端 SDK，为 And
 
 ```yaml
 dependencies:
-  dakit_flutter: ^0.1.0
+  dakit_flutter: ^0.1.8
 ```
 
 如果只需要纯 Dart 能力，也可以按需声明：
 
 ```yaml
 dependencies:
-  dakit_core: ^0.1.0
-  dakit_api: ^0.1.0
+  dakit_core: ^0.1.11
+  dakit_api: ^0.1.15
 ```
 
 随后阅读[开始使用](docs/GETTING_STARTED.md)。直接在移动端或桌面端运行内置登录流程时，需要注册 **Public** OAuth 应用，并配置精确回调地址 `dakit://oauth/callback`。

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:dakit_core/dakit_core.dart';
 import 'package:dakit_flutter/src/background_transfer_manager.dart';
@@ -120,7 +121,7 @@ void main() {
     },
   );
 
-  test('removes a record and its file paths', () async {
+  test('removes a record only after deleting every known file path', () async {
     final backend = FakeTransferBackend();
     final task = bg.DownloadTask(
       taskId: 'task-1',
@@ -134,13 +135,65 @@ void main() {
       1.0,
       1000,
     );
+    backend.resolvedPaths['task-1'] = '/private/file.bin';
+    backend.movedPath = '/downloads/file.bin';
+    backend.existingPaths.addAll(<String>{
+      '/private/file.bin',
+      '/downloads/file.bin',
+    });
     final manager = createBackgroundTransferManagerForTesting(backend: backend);
     await manager.initialize();
+    await manager.moveToSharedStorage(
+      'task-1',
+      TransferSharedStorage.downloads,
+    );
 
     await manager.remove('task-1');
 
+    expect(backend.deletedPaths, <String>{
+      '/private/file.bin',
+      '/downloads/file.bin',
+    });
     expect(backend.removed, <String>['task-1']);
     expect(backend.stored, isEmpty);
+    await manager.dispose();
+  });
+
+  test('retains record metadata when a downloaded file cannot be deleted', () async {
+    final backend = FakeTransferBackend();
+    final task = bg.DownloadTask(
+      taskId: 'task-1',
+      url: 'https://files.example.test/file.bin',
+      filename: 'file.bin',
+      group: BackgroundTransferManager.group,
+    );
+    backend.stored['task-1'] = bg.TaskRecord(
+      task,
+      bg.TaskStatus.complete,
+      1.0,
+      1000,
+    );
+    backend.resolvedPaths['task-1'] = '/private/file.bin';
+    backend.existingPaths.add('/private/file.bin');
+    backend.deleteFailures.add('/private/file.bin');
+    final manager = createBackgroundTransferManagerForTesting(backend: backend);
+    await manager.initialize();
+
+    await expectLater(
+      manager.remove('task-1'),
+      throwsA(
+        isA<DAKitException>()
+            .having((error) => error.code, 'code', 'transfer.remove.file_failed')
+            .having((error) => error.retryable, 'retryable', isTrue),
+      ),
+    );
+
+    expect(backend.removed, isEmpty);
+    expect(backend.stored, contains('task-1'));
+
+    backend.deleteFailures.clear();
+    await manager.remove('task-1');
+    expect(backend.removed, <String>['task-1']);
     await manager.dispose();
   });
 
@@ -292,6 +345,11 @@ final class FakeTransferBackend implements BackgroundTransferBackend {
   final List<String> cancelled = <String>[];
   final List<String> removed = <String>[];
   final List<ProxyConfiguration?> proxies = <ProxyConfiguration?>[];
+  final Map<String, String> resolvedPaths = <String, String>{};
+  final Set<String> existingPaths = <String>{};
+  final Set<String> deletedPaths = <String>{};
+  final Set<String> deleteFailures = <String>{};
+  String? movedPath;
 
   @override
   Stream<bg.TaskUpdate> get updates => controller.stream;
@@ -339,10 +397,24 @@ final class FakeTransferBackend implements BackgroundTransferBackend {
   }
 
   @override
+  Future<String?> filePath(bg.DownloadTask task) async =>
+      resolvedPaths[task.taskId];
+
+  @override
+  Future<bool> fileExists(String path) async => existingPaths.contains(path);
+
+  @override
+  Future<void> deleteFile(String path) async {
+    if (deleteFailures.contains(path)) throw FileSystemException('denied', path);
+    existingPaths.remove(path);
+    deletedPaths.add(path);
+  }
+
+  @override
   Future<String?> moveToSharedStorage(
     bg.DownloadTask task,
     bg.SharedStorage destination,
-  ) async => '/downloads/${task.filename}';
+  ) async => movedPath ?? '/downloads/${task.filename}';
 
   @override
   Future<List<(String, String)>> configureProxy(

@@ -25,6 +25,12 @@ abstract interface class BackgroundTransferBackend {
 
   Future<void> remove(String id);
 
+  Future<String?> filePath(bg.DownloadTask task);
+
+  Future<bool> fileExists(String path);
+
+  Future<void> deleteFile(String path);
+
   Future<String?> moveToSharedStorage(
     bg.DownloadTask task,
     bg.SharedStorage destination,
@@ -67,6 +73,15 @@ final class FileDownloaderBackend implements BackgroundTransferBackend {
 
   @override
   Future<void> remove(String id) => _downloader.database.deleteRecordWithId(id);
+
+  @override
+  Future<String?> filePath(bg.DownloadTask task) => task.filePath();
+
+  @override
+  Future<bool> fileExists(String path) => File(path).exists();
+
+  @override
+  Future<void> deleteFile(String path) => File(path).delete();
 
   @override
   Future<String?> moveToSharedStorage(
@@ -226,33 +241,60 @@ final class BackgroundTransferManager implements TransferManager {
   @override
   Future<void> remove(String id) async {
     _ensureReady();
-    // "Delete" should free disk space, not just drop the record. Delete the
-    // moved shared-storage copy (if any) and the task's app-private file.
+    // Removal is deliberately destructive: collect every known file path and
+    // only drop the record after all existing files were deleted. If deletion
+    // fails, retain the record/path metadata so the host can surface the error
+    // and the user can retry instead of losing track of an orphaned file.
+    final paths = <String>{};
     final movedPath = _movedPaths[id];
     if (movedPath != null && movedPath.isNotEmpty) {
-      try {
-        final file = File(movedPath);
-        if (await file.exists()) await file.delete();
-      } on Object catch (error) {
-        _record(
-          'transfer.remove.moved',
-          DiagnosticLevel.warning,
-          attributes: <String, Object?>{'error': '$error'},
-        );
-      }
+      paths.add(movedPath);
     }
     try {
       final record = await _backend.recordForId(id);
-      final filePath = await record?.task.filePath();
+      final filePath = record == null
+          ? null
+          : await _backend.filePath(record.task);
       if (filePath != null && filePath.isNotEmpty) {
-        final file = File(filePath);
-        if (await file.exists()) await file.delete();
+        paths.add(filePath);
       }
     } on Object catch (error) {
       _record(
-        'transfer.remove.task',
-        DiagnosticLevel.warning,
+        'transfer.remove.resolve_path',
+        DiagnosticLevel.error,
         attributes: <String, Object?>{'error': '$error'},
+      );
+      throw DAKitException(
+        kind: DAKitFailureKind.storage,
+        code: 'transfer.remove.path_failed',
+        message: 'The downloaded file path could not be resolved.',
+        retryable: true,
+        cause: error,
+      );
+    }
+
+    final failures = <String, String>{};
+    for (final path in paths) {
+      try {
+        if (await _backend.fileExists(path)) {
+          await _backend.deleteFile(path);
+        }
+      } on Object catch (error) {
+        failures[path] = '$error';
+        _record(
+          'transfer.remove.file',
+          DiagnosticLevel.error,
+          attributes: <String, Object?>{'path': path, 'error': '$error'},
+        );
+      }
+    }
+    if (failures.isNotEmpty) {
+      throw DAKitException(
+        kind: DAKitFailureKind.storage,
+        code: 'transfer.remove.file_failed',
+        message: 'One or more downloaded files could not be deleted.',
+        retryable: true,
+        details: <String, Object?>{'failures': failures},
       );
     }
     await _backend.remove(id);

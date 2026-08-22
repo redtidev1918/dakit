@@ -91,9 +91,12 @@ abstract interface class TransferManager {
 
   Future<void> cancel(String id);
 
-  /// Removes a completed/terminated transfer from the persisted records (the
-  /// downloaded file itself is left in place). Used to clear finished items
-  /// from a download history without deleting the user's file.
+  /// Permanently removes a completed/terminated transfer and every downloaded
+  /// local file path known to the implementation.
+  ///
+  /// Implementations must not discard the persisted record when deleting a
+  /// known file fails; they should throw a retryable storage failure so the
+  /// host can report the partial failure and let the user retry.
   Future<void> remove(String id);
 
   /// Moves a completed transfer into a system shared-storage location (e.g. the

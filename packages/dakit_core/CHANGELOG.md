@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.11
+
+### Changed
+
+- Clarified the destructive `TransferManager.remove` contract: implementations
+  remove downloaded local files as well as the persisted record, and must keep
+  the record retryable when a known file cannot be deleted.
+
 ## 0.1.10
 
 ### Added
@@ -33,7 +41,8 @@
 
 ### Added
 
-- `TransferManager.remove` so hosts can clear a finished transfer from the persisted records without deleting the downloaded file.
+- `TransferManager.remove` for finished transfer cleanup. Its original
+  record-only semantics were superseded by the destructive contract in 0.1.11.
 
 ## 0.1.5
 

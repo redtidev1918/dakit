@@ -57,6 +57,23 @@ if (asset.availability == MediaAvailability.available) {
 }
 ```
 
+`TransferManager.remove(id)` is destructive: it permanently deletes every
+known local file for the task and then removes the persisted record. Hosts must
+obtain explicit user confirmation before calling it. If a known file cannot be
+deleted, the Flutter implementation throws a retryable `DAKitException`
+(`transfer.remove.file_failed`) and retains the task record and path metadata;
+the host should report the failure and allow retry instead of claiming success.
+
+```dart
+try {
+  await transfers.remove(taskId); // confirm in the UI first
+} on DAKitException catch (error) {
+  if (error.code == 'transfer.remove.file_failed') {
+    // The file may remain and the record is retained; let the user retry.
+  }
+}
+```
+
 The SDK has no 16 KiB file or chunk-size limit. The transfer manager is agnostic to byte format and can handle images, videos, animations, archives, documents, or downloadable text; the formats and sizes actually downloadable are still determined by the provider, account permissions, mature-content/purchase restrictions, and the original-file endpoint.
 
 Task records do not store OAuth headers. The media repository first obtains a temporary HTTPS URL, then submits the necessary metadata to the native scheduler. Hosts should not write signed URLs to logs, analytics services, or error reporting.

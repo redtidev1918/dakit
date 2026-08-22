@@ -60,6 +60,21 @@ if (asset.availability == MediaAvailability.available) {
 }
 ```
 
+`TransferManager.remove(id)` 是破坏性操作：会永久删除该任务所有已知的本地文件，
+然后删除持久化记录。宿主必须在调用前取得用户明确确认。若任一已知文件无法删除，
+Flutter 实现会抛出可重试的 `DAKitException`（`transfer.remove.file_failed`），并保留
+任务记录与路径元数据；宿主应显示错误并允许重试，不能把失败当作“已删除”。
+
+```dart
+try {
+  await transfers.remove(taskId); // 调用前先在 UI 二次确认
+} on DAKitException catch (error) {
+  if (error.code == 'transfer.remove.file_failed') {
+    // 文件仍可能存在，记录也被保留；提示用户后允许重试。
+  }
+}
+```
+
 SDK 没有 16 KiB 文件或分块上限。传输器对字节格式无感，可处理图片、视频、动画、压缩包、文档或可下载文本；真正可下载的格式和大小仍由 provider、账户权限、成熟内容/购买限制以及原文件接口决定。
 
 任务记录不保存 OAuth header。媒体仓库先取得临时 HTTPS 地址，再向原生调度器提交必要元数据。宿主不应把签名 URL 写入日志、分析服务或错误上报。

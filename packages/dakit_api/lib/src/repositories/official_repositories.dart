@@ -420,15 +420,14 @@ final class OfficialDiscoveryRepository implements DiscoveryRepository {
       ApiRoutes.moreLikeThisPreview,
       query: <String, Object?>{'seed': normalized},
     );
-    final fromArtist = _deviationList(json, 'more_from_artist');
-    final fromDa = _deviationList(json, 'more_from_da');
+    final fromArtist = _tolerantRelatedArtworks(json, 'more_from_artist');
+    final fromDa = _tolerantRelatedArtworks(json, 'more_from_da');
 
     final seen = <String>{normalized};
     final artworks = <Artwork>[];
     // "More from DeviantArt" first, then "More from <artist>", de-duplicated
     // and excluding the seed itself so the section never repeats the artwork.
-    for (final deviation in <Map<String, Object?>>[...fromDa, ...fromArtist]) {
-      final artwork = _mapper.artwork(deviation);
+    for (final artwork in <Artwork>[...fromDa, ...fromArtist]) {
       if (seen.add(artwork.id)) artworks.add(artwork);
     }
     return MoreLikeThisResult(
@@ -444,15 +443,26 @@ final class OfficialDiscoveryRepository implements DiscoveryRepository {
     );
   }
 
-  static List<Map<String, Object?>> _deviationList(
+  /// Related-deviation arrays occasionally contain deleted, restricted, or
+  /// partially shaped entries. One bad sibling must not discard every usable
+  /// recommendation in the response.
+  List<Artwork> _tolerantRelatedArtworks(
     Map<String, Object?> json,
     String field,
   ) {
     final raw = json[field];
-    if (raw is! List) throw _missingField(field);
-    return List<Map<String, Object?>>.unmodifiable(
-      raw.map((item) => _requiredItemMap(item)),
-    );
+    if (raw is! List) return const <Artwork>[];
+    final artworks = <Artwork>[];
+    for (final item in raw) {
+      try {
+        artworks.add(_mapper.artwork(_requiredItemMap(item)));
+      } on Object {
+        // A malformed/deleted recommendation is local to that entry. Network
+        // and top-level request failures still throw before parsing reaches
+        // this point, so genuine outages remain retryable by the host.
+      }
+    }
+    return List<Artwork>.unmodifiable(artworks);
   }
 
   /// Collections are the most volatile part of the preview response. If the

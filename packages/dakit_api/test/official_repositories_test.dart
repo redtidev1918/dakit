@@ -219,6 +219,33 @@ void main() {
     expect(result.suggestedCollections, isEmpty);
   });
 
+  test('skips malformed related entries without dropping valid siblings', () async {
+    final transport = FixtureTransport(<Map<String, Object?>>[
+      <String, Object?>{
+        'more_from_artist': <Object?>[
+          <String, Object?>{'deviationid': 'deleted-without-required-fields'},
+          <String, Object?>{
+            'deviationid': 'art-2',
+            'title': 'Still available',
+            'url': 'https://www.deviantart.com/u/art/still-2',
+            'author': <String, Object?>{'userid': 'u', 'username': 'u'},
+            'preview': <String, Object?>{
+              'src': 'https://images.example.test/2.jpg',
+            },
+          },
+        ],
+        // The provider may omit one rail entirely; the other remains useful.
+        'featured_in_collections': <Object?>[],
+        'suggested_collections': <Object?>[],
+      },
+    ]);
+
+    final result = await OfficialDiscoveryRepository(transport)
+        .moreLikeThis('art-1');
+
+    expect(result.artworks.map((artwork) => artwork.id), <String>['art-2']);
+  });
+
   test('clamps gallery limit to the provider maximum of 24', () async {
     final transport = FixtureTransport(<Map<String, Object?>>[
       await fixture('gallery_page.json'),

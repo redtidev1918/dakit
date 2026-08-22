@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.15
+
+### Fixed
+
+- `OfficialDiscoveryRepository.moreLikeThis` now skips malformed, deleted, or
+  restricted entries independently and tolerates a missing related rail. One
+  bad recommendation can no longer discard every valid sibling in the preview;
+  transport failures still throw so hosts can offer retry.
+
 ## 0.1.14
 
 ### Changed

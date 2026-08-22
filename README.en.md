@@ -30,15 +30,16 @@ the SDK connects to.
   text, home/search, daily deviations, and the watched feed;
 - Browse tags, tag autocomplete, topic navigation, and gallery/favourites folder
   listings and contents;
-- Read the "More Like This" preview (related artworks plus featured/suggested
-  collections);
+- Read the "More Like This" preview without one malformed/deleted entry
+  discarding valid siblings;
 - Read/post artwork comments, favourite/unfavourite artworks, watch/unwatch
   users;
 - Read notifications, feedback, and mentions, and expand or delete message
   stacks;
 - Resolve the original file from its dedicated endpoint, never passing a
   thumbnail off as the original;
-- Queue, resume, pause, and cancel background transfers on Flutter;
+- Queue, resume, pause, cancel, and safely delete background transfers on
+  Flutter while retaining records when file removal fails;
 - Configure API and media proxies separately, and diagnose DNS, TCP, TLS, HTTP,
   OAuth, parsing, and storage failures;
 - Swap the network, sign-in, storage, or transfer layers behind stable domain
@@ -85,15 +86,15 @@ The packages are published to pub.dev. A full Flutter integration only needs
 
 ```yaml
 dependencies:
-  dakit_flutter: ^0.1.0
+  dakit_flutter: ^0.1.8
 ```
 
 If you only need pure-Dart capabilities, declare them individually:
 
 ```yaml
 dependencies:
-  dakit_core: ^0.1.0
-  dakit_api: ^0.1.0
+  dakit_core: ^0.1.11
+  dakit_api: ^0.1.15
 ```
 
 Then read [Getting started](docs/en/GETTING_STARTED.md). To run the built-in
