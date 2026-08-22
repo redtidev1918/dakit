@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.8
+
+### Added
+
+- `DiscoveryRepository.moreLikeThis` so hosts can surface related deviations ("More Like This") from the official browse endpoint.
+
 ## 0.1.7
 
 ### Added

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.10
+
+### Added
+
+- `OfficialDiscoveryRepository.moreLikeThis` maps the official `browse/morelikethis` endpoint into a paged `Artwork` list.
+
 ## 0.1.9
 
 ### Changed

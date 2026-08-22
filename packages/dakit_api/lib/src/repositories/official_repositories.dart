@@ -400,6 +400,29 @@ final class OfficialDiscoveryRepository implements DiscoveryRepository {
     );
     return _parseHybridPage(json, _mapper.artwork);
   }
+
+  @override
+  Future<Page<Artwork>> moreLikeThis(String seed, PageRequest request) async {
+    final normalized = seed.trim();
+    if (normalized.isEmpty) {
+      throw const DAKitException(
+        kind: DAKitFailureKind.configuration,
+        code: 'api.morelikethis.empty',
+        message: 'A seed deviation id must not be empty.',
+      );
+    }
+    _validatePageRequest(request);
+    final json = await _transport.getJson(
+      'browse/morelikethis',
+      query: <String, Object?>{
+        'seed': normalized,
+        'limit': request.limit,
+        'offset': _offset(request.cursor),
+        'mature_content': true,
+      },
+    );
+    return _parsePage(json, _mapper.artwork);
+  }
 }
 
 final class OfficialFolderRepository implements FolderRepository {

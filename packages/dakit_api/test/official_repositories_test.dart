@@ -157,6 +157,27 @@ void main() {
     });
   });
 
+  test('requests more-like-this with a seed deviation id', () async {
+    final transport = FixtureTransport(<Map<String, Object?>>[
+      await fixture('gallery_page.json'),
+    ]);
+    final repository = OfficialDiscoveryRepository(transport);
+
+    final page = await repository.moreLikeThis(
+      'art-1',
+      const PageRequest(limit: 12),
+    );
+
+    expect(page.items.single.id, 'art-1');
+    expect(transport.requests.single.path, 'browse/morelikethis');
+    expect(transport.requests.single.query, <String, Object?>{
+      'seed': 'art-1',
+      'limit': 12,
+      'offset': 0,
+      'mature_content': true,
+    });
+  });
+
   test('clamps gallery limit to the provider maximum of 24', () async {
     final transport = FixtureTransport(<Map<String, Object?>>[
       await fixture('gallery_page.json'),
