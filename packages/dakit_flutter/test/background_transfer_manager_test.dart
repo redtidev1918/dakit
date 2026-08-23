@@ -159,6 +159,50 @@ void main() {
     await manager.dispose();
   });
 
+  test('keeps an app-readable private copy when moving to shared storage on Android', () async {
+    final backend = FakeTransferBackend();
+    final dir = await Directory.systemTemp.createTemp('dakit-transfer-test');
+    addTearDown(() => dir.delete(recursive: true));
+    final privatePath = '${dir.path}/file.bin';
+    final task = bg.DownloadTask(
+      taskId: 'task-1',
+      url: 'https://files.example.test/file.bin',
+      filename: 'file.bin',
+      group: BackgroundTransferManager.group,
+    );
+    backend.stored['task-1'] = bg.TaskRecord(
+      task,
+      bg.TaskStatus.complete,
+      1.0,
+      1000,
+    );
+    backend.resolvedPaths['task-1'] = privatePath;
+    backend.movedPath = '/downloads/file.bin';
+    backend.existingPaths.addAll(<String>{privatePath, '/downloads/file.bin'});
+    await File(privatePath).writeAsBytes(<int>[1, 2, 3]);
+
+    final manager = createBackgroundTransferManagerForTesting(
+      backend: backend,
+      keepReadableCopyOnAndroid: true,
+    );
+    await manager.initialize();
+
+    final shared = await manager.moveToSharedStorage(
+      'task-1',
+      TransferSharedStorage.downloads,
+    );
+
+    expect(shared, '/downloads/file.bin');
+    // The private copy survives (readable by the app) and no backup remains.
+    expect(File(privatePath).existsSync(), isTrue);
+    expect(await File(privatePath).readAsBytes(), <int>[1, 2, 3]);
+    expect(File('$privatePath.shared-backup.tmp').existsSync(), isFalse);
+    // Removal still deletes both the private copy and the shared copy.
+    await manager.remove('task-1');
+    expect(backend.deletedPaths, <String>{privatePath, '/downloads/file.bin'});
+    await manager.dispose();
+  });
+
   test(
     'retains record metadata when a downloaded file cannot be deleted',
     () async {

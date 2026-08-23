@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:dakit_core/dakit_core.dart';
 import 'package:background_downloader/background_downloader.dart' as bg;
+import 'package:flutter/foundation.dart' hide DiagnosticLevel;
 import 'package:path_provider/path_provider.dart';
 
 abstract interface class BackgroundTransferBackend {
@@ -104,7 +105,11 @@ final class BackgroundTransferManager implements TransferManager {
     DiagnosticSink diagnostics = const NoopDiagnosticSink(),
   }) => BackgroundTransferManager._(FileDownloaderBackend(), diagnostics);
 
-  BackgroundTransferManager._(this._backend, this._diagnostics) {
+  BackgroundTransferManager._(
+    this._backend,
+    this._diagnostics, {
+    bool? keepReadableCopyOnAndroid,
+  }) : _keepReadableCopy = keepReadableCopyOnAndroid ?? Platform.isAndroid {
     _subscription = _backend.updates.listen(
       _queueUpdate,
       onError: _streamError,
@@ -115,6 +120,10 @@ final class BackgroundTransferManager implements TransferManager {
 
   final BackgroundTransferBackend _backend;
   final DiagnosticSink _diagnostics;
+
+  /// Android's scoped storage cannot read back a file moved into public
+  /// Downloads via MediaStore, so moving there must keep an app-readable copy.
+  final bool _keepReadableCopy;
   final StreamController<TransferSnapshot> _updates =
       StreamController<TransferSnapshot>.broadcast();
   final Map<String, TransferSnapshot> _latest = <String, TransferSnapshot>{};
@@ -311,6 +320,44 @@ final class BackgroundTransferManager implements TransferManager {
   ) async {
     _ensureReady();
     final task = await _task(id);
+    final privatePath = await _backend.filePath(task);
+
+    if (_keepReadableCopy && privatePath != null && privatePath.isNotEmpty) {
+      // Android scoped storage (API 29+) does not let the app read back a file
+      // moved into public Downloads via MediaStore, which would break in-app
+      // previews. Keep the private file as the readable copy while still
+      // exposing a shared copy for the system file manager: back the private
+      // file up, move the original to shared storage, then restore it.
+      final backup = File('$privatePath.shared-backup.tmp');
+      await File(privatePath).copy(backup.path);
+      final shared = await _backend.moveToSharedStorage(
+        task,
+        _sharedStorage(destination),
+      );
+      if (shared == null || shared.isEmpty) {
+        await _deleteBackup(backup);
+        return null;
+      }
+      await _restoreReadableCopy(backup, privatePath);
+      await _deleteBackup(backup);
+      _movedPaths[id] = shared;
+      await _persistMovedPaths();
+      final previous = _latest[id];
+      if (previous != null) {
+        _emit(
+          TransferSnapshot(
+            id: previous.id,
+            state: previous.state,
+            progress: previous.progress,
+            filename: previous.filename,
+            localPath: privatePath,
+            expectedBytes: previous.expectedBytes,
+          ),
+        );
+      }
+      return shared;
+    }
+
     final newPath = await _backend.moveToSharedStorage(
       task,
       _sharedStorage(destination),
@@ -332,6 +379,29 @@ final class BackgroundTransferManager implements TransferManager {
       );
     }
     return newPath;
+  }
+
+  /// Restores the app-readable copy after the original was moved to shared
+  /// storage. Rename is atomic within one directory; fall back to a copy.
+  static Future<void> _restoreReadableCopy(
+    File backup,
+    String privatePath,
+  ) async {
+    try {
+      await backup.rename(privatePath);
+    } on FileSystemException {
+      await backup.copy(privatePath);
+    }
+  }
+
+  /// Removes the backup file; a restore failure intentionally leaves it in
+  /// place so the downloaded file is never lost.
+  static Future<void> _deleteBackup(File backup) async {
+    try {
+      if (backup.existsSync()) await backup.delete();
+    } on FileSystemException {
+      // Best effort cleanup; keep the file rather than risk data loss.
+    }
   }
 
   @override
@@ -594,7 +664,12 @@ final class BackgroundTransferManager implements TransferManager {
 BackgroundTransferManager createBackgroundTransferManagerForTesting({
   required BackgroundTransferBackend backend,
   DiagnosticSink diagnostics = const NoopDiagnosticSink(),
-}) => BackgroundTransferManager._(backend, diagnostics);
+  @visibleForTesting bool? keepReadableCopyOnAndroid,
+}) => BackgroundTransferManager._(
+  backend,
+  diagnostics,
+  keepReadableCopyOnAndroid: keepReadableCopyOnAndroid,
+);
 
 extension on List<String> {
   String? get lastOrNull => isEmpty ? null : last;

@@ -81,7 +81,7 @@ These are all integration smoke builds, not store release packages. For formal d
 
 `.github/workflows/ci.yml` runs on push, pull request, and manual triggers:
 
-- Ubuntu: formatting, analysis, 116 tests (CLI tests run separately in the tag pipeline);
+- Ubuntu: formatting, analysis, 117 tests (CLI tests run separately in the tag pipeline);
 - Ubuntu: generate and upload `coverage/lcov.info`;
 - Ubuntu/Android: debug APK;
 - macOS: debug `.app`;

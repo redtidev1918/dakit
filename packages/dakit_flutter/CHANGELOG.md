@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.9
+
+### Fixed
+
+- `BackgroundTransferManager.moveToSharedStorage` on Android keeps the
+  app-readable private copy while still exposing the shared copy, so in-app
+  previews keep working under scoped storage (a file moved into public
+  Downloads via MediaStore is not readable back by the app).
+
 ## 0.1.8
 
 ### Fixed
