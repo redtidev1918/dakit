@@ -15,10 +15,11 @@ DAKit 是一个 Dart workspace，公开包为 `dakit_core`、`dakit_api` 和
    git push origin dakit_cli-v0.2.0
    ```
 
-`.github/workflows/cli-release.yml` 会分别在原生 runner 上构建并 smoke test Linux
-x64/ARM64、Windows x64、macOS Intel/Apple Silicon 二进制，生成 SHA-256 清单后
-创建 GitHub Release。macOS 资产必须保留 `unsigned-preview` 文件名和 Release
-警告，直到接入 Apple Developer ID 签名与公证。
+`.github/workflows/cli-release.yml` 会原生构建并 smoke test Linux x64、Windows
+x64、macOS Intel/Apple Silicon；Linux ARM64 使用 Dart 官方交叉编译器并验证 ELF
+架构。全部产物生成 SHA-256 清单后创建 GitHub Release。macOS 资产必须保留
+`unsigned-preview` 文件名和 Release 警告，直到接入 Apple Developer ID 签名与
+公证。
 
 ## 发布前
 

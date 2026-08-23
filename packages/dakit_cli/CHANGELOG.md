@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.1
+
+### Fixed
+
+- Build Linux ARM64 from the supported x64 Flutter toolchain with Dart's
+  official cross-compiler, and validate the resulting ELF architecture. The
+  `0.2.0` source tag produced no GitHub Release because Flutter 3.47.1 has no
+  Linux ARM64 SDK archive; this is the first downloadable binary release and
+  includes all `0.2.0` changes below.
+
 ## 0.2.0
 
 ### Added

@@ -15,11 +15,12 @@ pub.dev; `example_client` remains an in-repo integration target.
    git push origin dakit_cli-v0.2.0
    ```
 
-`.github/workflows/cli-release.yml` builds and smoke-tests native Linux
-x64/ARM64, Windows x64, and macOS Intel/Apple Silicon executables, generates a
-SHA-256 manifest, and creates the GitHub Release. The macOS assets must keep the
-`unsigned-preview` filename and release warning until Apple Developer ID signing
-and notarization are configured.
+`.github/workflows/cli-release.yml` natively builds and smoke-tests Linux x64,
+Windows x64, and macOS Intel/Apple Silicon. Linux ARM64 uses Dart's official
+cross-compiler and validates the ELF architecture. After every asset succeeds,
+it generates a SHA-256 manifest and creates the GitHub Release. The macOS assets
+must keep the `unsigned-preview` filename and release warning until Apple
+Developer ID signing and notarization are configured.
 
 ## Before Releasing
 

@@ -21,9 +21,9 @@ jobs:
           - runner: ubuntu-24.04
             asset: linux-x64
             expected_arch: x86_64
-          - runner: ubuntu-24.04-arm
+          - runner: ubuntu-24.04
             asset: linux-arm64
-            expected_arch: aarch64
+            expected_arch: x86_64
           - runner: macos-15-intel
             asset: macos-x64-unsigned-preview
             expected_arch: x86_64
@@ -53,12 +53,25 @@ jobs:
         run: |
           VERSION="${GITHUB_REF_NAME#dakit_cli-v}"
           mkdir -p dist/staging
-          dart compile exe \
-            --define="DAKIT_CLI_VERSION=$VERSION" \
-            packages/dakit_cli/bin/dakit.dart \
-            -o dist/staging/dakit
+          if [ "${{ matrix.asset }}" = "linux-arm64" ]; then
+            dart compile exe \
+              --target-os=linux \
+              --target-arch=arm64 \
+              --define="DAKIT_CLI_VERSION=$VERSION" \
+              packages/dakit_cli/bin/dakit.dart \
+              -o dist/staging/dakit
+          else
+            dart compile exe \
+              --define="DAKIT_CLI_VERSION=$VERSION" \
+              packages/dakit_cli/bin/dakit.dart \
+              -o dist/staging/dakit
+          fi
           chmod +x dist/staging/dakit
-          dist/staging/dakit --version | grep "dakit_cli $VERSION"
+          if [ "${{ matrix.asset }}" = "linux-arm64" ]; then
+            file dist/staging/dakit | grep -E 'ELF 64-bit.*ARM aarch64'
+          else
+            dist/staging/dakit --version | grep "dakit_cli $VERSION"
+          fi
           cp LICENSE packages/dakit_cli/DISTRIBUTION.md dist/staging/
       - name: Package archive
         run: |

@@ -92,8 +92,9 @@ dart run msix:create --build-windows false --install-certificate false
 平台 job 依赖质量 job，同一分支的新运行会取消旧运行。普通流水线不保存 client ID、secret、token、代理密码或签名凭据。
 
 推送 `dakit_cli-v*` tag 时，独立流水线会构建 Linux x64/ARM64、Windows x64、
-macOS Intel/Apple Silicon 的自包含 CLI，执行版本 smoke test，生成 `SHA256SUMS`
-并创建 GitHub Release。macOS CLI 在签名和公证落地前必须标为未签名测试版。
+macOS Intel/Apple Silicon 的自包含 CLI；原生目标执行版本 smoke test，交叉编译的
+Linux ARM64 验证 ELF 架构，随后生成 `SHA256SUMS` 并创建 GitHub Release。macOS
+CLI 在签名和公证落地前必须标为未签名测试版。
 
 ## 包发布检查
 

@@ -13,7 +13,7 @@ import 'cli_session.dart';
 const _defaultScopes = 'basic,browse';
 const cliVersion = String.fromEnvironment(
   'DAKIT_CLI_VERSION',
-  defaultValue: '0.2.0-dev',
+  defaultValue: '0.2.1-dev',
 );
 const _usage = '''
 DAKit command-line client

@@ -91,10 +91,11 @@ These are all integration smoke builds, not store release packages. For formal d
 Platform jobs depend on the quality job, and a new run on the same branch cancels the previous run. The regular pipeline does not store client IDs, secrets, tokens, proxy passwords, or signing credentials.
 
 Pushing a `dakit_cli-v*` tag triggers a separate pipeline that builds standalone
-Linux x64/ARM64, Windows x64, and macOS Intel/Apple Silicon CLIs, runs version
-smoke tests, creates `SHA256SUMS`, and publishes a GitHub Release. macOS CLI
-assets remain explicitly marked as unsigned previews until signing and
-notarization are configured.
+Linux x64/ARM64, Windows x64, and macOS Intel/Apple Silicon CLIs. Native targets
+run version smoke tests; the cross-compiled Linux ARM64 target validates its ELF
+architecture. The pipeline then creates `SHA256SUMS` and publishes a GitHub
+Release. macOS CLI assets remain explicitly marked as unsigned previews until
+signing and notarization are configured.
 
 ## Package Publish Checks
 
