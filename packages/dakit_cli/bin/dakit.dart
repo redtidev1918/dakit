@@ -1,3 +1,7 @@
+import 'dart:io';
+
 import 'package:dakit_cli/src/cli.dart';
 
-Future<void> main(List<String> arguments) => runCli(arguments);
+Future<void> main(List<String> arguments) async {
+  exitCode = await runCli(arguments);
+}

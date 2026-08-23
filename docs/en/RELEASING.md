@@ -1,7 +1,25 @@
 # Releasing DAKit Packages
 
 DAKit is a Dart workspace whose public packages are `dakit_core`, `dakit_api`, and
-`dakit_flutter`. `dakit_cli` and `example_client` are in-repo tools and applications and are not published.
+`dakit_flutter`. `dakit_cli` is released as standalone binaries rather than to
+pub.dev; `example_client` remains an in-repo integration target.
+
+## Releasing CLI Binaries
+
+1. Update `packages/dakit_cli/pubspec.yaml` and `CHANGELOG.md`;
+2. Run `./tool/verify.sh` and a local `dart compile exe` smoke test;
+3. Push a tag that exactly matches the package version, for example:
+
+   ```shell
+   git tag dakit_cli-v0.2.0
+   git push origin dakit_cli-v0.2.0
+   ```
+
+`.github/workflows/cli-release.yml` builds and smoke-tests native Linux
+x64/ARM64, Windows x64, and macOS Intel/Apple Silicon executables, generates a
+SHA-256 manifest, and creates the GitHub Release. The macOS assets must keep the
+`unsigned-preview` filename and release warning until Apple Developer ID signing
+and notarization are configured.
 
 ## Before Releasing
 
@@ -29,7 +47,7 @@ DAKit is a Dart workspace whose public packages are `dakit_core`, `dakit_api`, a
 
 ## Updating Versions
 
-Public packages follow semantic versioning. Before a formal release you need to:
+The pub.dev packages and CLI follow semantic versioning. Before a formal release you need to:
 
 1. Update the `version` in the corresponding package's `pubspec.yaml`, and freeze it to a stable version without the `-dev` suffix before the formal release, for example `0.1.0`.
 2. Update the corresponding package's `CHANGELOG.md`, using the `Added` / `Changed` / `Fixed` /

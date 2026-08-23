@@ -1,0 +1,165 @@
+name: Release DAKit CLI binaries
+
+on:
+  push:
+    tags:
+      - 'dakit_cli-v[0-9]+.[0-9]+.[0-9]+'
+
+permissions:
+  contents: read
+
+env:
+  FLUTTER_VERSION: 3.47.1
+
+jobs:
+  unix:
+    name: Build ${{ matrix.asset }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            asset: linux-x64
+            expected_arch: x86_64
+          - runner: ubuntu-24.04-arm
+            asset: linux-arm64
+            expected_arch: aarch64
+          - runner: macos-15-intel
+            asset: macos-x64-unsigned-preview
+            expected_arch: x86_64
+          - runner: macos-15
+            asset: macos-arm64-unsigned-preview
+            expected_arch: arm64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - name: Resolve dependencies
+        run: dart pub get
+      - name: Validate tag and runner
+        run: |
+          VERSION="${GITHUB_REF_NAME#dakit_cli-v}"
+          PACKAGE_VERSION="$(sed -n 's/^version: //p' packages/dakit_cli/pubspec.yaml)"
+          test "$VERSION" = "$PACKAGE_VERSION"
+          test "$(uname -m)" = "${{ matrix.expected_arch }}"
+      - name: Compile standalone executable
+        run: |
+          VERSION="${GITHUB_REF_NAME#dakit_cli-v}"
+          mkdir -p dist/staging
+          dart compile exe \
+            --define="DAKIT_CLI_VERSION=$VERSION" \
+            packages/dakit_cli/bin/dakit.dart \
+            -o dist/staging/dakit
+          chmod +x dist/staging/dakit
+          dist/staging/dakit --version | grep "dakit_cli $VERSION"
+          cp LICENSE packages/dakit_cli/DISTRIBUTION.md dist/staging/
+      - name: Package archive
+        run: |
+          VERSION="${GITHUB_REF_NAME#dakit_cli-v}"
+          tar -C dist/staging -czf "dist/dakit-cli-$VERSION-${{ matrix.asset }}.tar.gz" .
+      - name: Upload binary archive
+        uses: actions/upload-artifact@v7
+        with:
+          name: dakit-cli-${{ matrix.asset }}
+          path: dist/dakit-cli-*.tar.gz
+          if-no-files-found: error
+
+  windows:
+    name: Build windows-x64
+    runs-on: windows-2025
+    timeout-minutes: 20
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - name: Resolve dependencies
+        run: dart pub get
+      - name: Validate tag
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}" -replace '^dakit_cli-v', ''
+          $packageVersion = (Select-String '^version: ' packages/dakit_cli/pubspec.yaml).Line -replace '^version: ', ''
+          if ($version -ne $packageVersion) { throw "Tag $version does not match package $packageVersion" }
+      - name: Compile standalone executable
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}" -replace '^dakit_cli-v', ''
+          New-Item -ItemType Directory -Force dist/staging | Out-Null
+          dart compile exe --define="DAKIT_CLI_VERSION=$version" packages/dakit_cli/bin/dakit.dart -o dist/staging/dakit.exe
+          $actual = & dist/staging/dakit.exe --version
+          if ($actual -ne "dakit_cli $version") { throw "Unexpected version: $actual" }
+          Copy-Item LICENSE, packages/dakit_cli/DISTRIBUTION.md dist/staging/
+      - name: Package archive
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}" -replace '^dakit_cli-v', ''
+          Compress-Archive -Path dist/staging/* -DestinationPath "dist/dakit-cli-$version-windows-x64.zip"
+      - name: Upload binary archive
+        uses: actions/upload-artifact@v7
+        with:
+          name: dakit-cli-windows-x64
+          path: dist/dakit-cli-*.zip
+          if-no-files-found: error
+
+  release:
+    name: Publish GitHub Release
+    needs: [unix, windows]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+      - name: Download binary archives
+        uses: actions/download-artifact@v8
+        with:
+          pattern: dakit-cli-*
+          path: dist
+          merge-multiple: true
+      - name: Verify assets and checksums
+        run: |
+          VERSION="${GITHUB_REF_NAME#dakit_cli-v}"
+          test -f "dist/dakit-cli-$VERSION-linux-x64.tar.gz"
+          test -f "dist/dakit-cli-$VERSION-linux-arm64.tar.gz"
+          test -f "dist/dakit-cli-$VERSION-macos-x64-unsigned-preview.tar.gz"
+          test -f "dist/dakit-cli-$VERSION-macos-arm64-unsigned-preview.tar.gz"
+          test -f "dist/dakit-cli-$VERSION-windows-x64.zip"
+          cd dist
+          sha256sum dakit-cli-* > SHA256SUMS
+      - name: Prepare release notes
+        run: |
+          VERSION="${GITHUB_REF_NAME#dakit_cli-v}"
+          {
+            echo '> [!WARNING]'
+            echo '> The macOS CLI archives are unsigned previews: no Apple Developer ID signature and no notarization.'
+            echo
+            awk -v version="$VERSION" '
+              $0 == "## " version { found=1; next }
+              found && /^## / { exit }
+              found { print }
+            ' packages/dakit_cli/CHANGELOG.md
+          } > release-notes.md
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#dakit_cli-v}"
+          gh release create "$GITHUB_REF_NAME" \
+            dist/dakit-cli-* dist/SHA256SUMS \
+            --verify-tag \
+            --latest=false \
+            --title "DAKit CLI $VERSION" \
+            --notes-file release-notes.md

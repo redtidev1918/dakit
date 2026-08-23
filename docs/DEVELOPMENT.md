@@ -33,7 +33,7 @@ dart pub get
 ```
 
 `tool/verify.sh` 会先拉取依赖，再通过 melos 依次检查格式、静态分析，并运行
-core、api、flutter 与示例应用测试。当前基线为 109 个测试。
+core、api、flutter、CLI 与示例应用测试。
 
 更细粒度的 melos 命令：
 
@@ -82,7 +82,7 @@ dart run msix:create --build-windows false --install-certificate false
 
 `.github/workflows/ci.yml` 在 push、pull request 和手动触发时执行：
 
-- Ubuntu：格式、分析、109 个测试；
+- Ubuntu：格式、分析、123 个测试（含 CLI）；
 - Ubuntu：生成并上传 `coverage/lcov.info`；
 - Ubuntu/Android：debug APK；
 - macOS：debug `.app`；
@@ -90,6 +90,10 @@ dart run msix:create --build-windows false --install-certificate false
 - 每个平台上传 smoke artifact。
 
 平台 job 依赖质量 job，同一分支的新运行会取消旧运行。普通流水线不保存 client ID、secret、token、代理密码或签名凭据。
+
+推送 `dakit_cli-v*` tag 时，独立流水线会构建 Linux x64/ARM64、Windows x64、
+macOS Intel/Apple Silicon 的自包含 CLI，执行版本 smoke test，生成 `SHA256SUMS`
+并创建 GitHub Release。macOS CLI 在签名和公证落地前必须标为未签名测试版。
 
 ## 包发布检查
 
@@ -101,7 +105,9 @@ dart pub publish --dry-run --directory packages/dakit_api
 flutter pub publish --dry-run --directory packages/dakit_flutter
 ```
 
-发布顺序为 core → api → flutter。正式发布前还需确认 pub.dev 上的包名可用、repository 链接、版本依赖和 changelog 一致。当前三个公开包已发布为 `0.1.0`，完整发布流程见 [RELEASING.md](RELEASING.md)。
+发布顺序为 core → api → flutter。正式发布前还需确认 repository 链接、版本依赖和
+changelog 一致。当前版本分别为 core 0.1.11、api 0.1.16、flutter 0.1.8，完整
+发布流程见 [RELEASING.md](RELEASING.md)。
 
 ## 提交纪律
 

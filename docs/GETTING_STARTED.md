@@ -72,56 +72,30 @@ Windows 需要安装 MSIX 才能由系统注册 `dakit` 协议；未打包的 EX
 
 ### 命令行客户端
 
-如果暂时不需要图形界面，可以直接使用 `dakit_cli`：
+从 [GitHub Releases](https://github.com/redtidev1918/dakit/releases?q=dakit_cli)
+下载独立二进制即可使用，无需 Dart/Flutter。支持 Linux x64/ARM64、Windows
+x64、macOS Intel/Apple Silicon；macOS 包是明确标记的未签名测试版。
 
-使用前准备：
+在 Public OAuth 应用中精确加入 `http://127.0.0.1:8765/callback`，然后运行：
 
-1. 在 DeviantArt 注册 **Public** OAuth 应用；
-2. 把精确回调地址 `dakit://oauth/callback` 加入应用白名单；
-3. 记录该应用的 `client_id`。
-
-```shell
-dart run packages/dakit_cli/bin/dakit.dart status --proxy 127.0.0.1:7892
-dart run packages/dakit_cli/bin/dakit.dart login --client-id 你的_PUBLIC_CLIENT_ID --proxy 127.0.0.1:7892
-dart run packages/dakit_cli/bin/dakit.dart url 作品UUID --dest downloads --proxy 127.0.0.1:7892
-dart run packages/dakit_cli/bin/dakit.dart artist 用户名 --limit 24 --delay 1
-dart run packages/dakit_cli/bin/dakit.dart gallery 用户名 [gallery_id]
-dart run packages/dakit_cli/bin/dakit.dart fav 用户名 [folder_id]
-dart run packages/dakit_cli/bin/dakit.dart search "digital art" --limit 24
-dart run packages/dakit_cli/bin/dakit.dart login validate
+```text
+dakit login --client-id 你的_PUBLIC_CLIENT_ID
+dakit whoami
+dakit search "digital art" --limit 24 --dest downloads
+dakit logout
 ```
 
-CLI 登录使用回调 `dakit://oauth/callback`，需要在 Public 应用白名单中精确加入该地址。授权完成后，把浏览器地址栏里的完整回调 URL 粘贴回 CLI。批量下载命令需要先完成登录，并传入作品 UUID / 用户名。凭据会保存到本机 `~/.config/dakit/credentials.json`（Windows 为 `%APPDATA%/dakit/credentials.json`），下载完成后 CLI 会输出保存路径、字节数、SHA-256 和媒体类型。运行 `dakit --help` 可以查看完整检查清单。
-
-所有 CLI 命令都支持 `--verbose` / `-v`，会把脱敏诊断事件输出到 `stderr`：
-
-```shell
-dart run packages/dakit_cli/bin/dakit.dart status --proxy 127.0.0.1:7892 --verbose
-```
-
-CLI 使用官方 OAuth API，不使用网页 Cookie / 抓取；因此不支持 `cookies.txt`、`SOCKS5` 代理、预览画质切换或“防封”参数。官方接口直接提供原文件，CLI 不会用 preview 冒充 original。
-
-Flutter 示例客户端登录后，在页面底部有内置 Debug console，可输入 `help`、`account`、`status`、`open UUID`、`download UUID`、`clear`。
+CLI 会通过系统浏览器登录、自动刷新会话，并用临时文件流式下载。完整的命令、代理、
+无界面登录、覆盖策略和安全说明见根 [README](../README.md#命令行客户端)。
 
 ## 3. 嵌入 Flutter 应用
 
-首次发布到 pub.dev 前，需要从 Git 仓库显式声明三个包；否则
-`dakit_flutter` 尚未发布的传递依赖 `dakit_core` / `dakit_api` 无法解析：
+包已发布到 pub.dev。完整 Flutter 集成只需要声明 `dakit_flutter`，其余依赖会自动
+解析：
 
 ```yaml
 dependencies:
-  dakit_core:
-    git:
-      url: https://github.com/redtidev1918/dakit.git
-      path: packages/dakit_core
-  dakit_api:
-    git:
-      url: https://github.com/redtidev1918/dakit.git
-      path: packages/dakit_api
-  dakit_flutter:
-    git:
-      url: https://github.com/redtidev1918/dakit.git
-      path: packages/dakit_flutter
+  dakit_flutter: ^0.1.8
 ```
 
 随后在 `runApp` 前创建 OAuth 客户端：

@@ -94,7 +94,7 @@ If you only need pure-Dart capabilities, declare them individually:
 ```yaml
 dependencies:
   dakit_core: ^0.1.11
-  dakit_api: ^0.1.15
+  dakit_api: ^0.1.16
 ```
 
 Then read [Getting started](docs/en/GETTING_STARTED.md). To run the built-in
@@ -103,61 +103,48 @@ the exact callback `dakit://oauth/callback`.
 
 ## Command-line client
 
-To try things without writing a Flutter UI, use the pure-Dart `dakit_cli` to
-sign in and download single files.
+No Dart or Flutter installation is required. Download the archive matching your
+OS and CPU from
+[DAKit CLI Releases](https://github.com/redtidev1918/dakit/releases?q=dakit_cli):
+Linux x64/ARM64, Windows x64, or macOS Intel/Apple Silicon. macOS binaries are
+explicitly marked **unsigned previews**: they have no Apple Developer ID
+signature or notarization, so Gatekeeper can block the first launch. Every
+release includes `SHA256SUMS`.
 
-Setup:
-
-1. Register a **Public** OAuth app on DeviantArt;
-2. Add the exact callback `dakit://oauth/callback` to its whitelist;
-3. Note the app's `client_id`.
-
-From the repository root, short scripts let you run it without a full Dart path:
-
-```shell
-./dakit --help
-./devart-dl artist USERNAME
+```text
+dakit --help
+dakit status --proxy 127.0.0.1:7892
+dakit login --client-id YOUR_PUBLIC_CLIENT_ID
+dakit whoami
+dakit url ARTWORK_UUID --dest downloads
+dakit artist USERNAME --limit 24 --delay 0
+dakit gallery USERNAME [GALLERY_ID]
+dakit fav USERNAME [FOLDER_ID]
+dakit search "digital art" --limit 24
+dakit logout
 ```
 
-```shell
-dart run packages/dakit_cli/bin/dakit.dart status --proxy 127.0.0.1:7892
-dart run packages/dakit_cli/bin/dakit.dart login --client-id YOUR_PUBLIC_CLIENT_ID --proxy 127.0.0.1:7892
-dart run packages/dakit_cli/bin/dakit.dart url ARTWORK_UUID --dest downloads --proxy 127.0.0.1:7892
-dart run packages/dakit_cli/bin/dakit.dart artist USERNAME --limit 24 --delay 1
-dart run packages/dakit_cli/bin/dakit.dart gallery USERNAME [gallery_id]
-dart run packages/dakit_cli/bin/dakit.dart fav USERNAME [folder_id]
-dart run packages/dakit_cli/bin/dakit.dart search "digital art" --limit 24
-dart run packages/dakit_cli/bin/dakit.dart login validate
-```
+Before login, register a **Public** DeviantArt OAuth app and whitelist
+`http://127.0.0.1:8765/callback` exactly. `login` opens the system browser and
+receives the callback locally; the DeviantArt password never enters the CLI.
+For a remote or headless system, also whitelist `dakit://oauth/callback` and use
+`--manual --no-open`.
 
-`login` opens the system browser; after authorizing, paste the full callback URL
-from the address bar back into the CLI. Credentials are stored at
-`~/.config/dakit/credentials.json` (Windows: `%APPDATA%`). Batch commands require
-a prior login. The proxy flag is optional — the CLI follows `http_proxy` /
-`https_proxy`; run `dakit --help` for the full usage.
+Credentials live under `~/.config/dakit/` (Windows: `%APPDATA%/dakit/`) and
+refresh automatically. `logout` revokes the remote token; `logout --local`
+only removes local credentials. Downloads stream through a temporary file and
+preserve an existing destination unless `--overwrite` is explicit.
 
-All CLI commands accept `--verbose` / `-v`, which prints redacted DNS/TCP/TLS/HTTP
-diagnostic events to `stderr`:
-
-```shell
-dart run packages/dakit_cli/bin/dakit.dart status --proxy 127.0.0.1:7892 --verbose
-```
-
-The `devart-dl` executable name is also registered and usable via
-`dart pub global activate dakit_cli`; the local equivalent is:
-
-```shell
-dart run packages/dakit_cli/bin/devart_dl.dart --help
-```
+Configure a proxy with `--proxy HOST:PORT`, `--proxy http://HOST:PORT`,
+`http_proxy`, `https_proxy`, or an HTTP-form `all_proxy`. `--verbose` / `-v`
+writes redacted diagnostics to `stderr`. The CLI only supports HTTP proxies and
+does not silently treat SOCKS5 as HTTP.
 
 The CLI uses the official OAuth API, not web cookies/scraping, so it offers no
 `cookies.txt`, SOCKS5 proxy, preview-quality switching, or "anti-ban" strategy.
 The official API supports original-file downloads; the CLI never passes a
 preview off as the original.
 
-The Flutter sample client includes a Debug console: after signing in, type
-`help`, `account`, `status`, `open UUID`, `download UUID`, or `clear` at the
-bottom of the page.
 
 ## Minimal example
 

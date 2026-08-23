@@ -9,14 +9,14 @@ This file records only the verifiable current state and next steps, to avoid mix
 - Version stage: `dakit_core` 0.1.10, `dakit_api` 0.1.14, and `dakit_flutter` 0.1.7, all published to pub.dev;
 - Runtime: Flutter 3.47.1 / Dart 3.13.1;
 - Platforms: Android, macOS, Windows/MSIX;
-- Tests: formatting and analysis pass, 109 tests pass;
+- Tests: formatting and analysis pass, 123 tests pass;
 - Local builds: Android debug APK and macOS debug app pass;
 - CI: the Linux quality gate and the four Android/macOS/Windows jobs pass;
 - Package publishing: `dakit_core` 0.1.10, `dakit_api` 0.1.14, and `dakit_flutter` 0.1.7 have been successfully uploaded to pub.dev (verified via both paths: GitHub Actions OIDC automated publishing and local manual publishing);
 - Dependency policy: the major upgrade of `flutter_secure_storage` is being ignored until the Android toolchain supports `compileSdk 37` (v11 is incompatible with the current Android API 36 / AGP 9.1.0);
 - Not done: the five-category real media matrix under a valid Public OAuth application.
 
-Full CI covers the Linux quality gate (analyze / format / test) and the Android APK, macOS app, and Windows/MSIX builds. The quality gate previously failed because the example_client test fakes did not implement `TransferManager.moveToSharedStorage` added in `dakit_core` 0.1.5; those fakes have been filled in, and all 109 tests pass locally.
+Full CI covers the Linux quality gate (analyze / format / test) and the Android APK, macOS app, and Windows/MSIX builds; the CLI tag pipeline separately covers five native binaries. All 123 tests pass locally.
 
 ## Implemented Scope
 
@@ -33,7 +33,7 @@ Full CI covers the Linux quality gate (analyze / format / test) and the Android 
 - Original file availability classification without passing preview off as original; `MediaAsset.availabilityReason` passes through the provider's rejection reason (distinguishing "downloads disabled by the author" from "free quota exhausted");
 - Flutter background task resume, progress, retry, pause/resume/cancel, and independent proxy;
 - Chinese/English example client and a sanitized diagnostics panel;
-- Pure Dart `dakit_cli`: loopback OAuth login, batch download for a single deviation/artist/gallery/favourites/search, account queries, and connectivity diagnostics;
+- Pure Dart `dakit_cli`: automatic-callback/headless OAuth login, automatic refresh and revocation, streaming batch downloads, account/connectivity diagnostics, and standalone binaries for five OS/architecture targets;
 - CLI `--verbose` sanitized diagnostics output, and a built-in Debug console in the example client;
 - Android custom scheme, macOS URL type, and Windows MSIX protocol activation;
 - MIT licenses for the three packages, package README/changelog, and publishable archives.

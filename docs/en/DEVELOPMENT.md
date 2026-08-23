@@ -32,7 +32,8 @@ dart pub get
 ./tool/verify.sh
 ```
 
-`tool/verify.sh` first pulls the dependencies, then uses melos to run the format and static analysis checks in sequence, and runs the core, api, flutter, and example-app tests. The current baseline is 109 tests.
+`tool/verify.sh` first pulls dependencies, then uses melos to run formatting,
+static analysis, and the core, api, flutter, CLI, and example-app tests.
 
 Finer-grained melos commands:
 
@@ -80,7 +81,7 @@ These are all integration smoke builds, not store release packages. For formal d
 
 `.github/workflows/ci.yml` runs on push, pull request, and manual triggers:
 
-- Ubuntu: formatting, analysis, 109 tests;
+- Ubuntu: formatting, analysis, 123 tests including the CLI;
 - Ubuntu: generate and upload `coverage/lcov.info`;
 - Ubuntu/Android: debug APK;
 - macOS: debug `.app`;
@@ -88,6 +89,12 @@ These are all integration smoke builds, not store release packages. For formal d
 - each platform uploads a smoke artifact.
 
 Platform jobs depend on the quality job, and a new run on the same branch cancels the previous run. The regular pipeline does not store client IDs, secrets, tokens, proxy passwords, or signing credentials.
+
+Pushing a `dakit_cli-v*` tag triggers a separate pipeline that builds standalone
+Linux x64/ARM64, Windows x64, and macOS Intel/Apple Silicon CLIs, runs version
+smoke tests, creates `SHA256SUMS`, and publishes a GitHub Release. macOS CLI
+assets remain explicitly marked as unsigned previews until signing and
+notarization are configured.
 
 ## Package Publish Checks
 
@@ -99,7 +106,10 @@ dart pub publish --dry-run --directory packages/dakit_api
 flutter pub publish --dry-run --directory packages/dakit_flutter
 ```
 
-The publish order is core → api → flutter. Before a formal release, also confirm that the package name is available on pub.dev and that the repository link, version dependencies, and changelog are consistent. The three public packages are currently published as `0.1.0`; see [RELEASING.md](RELEASING.md) for the full release workflow.
+The publish order is core → api → flutter. Before a formal release, confirm the
+repository links, version dependencies, and changelogs. Current versions are
+core 0.1.11, api 0.1.16, and flutter 0.1.8; see
+[RELEASING.md](RELEASING.md) for the full workflow.
 
 ## Commit Discipline
 

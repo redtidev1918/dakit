@@ -11,6 +11,10 @@ import 'cli_platform.dart';
 import 'cli_session.dart';
 
 const _defaultScopes = 'basic,browse';
+const cliVersion = String.fromEnvironment(
+  'DAKIT_CLI_VERSION',
+  defaultValue: '0.2.0-dev',
+);
 const _usage = '''
 DAKit command-line client
 
@@ -25,13 +29,14 @@ Usage:
   dakit recommended [--limit N]
   dakit login --client-id ID [--scopes basic,browse] [--proxy HOST:PORT]
   dakit login validate
+  dakit logout [--local]
   dakit whoami [--proxy HOST:PORT]
   dakit status [--proxy HOST:PORT]
   dakit version
 
 Environment:
   DAKIT_CLIENT_ID      Public OAuth client ID (login only)
-  http_proxy / https_proxy
+  http_proxy / https_proxy / all_proxy
 ''';
 
 const _prerequisites = '''
@@ -39,17 +44,21 @@ Before `login`, prepare:
   1. Register a Public OAuth application on DeviantArt (not Confidential).
      DAKit client login never accepts a client_secret.
   2. Add this exact redirect URI to its whitelist:
-       dakit://oauth/callback
+       http://127.0.0.1:8765/callback
   3. Keep the application's client_id ready.
-     After authorizing, paste the full redirect URL when prompted.
+     DAKit opens the browser and receives the callback locally.
+
+For remote/headless use, add `dakit://oauth/callback` to the whitelist and run
+`dakit login --manual --no-open`, then paste the callback URL when prompted.
 
 Before downloading (`url`, `artist`, `gallery`, `fav`, `search`), run
 `dakit login` once and prepare an artwork UUID or username as needed.
 ''';
 
-Future<void> runCli(List<String> arguments) async {
+Future<int> runCli(List<String> arguments) async {
   final parser = ArgParser()
     ..addFlag('help', abbr: 'h', negatable: false)
+    ..addFlag('version', negatable: false)
     ..addCommand('url', _downloadParser())
     ..addCommand('artist', _batchParser())
     ..addCommand('gallery', _batchParser())
@@ -58,6 +67,7 @@ Future<void> runCli(List<String> arguments) async {
     ..addCommand('home', _listParser())
     ..addCommand('recommended', _listParser())
     ..addCommand('login', _loginParser())
+    ..addCommand('logout', _logoutParser())
     ..addCommand('whoami', _proxyParser())
     ..addCommand('status', _proxyParser())
     ..addCommand('version', _proxyParser());
@@ -68,22 +78,28 @@ Future<void> runCli(List<String> arguments) async {
   } on FormatException catch (error) {
     stderr.writeln(error.message);
     stderr.writeln(_usage);
-    exitCode = 64;
-    return;
+    return 64;
   }
 
+  if (results['version'] as bool) return _version();
   final command = results.command;
   final showHelp = command == null
       ? results['help'] as bool
       : command['help'] as bool;
   if (command == null || showHelp) {
-    stdout.writeln(_help());
-    return;
+    if (command == null) {
+      stdout.writeln(_help());
+    } else {
+      stdout.writeln('Usage: dakit ${command.name} [options]\n');
+      stdout.writeln(parser.commands[command.name]!.usage);
+    }
+    return 0;
   }
 
   try {
-    exitCode = await switch (command.name) {
+    return await switch (command.name) {
       'login' => _login(command),
+      'logout' => _logout(command),
       'url' => _url(command),
       'artist' => _artist(command),
       'gallery' => _gallery(command),
@@ -93,15 +109,15 @@ Future<void> runCli(List<String> arguments) async {
       'recommended' => _recommended(command),
       'whoami' => _whoami(command),
       'status' => _status(command),
-      'version' => _version(command),
+      'version' => Future<int>.value(_version()),
       _ => Future<int>.value(64),
     };
   } on DAKitException catch (error) {
     stderr.writeln('${error.kind.name} ${error.code}: ${error.message}');
-    exitCode = 1;
+    return error.kind == DAKitFailureKind.configuration ? 64 : 1;
   } on Object catch (error) {
     stderr.writeln('unexpected: $error');
-    exitCode = 1;
+    return 1;
   }
 }
 
@@ -116,9 +132,26 @@ ArgParser _loginParser() {
       help: 'Comma-separated OAuth scopes.',
     )
     ..addOption('port', defaultsTo: '8765', help: 'Loopback callback port.')
+    ..addFlag(
+      'manual',
+      negatable: false,
+      help: 'Paste a dakit:// callback instead of using loopback login.',
+    )
+    ..addFlag(
+      'open',
+      defaultsTo: true,
+      help: 'Open the authorization URL in the system browser.',
+    )
     ..addOption('proxy', help: 'HTTP proxy as HOST:PORT.');
   return parser;
 }
+
+ArgParser _logoutParser() => _proxyParser()
+  ..addFlag(
+    'local',
+    negatable: false,
+    help: 'Delete local credentials without revoking the remote token.',
+  );
 
 ArgParser _downloadParser() {
   final parser = ArgParser()
@@ -126,7 +159,8 @@ ArgParser _downloadParser() {
     ..addFlag('verbose', abbr: 'v', negatable: false)
     ..addOption('proxy', help: 'HTTP proxy as HOST:PORT.')
     ..addOption('dest', defaultsTo: 'downloads', help: 'Output directory.')
-    ..addOption('output', help: 'Alias for --dest.');
+    ..addOption('output', help: 'Alias for --dest.')
+    ..addFlag('overwrite', negatable: false, help: 'Replace existing files.');
   return parser;
 }
 
@@ -145,8 +179,10 @@ ArgParser _batchParser() {
     ..addOption(
       'organize',
       defaultsTo: 'by_author',
+      allowed: <String>['by_author', 'flat'],
       help: 'File layout: by_author or flat.',
-    );
+    )
+    ..addFlag('overwrite', negatable: false, help: 'Replace existing files.');
 }
 
 ArgParser _listParser() {
@@ -183,7 +219,7 @@ Future<int> _login(ArgResults arguments) async {
       .map((value) => value.trim())
       .where((value) => value.isNotEmpty)
       .toSet();
-  final useLoopback = arguments.rest.firstOrNull == 'loopback';
+  final useLoopback = !(arguments['manual'] as bool);
   late final Uri redirectUri;
   late final CallbackUriSource callbackSource;
   if (useLoopback) {
@@ -210,6 +246,7 @@ Future<int> _login(ArgResults arguments) async {
   final profile = resolveNetworkProfile(arguments['proxy'] as String?);
   final diagnostics = _diagnostics(arguments);
   final tokenStore = FileTokenStore();
+  final settingsStore = FileCliSettingsStore();
   final endpoint = DioOAuthEndpoint(
     networkProfile: profile,
     diagnostics: diagnostics,
@@ -225,7 +262,9 @@ Future<int> _login(ArgResults arguments) async {
   );
   final coordinator = OAuthAuthorizationCoordinator(
     config: config,
-    launcher: const PlatformUriLauncher(),
+    launcher: arguments['open'] as bool
+        ? const PlatformUriLauncher()
+        : const PrintingUriLauncher(),
     callbacks: callbackSource,
     pendingStore: MemoryPendingAuthorizationStore(),
     tokenClient: tokenClient,
@@ -233,15 +272,18 @@ Future<int> _login(ArgResults arguments) async {
     diagnostics: diagnostics,
   );
 
-  stdout.writeln('Opening your browser. Complete login to continue.');
+  stdout.writeln(
+    arguments['open'] as bool
+        ? 'Opening your browser. Complete login to continue.'
+        : 'Complete login with the printed URL to continue.',
+  );
   try {
-    final tokens = await coordinator.authorize();
-    stdout.writeln('Credentials saved to ${tokenStore.path}');
-    final user = await currentUser(
-      StaticTokenProvider(tokens),
-      profile,
-      diagnostics,
+    await settingsStore.write(
+      CliOAuthSettings(clientId: config.clientId, redirectUri: redirectUri),
     );
+    await coordinator.authorize();
+    stdout.writeln('Credentials saved to ${tokenStore.path}');
+    final user = await currentUser(session, profile, diagnostics);
     stdout.writeln('account=${user.username} id=${user.id}');
     return 0;
   } finally {
@@ -251,18 +293,46 @@ Future<int> _login(ArgResults arguments) async {
   }
 }
 
-Future<int> _whoami(ArgResults arguments) async {
-  final profile = resolveNetworkProfile(arguments['proxy'] as String?);
-  final diagnostics = _diagnostics(arguments);
-  final tokens = await FileTokenStore().read();
+Future<int> _logout(ArgResults arguments) async {
+  final tokenStore = FileTokenStore();
+  final settingsStore = FileCliSettingsStore();
+  final tokens = await tokenStore.read();
   if (tokens == null) {
-    stderr.writeln('Not logged in. Run `dakit login` first.');
+    await settingsStore.clear();
+    stdout.writeln('Already logged out.');
+    return 0;
+  }
+  if (arguments['local'] as bool) {
+    await tokenStore.clear();
+    await settingsStore.clear();
+    stdout.writeln('Local credentials removed.');
+    return 0;
+  }
+  final session = await _oauthSession(
+    arguments,
+    tokenStore: tokenStore,
+    settingsStore: settingsStore,
+  );
+  if (session == null) {
+    stderr.writeln(
+      'Cannot revoke this legacy session because its client ID was not saved. '
+      'Use `dakit logout --local` or log in again first.',
+    );
     return 64;
   }
+  await session.logout();
+  await settingsStore.clear();
+  stdout.writeln('Logged out and remote token revoked.');
+  return 0;
+}
+
+Future<int> _whoami(ArgResults arguments) async {
+  final context = await _session(arguments);
+  if (context == null) return 64;
   final user = await currentUser(
-    StaticTokenProvider(tokens),
-    profile,
-    diagnostics,
+    context.session,
+    context.profile,
+    context.diagnostics,
   );
   stdout.writeln('username=${user.username} id=${user.id}');
   return 0;
@@ -280,7 +350,10 @@ Future<int> _url(ArgResults arguments) async {
   final mediaRepository = OfficialMediaRepository(context.transport);
   final asset = await mediaRepository.originalFile(uuid);
   if (!asset.canTransfer) {
-    stderr.writeln('Not downloadable: availability=${asset.availability.name}');
+    stderr.writeln(
+      'Not downloadable: availability=${asset.availability.name}'
+      '${asset.availabilityReason == null ? '' : ' reason=${terminalText(asset.availabilityReason)}'}',
+    );
     return 1;
   }
 
@@ -295,6 +368,7 @@ Future<int> _url(ArgResults arguments) async {
       asset: asset,
       profile: context.profile,
       outputDirectory: outputDirectory,
+      overwrite: arguments['overwrite'] as bool,
     ),
   );
   return 0;
@@ -371,11 +445,11 @@ Future<int> _favourites(ArgResults arguments) async {
 
 Future<int> _search(ArgResults arguments) async {
   final parts = arguments.rest.toList(growable: false);
-  if (parts.isEmpty) {
+  final query = searchQuery(parts);
+  if (query.isEmpty) {
     stderr.writeln('Provide a search query.');
     return 64;
   }
-  final query = parts.length > 1 ? parts.sublist(1).join(' ') : parts.first;
   final context = await _session(arguments);
   if (context == null) return 64;
   final artworkRepository = OfficialArtworkRepository(context.transport);
@@ -407,14 +481,15 @@ Future<int> _recommended(ArgResults arguments) async {
 int _printArtworks(List<Artwork> items) {
   for (final artwork in items) {
     stdout.writeln(
-      '${artwork.id} ${artwork.title} by ${artwork.author.username}',
+      '${artwork.id} ${terminalText(artwork.title)} by '
+      '${terminalText(artwork.author.username)}',
     );
   }
   return 0;
 }
 
-Future<int> _version(ArgResults arguments) async {
-  stdout.writeln('dakit_cli 0.1.0-dev.1');
+int _version() {
+  stdout.writeln('dakit_cli $cliVersion');
   return 0;
 }
 
@@ -425,7 +500,7 @@ Future<int> _downloadBatch(
   Future<Page<Artwork>> Function(PageRequest request) load,
 ) async {
   final limit = positiveInt(arguments['limit'] as String, 24, '--limit');
-  final delay = positiveInt(arguments['delay'] as String, 1, '--delay');
+  final delay = nonNegativeInt(arguments['delay'] as String, 1, '--delay');
   final organize = (arguments['organize'] as String).trim();
   final root = Directory(arguments['dest'] as String);
   final outputDirectory = organize == 'flat'
@@ -450,7 +525,8 @@ Future<int> _downloadBatch(
         final asset = await mediaRepository.originalFile(artwork.id);
         if (!asset.canTransfer) {
           stdout.writeln(
-            'skip=${artwork.id} availability=${asset.availability.name}',
+            'skip=${artwork.id} availability=${asset.availability.name}'
+            '${asset.availabilityReason == null ? '' : ' reason=${terminalText(asset.availabilityReason)}'}',
           );
         } else {
           stdout.writeln(
@@ -458,6 +534,7 @@ Future<int> _downloadBatch(
               asset: asset,
               profile: context.profile,
               outputDirectory: outputDirectory,
+              overwrite: arguments['overwrite'] as bool,
             ),
           );
         }
@@ -479,15 +556,56 @@ Future<int> _downloadBatch(
 }
 
 Future<CliContext?> _session(ArgResults arguments) async {
-  final tokens = await FileTokenStore().read();
+  final tokenStore = FileTokenStore();
+  final tokens = await tokenStore.read();
   if (tokens == null) {
     stderr.writeln('Not logged in. Run `dakit login` first.');
+    return null;
+  }
+  final settingsStore = FileCliSettingsStore();
+  final session = await _oauthSession(
+    arguments,
+    tokenStore: tokenStore,
+    settingsStore: settingsStore,
+  );
+  if (session == null && tokens.isExpired(DateTime.now().toUtc())) {
+    stderr.writeln(
+      'Your legacy session has expired and cannot be refreshed because its '
+      'client ID was not saved. Run `dakit login` again.',
+    );
     return null;
   }
   return CliContext(
     profile: resolveNetworkProfile(arguments['proxy'] as String?),
     diagnostics: _diagnostics(arguments),
-    tokens: tokens,
+    session: session ?? StaticTokenProvider(tokens),
+  );
+}
+
+Future<OAuthSession?> _oauthSession(
+  ArgResults arguments, {
+  required FileTokenStore tokenStore,
+  required FileCliSettingsStore settingsStore,
+}) async {
+  final saved = await settingsStore.read();
+  final environmentClientId = Platform.environment['DAKIT_CLIENT_ID'];
+  final clientId = saved?.clientId ?? environmentClientId;
+  if (clientId == null || clientId.trim().isEmpty) return null;
+  final profile = resolveNetworkProfile(arguments['proxy'] as String?);
+  final diagnostics = _diagnostics(arguments);
+  final config = OAuthConfig(
+    clientId: clientId.trim(),
+    redirectUri:
+        saved?.redirectUri ?? Uri.parse('http://127.0.0.1:8765/callback'),
+  );
+  final endpoint = DioOAuthEndpoint(
+    networkProfile: profile,
+    diagnostics: diagnostics,
+  );
+  return OAuthSession(
+    config: config,
+    store: tokenStore,
+    tokenClient: OAuthTokenClient(endpoint: endpoint, diagnostics: diagnostics),
   );
 }
 

@@ -66,12 +66,14 @@ DTO 不从顶层库导出。官方响应新增未知字段不应破坏解析；�
 命令行 kit 面向开发者调试、批量下载和脚本化使用。它按模块拆分：
 
 - `cli.dart`：命令解析与分发；
-- `cli_session.dart`：文件 token store、静态会话、`CliContext`；
-- `cli_networking.dart`：代理解析、下载器、UUID/文件名工具；
+- `cli_session.dart`：文件 token/config store、自动刷新会话、`CliContext`；
+- `cli_networking.dart`：代理解析、流式下载器、UUID/文件名工具；
 - `cli_platform.dart`：系统浏览器、loopback/粘贴回调；
 - `cli_diagnostics.dart`：`--verbose` 诊断输出。
 
-普通用户不应直接使用 CLI 登录；最终客户端使用 `dakit_flutter` 的系统浏览器深链登录。
+CLI 不依赖 Flutter 插件，可编译成自包含原生二进制供终端用户直接下载。它与
+`dakit_flutter` 一样通过系统浏览器登录，不接触用户密码；macOS 二进制的签名状态
+必须在资产名称和 Release 中明确标注。
 
 ## 解耦方式
 

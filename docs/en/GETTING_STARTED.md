@@ -72,55 +72,34 @@ The example app follows the system language to display Chinese or English. It is
 
 ### Command-Line Client
 
-If you do not need a graphical interface for now, you can use `dakit_cli` directly:
+Download a standalone binary from
+[GitHub Releases](https://github.com/redtidev1918/dakit/releases?q=dakit_cli);
+Dart and Flutter are not required. Builds cover Linux x64/ARM64, Windows x64,
+and macOS Intel/Apple Silicon. The macOS archives are explicitly marked
+unsigned previews.
 
-Before using it, prepare:
+Whitelist `http://127.0.0.1:8765/callback` exactly on a Public OAuth app, then:
 
-1. Register a **Public** OAuth app on DeviantArt;
-2. Add the exact callback URL `dakit://oauth/callback` to the app whitelist;
-3. Record the app's `client_id`.
-
-```shell
-dart run packages/dakit_cli/bin/dakit.dart status --proxy 127.0.0.1:7892
-dart run packages/dakit_cli/bin/dakit.dart login --client-id YOUR_PUBLIC_CLIENT_ID --proxy 127.0.0.1:7892
-dart run packages/dakit_cli/bin/dakit.dart url ARTWORK_UUID --dest downloads --proxy 127.0.0.1:7892
-dart run packages/dakit_cli/bin/dakit.dart artist USERNAME --limit 24 --delay 1
-dart run packages/dakit_cli/bin/dakit.dart gallery USERNAME [gallery_id]
-dart run packages/dakit_cli/bin/dakit.dart fav USERNAME [folder_id]
-dart run packages/dakit_cli/bin/dakit.dart search "digital art" --limit 24
-dart run packages/dakit_cli/bin/dakit.dart login validate
+```text
+dakit login --client-id YOUR_PUBLIC_CLIENT_ID
+dakit whoami
+dakit search "digital art" --limit 24 --dest downloads
+dakit logout
 ```
 
-CLI login uses the callback `dakit://oauth/callback`, which must be added exactly to the Public app whitelist. After authorization completes, paste the full callback URL from the browser address bar back into the CLI. Batch download commands require completing login first and passing the artwork UUID / username. Credentials are saved to `~/.config/dakit/credentials.json` on your machine (`%APPDATA%/dakit/credentials.json` on Windows), and after a download completes the CLI prints the save path, byte count, SHA-256, and media type. Run `dakit --help` to view the full checklist.
-
-All CLI commands support `--verbose` / `-v`, which outputs redacted diagnostic events to `stderr`:
-
-```shell
-dart run packages/dakit_cli/bin/dakit.dart status --proxy 127.0.0.1:7892 --verbose
-```
-
-The CLI uses the official OAuth API and does not use web cookies / scraping; therefore it does not support `cookies.txt`, SOCKS5 proxies, preview quality switching, or "anti-ban" parameters. The official API provides original files directly, and the CLI will not pass off preview as original.
-
-After logging in to the Flutter example client, there is a built-in Debug console at the bottom of the page where you can type `help`, `account`, `status`, `open UUID`, `download UUID`, `clear`.
+The CLI signs in through the system browser, refreshes sessions automatically,
+and streams downloads through temporary files. See the root
+[README](../../README.en.md#command-line-client) for all commands, proxy modes,
+headless login, overwrite behavior, and security notes.
 
 ## 3. Embed in a Flutter App
 
-Before the first release to pub.dev, you need to declare the three packages explicitly from the Git repository; otherwise `dakit_flutter`'s not-yet-published transitive dependencies `dakit_core` / `dakit_api` cannot be resolved:
+The packages are available on pub.dev. A full Flutter integration only needs
+`dakit_flutter`; its dependencies resolve automatically:
 
 ```yaml
 dependencies:
-  dakit_core:
-    git:
-      url: https://github.com/redtidev1918/dakit.git
-      path: packages/dakit_core
-  dakit_api:
-    git:
-      url: https://github.com/redtidev1918/dakit.git
-      path: packages/dakit_api
-  dakit_flutter:
-    git:
-      url: https://github.com/redtidev1918/dakit.git
-      path: packages/dakit_flutter
+  dakit_flutter: ^0.1.8
 ```
 
 Then create the OAuth client before `runApp`:

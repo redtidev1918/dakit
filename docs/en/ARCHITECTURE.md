@@ -66,12 +66,15 @@ It uses `ClientRuntime` as a composition root that assembles OAuth, transport, r
 The command-line kit targets developer debugging, batch downloads, and scripted use. It is split by module:
 
 - `cli.dart`: command parsing and dispatch;
-- `cli_session.dart`: file token store, static sessions, `CliContext`;
-- `cli_networking.dart`: proxy parsing, downloader, UUID/filename utilities;
+- `cli_session.dart`: file token/config stores, refreshing sessions, `CliContext`;
+- `cli_networking.dart`: proxy parsing, streaming downloader, UUID/filename utilities;
 - `cli_platform.dart`: system browser, loopback/paste callback;
 - `cli_diagnostics.dart`: `--verbose` diagnostic output.
 
-Regular users should not use the CLI to log in directly; final clients use the system-browser deep-link login from `dakit_flutter`.
+The CLI uses no Flutter plugins and compiles to self-contained native binaries
+for direct end-user download. Like `dakit_flutter`, it signs in through the
+system browser and never receives the user's password. macOS signing status must
+remain explicit in asset names and release notes.
 
 ## Decoupling Approaches
 

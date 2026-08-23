@@ -54,6 +54,7 @@ melos:
           packages/dakit_core/test \
           packages/dakit_api/test \
           packages/dakit_flutter/test \
+          packages/dakit_cli/test \
           apps/example_client/test
       description: Run the full unit and widget test suite.
 
@@ -63,6 +64,7 @@ melos:
           packages/dakit_core/test \
           packages/dakit_api/test \
           packages/dakit_flutter/test \
+          packages/dakit_cli/test \
           apps/example_client/test \
           --coverage
       description: Run tests and collect coverage data.

@@ -1,7 +1,24 @@
 # 发布 DAKit 包
 
 DAKit 是一个 Dart workspace，公开包为 `dakit_core`、`dakit_api` 和
-`dakit_flutter`。`dakit_cli` 与 `example_client` 是仓库内的工具和应用，不发布。
+`dakit_flutter`。`dakit_cli` 不发布到 pub.dev，而是作为独立二进制发布；
+`example_client` 仅用于仓库内集成验证。
+
+## 发布 CLI 二进制
+
+1. 更新 `packages/dakit_cli/pubspec.yaml` 与 `CHANGELOG.md`；
+2. 运行 `./tool/verify.sh`，并在本机执行一次 `dart compile exe` smoke test；
+3. 推送与版本完全一致的 tag，例如：
+
+   ```shell
+   git tag dakit_cli-v0.2.0
+   git push origin dakit_cli-v0.2.0
+   ```
+
+`.github/workflows/cli-release.yml` 会分别在原生 runner 上构建并 smoke test Linux
+x64/ARM64、Windows x64、macOS Intel/Apple Silicon 二进制，生成 SHA-256 清单后
+创建 GitHub Release。macOS 资产必须保留 `unsigned-preview` 文件名和 Release
+警告，直到接入 Apple Developer ID 签名与公证。
 
 ## 发布前
 
@@ -29,7 +46,7 @@ DAKit 是一个 Dart workspace，公开包为 `dakit_core`、`dakit_api` 和
 
 ## 更新版本
 
-公开包遵循语义化版本。正式发布前需要：
+pub.dev 公开包与 CLI 都遵循语义化版本。正式发布前需要：
 
 1. 更新对应包的 `pubspec.yaml` `version`，并在正式发布前冻结为不带 `-dev` 后缀的
    稳定版本，例如 `0.1.0`。

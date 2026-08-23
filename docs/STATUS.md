@@ -9,14 +9,14 @@
 - 版本阶段：`dakit_core` 0.1.10、`dakit_api` 0.1.14、`dakit_flutter` 0.1.7，均已发布到 pub.dev；
 - 运行时：Flutter 3.47.1 / Dart 3.13.1；
 - 平台：Android、macOS、Windows/MSIX；
-- 测试：格式与分析通过，109 个测试通过；
+- 测试：格式与分析通过，123 个测试通过；
 - 本机构建：Android debug APK、macOS debug app 通过；
 - CI：Linux 质量门及 Android/macOS/Windows 四个 job 通过；
 - 包发布：`dakit_core` 0.1.10、`dakit_api` 0.1.14 与 `dakit_flutter` 0.1.7 已成功上传 pub.dev（通过 GitHub Actions OIDC 自动发布 + 本机手动发布两种路径验证）；
 - 依赖策略：已忽略 `flutter_secure_storage` 的主版本升级，直到 Android 工具链支持 `compileSdk 37`（v11 与当前 Android API 36 / AGP 9.1.0 不兼容）；
 - 未完成：有效 Public OAuth 应用下的五类真实媒体矩阵。
 
-完整 CI 覆盖 Linux 质量门（analyze / format / test）与 Android APK、macOS app、Windows/MSIX 构建。此前 example_client 的测试桩未实现 `dakit_core` 0.1.5 新增的 `TransferManager.moveToSharedStorage`，导致质量门失败；该测试桩已补齐，本地验证 109 项测试全部通过。
+完整 CI 覆盖 Linux 质量门（analyze / format / test）与 Android APK、macOS app、Windows/MSIX 构建；CLI tag 流水线另行覆盖五种原生二进制。本地验证 123 项测试全部通过。
 
 ## 已实现范围
 
@@ -33,7 +33,7 @@
 - 原文件可用性分类，不以 preview 冒充 original；`MediaAsset.availabilityReason` 透传 provider 拒绝原因（区分「作者禁止下载」与「免费额度用完」）；
 - Flutter 后台任务恢复、进度、重试、暂停/继续/取消及独立代理；
 - 中英文示例客户端和脱敏诊断面板；
-- 纯 Dart `dakit_cli`：loopback OAuth 登录、单作品/画师/画廊/收藏夹/搜索批量下载、账户查询与连通性诊断；
+- 纯 Dart `dakit_cli`：自动回调/手动 OAuth 登录、自动刷新与撤销会话、流式批量下载、账户与连通性诊断，并发布五种架构的独立二进制；
 - CLI `--verbose` 脱敏诊断输出，以及示例客户端内置 Debug console；
 - Android 自定义 scheme、macOS URL type、Windows MSIX 协议激活；
 - 三包 MIT 许可证、package README/changelog 与可发布归档。

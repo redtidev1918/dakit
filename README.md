@@ -68,56 +68,47 @@ dependencies:
 ```yaml
 dependencies:
   dakit_core: ^0.1.11
-  dakit_api: ^0.1.15
+  dakit_api: ^0.1.16
 ```
 
 随后阅读[开始使用](docs/GETTING_STARTED.md)。直接在移动端或桌面端运行内置登录流程时，需要注册 **Public** OAuth 应用，并配置精确回调地址 `dakit://oauth/callback`。
 
 ## 命令行客户端
 
-不想先写 Flutter 界面时，可以用纯 Dart 的 `dakit_cli` 完成登录和单文件下载：
+不需要安装 Dart 或 Flutter。直接从
+[DAKit CLI Releases](https://github.com/redtidev1918/dakit/releases?q=dakit_cli)
+下载与系统和 CPU 对应的压缩包：Linux x64/ARM64、Windows x64、macOS
+Intel/Apple Silicon。macOS 二进制明确标记为**未签名测试版**，没有 Apple
+Developer ID 签名或公证，Gatekeeper 可能拦截首次运行。每个 Release 同时提供
+`SHA256SUMS`。
 
-使用前准备：
-
-1. 在 DeviantArt 注册 **Public** OAuth 应用；
-2. 把精确回调地址 `dakit://oauth/callback` 加入应用白名单；
-3. 记录该应用的 `client_id`。
-
-在仓库根目录，可以直接用短脚本运行，不用输入完整 Dart 路径：
-
-```shell
-./dakit --help
-./devart-dl artist 用户名
+```text
+dakit --help
+dakit status --proxy 127.0.0.1:7892
+dakit login --client-id 你的_PUBLIC_CLIENT_ID
+dakit whoami
+dakit url 作品UUID --dest downloads
+dakit artist 用户名 --limit 24 --delay 0
+dakit gallery 用户名 [gallery_id]
+dakit fav 用户名 [folder_id]
+dakit search "digital art" --limit 24
+dakit logout
 ```
 
-```shell
-dart run packages/dakit_cli/bin/dakit.dart status --proxy 127.0.0.1:7892
-dart run packages/dakit_cli/bin/dakit.dart login --client-id 你的_PUBLIC_CLIENT_ID --proxy 127.0.0.1:7892
-dart run packages/dakit_cli/bin/dakit.dart url 作品UUID --dest downloads --proxy 127.0.0.1:7892
-dart run packages/dakit_cli/bin/dakit.dart artist 用户名 --limit 24 --delay 1
-dart run packages/dakit_cli/bin/dakit.dart gallery 用户名 [gallery_id]
-dart run packages/dakit_cli/bin/dakit.dart fav 用户名 [folder_id]
-dart run packages/dakit_cli/bin/dakit.dart search "digital art" --limit 24
-dart run packages/dakit_cli/bin/dakit.dart login validate
-```
+登录前在 DeviantArt 注册 **Public** OAuth 应用，把
+`http://127.0.0.1:8765/callback` 精确加入白名单。`login` 会打开系统浏览器并在
+本机接收回调，不会要求 DeviantArt 密码进入 CLI。远程或无界面环境可另外加入
+`dakit://oauth/callback`，再使用 `--manual --no-open`。
 
-`login` 会打开系统浏览器；授权完成后，把浏览器地址栏里的完整回调 URL 粘贴回 CLI。凭据保存到 `~/.config/dakit/credentials.json`（Windows 在 `%APPDATA%`）。批量命令需要先完成登录。代理参数可省略，CLI 会遵循 `http_proxy` / `https_proxy` 环境变量；也可以运行 `dakit --help` 查看完整使用说明。
+凭据保存到 `~/.config/dakit/`（Windows 为 `%APPDATA%/dakit/`），刷新令牌会自动
+续期；`logout` 会撤销远端令牌，`logout --local` 只删除本地凭据。下载采用流式
+临时文件，默认保留同名文件，需要替换时显式传入 `--overwrite`。
 
-所有 CLI 命令都支持 `--verbose` / `-v`，会把脱敏后的 DNS/TCP/TLS/HTTP 诊断事件输出到 `stderr`：
-
-```shell
-dart run packages/dakit_cli/bin/dakit.dart status --proxy 127.0.0.1:7892 --verbose
-```
-
-`devart-dl` 可执行名也已注册，发布后可通过 `dart pub global activate dakit_cli` 使用；本地等价命令为：
-
-```shell
-dart run packages/dakit_cli/bin/devart_dl.dart --help
-```
+代理可通过 `--proxy HOST:PORT`、`--proxy http://HOST:PORT`、`http_proxy`、
+`https_proxy` 或 HTTP 形式的 `all_proxy` 配置。`--verbose` / `-v` 会把脱敏诊断
+输出到 `stderr`。CLI 只支持 HTTP 代理，不把 SOCKS5 静默当作 HTTP 使用。
 
 CLI 使用官方 OAuth API，而不是网页 Cookie / 抓取，因此不提供 `cookies.txt`、`SOCKS5` 代理、预览画质切换或“防封”策略。官方接口支持原文件下载，CLI 不会用 preview 冒充 original。
-
-Flutter 示例客户端内置了一个 Debug console，登录后在页面底部可输入 `help`、`account`、`status`、`open UUID`、`download UUID`、`clear`。
 
 ## 最小示例
 

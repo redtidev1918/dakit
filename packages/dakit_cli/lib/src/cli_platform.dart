@@ -10,27 +10,40 @@ final class PlatformUriLauncher implements ExternalUriLauncher {
 
   @override
   Future<void> launch(Uri uri) async {
+    late final ProcessResult result;
     if (Platform.isMacOS) {
-      await Process.run('open', <String>[uri.toString()]);
-      return;
-    }
-    if (Platform.isLinux) {
-      await Process.run('xdg-open', <String>[uri.toString()]);
-      return;
-    }
-    if (Platform.isWindows) {
-      await Process.run('cmd', <String>[
-        '/c',
-        'start',
+      result = await Process.run('open', <String>[uri.toString()]);
+    } else if (Platform.isLinux) {
+      result = await Process.run('xdg-open', <String>[uri.toString()]);
+    } else if (Platform.isWindows) {
+      result = await Process.run('rundll32', <String>[
+        'url.dll,FileProtocolHandler',
         uri.toString(),
-      ], runInShell: true);
-      return;
+      ]);
+    } else {
+      throw const DAKitException(
+        kind: DAKitFailureKind.authentication,
+        code: 'oauth.browser.unsupported_platform',
+        message: 'This CLI does not know how to open a browser here.',
+      );
     }
-    throw const DAKitException(
-      kind: DAKitFailureKind.authentication,
-      code: 'oauth.browser.unsupported_platform',
-      message: 'This CLI does not know how to open a browser here.',
-    );
+    if (result.exitCode != 0) {
+      throw DAKitException(
+        kind: DAKitFailureKind.authentication,
+        code: 'oauth.browser.launch_failed',
+        message: 'The system browser could not be opened.',
+        details: <String, Object?>{'exit_code': result.exitCode},
+      );
+    }
+  }
+}
+
+final class PrintingUriLauncher implements ExternalUriLauncher {
+  const PrintingUriLauncher();
+
+  @override
+  Future<void> launch(Uri uri) async {
+    stdout.writeln('Open this URL in a browser:\n$uri');
   }
 }
 
@@ -72,7 +85,17 @@ final class LoopbackCallbackSource implements CallbackUriSource {
   }
 
   Future<void> start() async {
-    _server = await HttpServer.bind(InternetAddress.loopbackIPv4, port);
+    try {
+      _server = await HttpServer.bind(InternetAddress.loopbackIPv4, port);
+    } on SocketException catch (error) {
+      throw DAKitException(
+        kind: DAKitFailureKind.configuration,
+        code: 'oauth.callback.bind_failed',
+        message:
+            'Cannot listen on 127.0.0.1:$port. Choose another --port or use --manual.',
+        cause: error,
+      );
+    }
     _server!.listen(_handle);
   }
 
