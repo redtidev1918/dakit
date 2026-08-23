@@ -523,6 +523,42 @@ void main() {
     expect(transport.requests[3].query, isNot(contains('offset')));
   });
 
+  test('treats a missing watched results list as an empty feed', () async {
+    final transport = FixtureTransport(<Map<String, Object?>>[
+      <String, Object?>{},
+      <String, Object?>{'results': null, 'has_more': false},
+    ]);
+    final repository = OfficialDiscoveryRepository(transport);
+
+    final missing = await repository.watched(const PageRequest(limit: 20));
+    final nullResults = await repository.watched(const PageRequest(limit: 20));
+
+    expect(missing.items, isEmpty);
+    expect(missing.hasMore, isFalse);
+    expect(missing.nextCursor, isNull);
+    expect(nullResults.items, isEmpty);
+    expect(nullResults.hasMore, isFalse);
+    expect(nullResults.nextCursor, isNull);
+  });
+
+  test('rejects missing watched results with contradictory pagination', () {
+    final transport = FixtureTransport(<Map<String, Object?>>[
+      <String, Object?>{'has_more': true, 'next_offset': 20},
+    ]);
+
+    expect(
+      OfficialDiscoveryRepository(transport)
+          .watched(const PageRequest(limit: 20)),
+      throwsA(
+        isA<DAKitException>().having(
+          (error) => error.code,
+          'code',
+          'api.page.missing_results',
+        ),
+      ),
+    );
+  });
+
   test('falls back to a tagged offset when tag cursor is omitted', () async {
     final artwork = await fixture('deviation.json');
     final transport = FixtureTransport(<Map<String, Object?>>[

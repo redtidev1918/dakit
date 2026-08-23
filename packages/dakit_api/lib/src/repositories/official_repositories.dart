@@ -319,6 +319,15 @@ final class OfficialDiscoveryRepository implements DiscoveryRepository {
         'mature_content': true,
       },
     );
+    // DeviantArt returns an empty object (or a null `results`) for accounts
+    // that do not watch anyone. That is a valid empty feed, not a malformed
+    // generic page. Keep strict page parsing for contradictory pagination
+    // metadata so an actual upstream schema change still remains observable.
+    if ((!json.containsKey('results') || json['results'] == null) &&
+        json['has_more'] != true &&
+        json['next_offset'] == null) {
+      return const Page<Artwork>(items: <Artwork>[], hasMore: false);
+    }
     return _parsePage(json, _mapper.artwork);
   }
 

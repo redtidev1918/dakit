@@ -68,7 +68,7 @@ dependencies:
 ```yaml
 dependencies:
   dakit_core: ^0.1.11
-  dakit_api: ^0.1.16
+  dakit_api: ^0.1.18
 ```
 
 随后阅读[开始使用](docs/GETTING_STARTED.md)。直接在移动端或桌面端运行内置登录流程时，需要注册 **Public** OAuth 应用，并配置精确回调地址 `dakit://oauth/callback`。

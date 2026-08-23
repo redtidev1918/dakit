@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.18
+
+### Fixed
+
+- `OfficialDiscoveryRepository.watched` now treats the official API's empty
+  object / null-results response for accounts that watch nobody as a valid
+  empty feed. Contradictory pagination metadata remains a parsing failure, so
+  real upstream schema drift is not silently swallowed.
+
 ## 0.1.17
 
 ### Added
