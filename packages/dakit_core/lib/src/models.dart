@@ -356,11 +356,17 @@ final class CollectionSummary {
     required this.folderId,
     required this.name,
     required this.owner,
+    this.coverUri,
   });
 
   final int folderId;
   final String name;
   final UserProfile owner;
+
+  /// A preview image for the collection, when the provider supplies one (e.g.
+  /// the collection's thumbnail). `null` when the provider gave no cover, in
+  /// which case hosts should render a placeholder.
+  final Uri? coverUri;
 }
 
 /// A collection paired with the deviations the provider listed inside it.

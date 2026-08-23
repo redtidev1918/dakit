@@ -215,6 +215,10 @@ void main() {
     expect(featured.collection.folderId, 111);
     expect(featured.collection.name, 'Curated picks');
     expect(featured.collection.owner.username, 'curator');
+    expect(
+      featured.collection.coverUri,
+      Uri.parse('https://images.example.test/cover.jpg'),
+    );
     expect(featured.deviations.single.id, 'art-4');
     expect(result.suggestedCollections.single.collection.folderId, 222);
     expect(result.suggestedCollections.single.deviations.single.id, 'art-5');

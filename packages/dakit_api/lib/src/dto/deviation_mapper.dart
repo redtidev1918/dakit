@@ -256,13 +256,47 @@ final class DeviationMapper {
   }
 
   /// Maps a `gallection` object from the "More Like This" preview endpoint:
-  /// a numeric collection/folder id, its display name, and its owner.
+  /// a numeric collection/folder id, its display name, its owner, and — when
+  /// the provider supplies one — a preview image (cover) for the collection.
   CollectionSummary collectionSummary(Map<String, Object?> json) {
     return CollectionSummary(
       folderId: _requiredInteger(json, 'folderid'),
       name: _requiredText(json, 'name'),
       owner: user(_requiredMap(json, 'owner')),
+      coverUri: _collectionCoverUri(json),
     );
+  }
+
+  /// The first usable image from a collection's `thumb` deviation or a bare
+  /// `preview`/`cover` image object. Returns `null` when the provider gave no
+  /// cover, so hosts render a placeholder instead of a broken image.
+  Uri? _collectionCoverUri(Map<String, Object?> json) {
+    final candidates = <Map<String, Object?>?>[
+      _map(json['thumb']),
+      _map(json['preview']),
+      _map(json['cover']),
+    ];
+    for (final candidate in candidates) {
+      if (candidate == null) continue;
+      final uri = _firstImageUri(candidate);
+      if (uri != null) return uri;
+    }
+    return null;
+  }
+
+  Uri? _firstImageUri(Map<String, Object?> json) {
+    for (final field in <String>['preview', 'content', 'social_preview']) {
+      final image = _map(json[field]);
+      final uri = image == null ? null : _webUri(image['src']);
+      if (uri != null) return uri;
+    }
+    final thumbs = _list(json['thumbs']);
+    for (final thumb in thumbs) {
+      final image = _map(thumb);
+      final uri = image == null ? null : _webUri(image['src']);
+      if (uri != null) return uri;
+    }
+    return null;
   }
 
   ProviderMessage message(Map<String, Object?> json) {

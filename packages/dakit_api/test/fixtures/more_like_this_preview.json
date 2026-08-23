@@ -80,6 +80,13 @@
         "owner": {
           "userid": "user-9",
           "username": "curator"
+        },
+        "thumb": {
+          "preview": {
+            "src": "https://images.example.test/cover.jpg",
+            "width": 320,
+            "height": 320
+          }
         }
       },
       "deviations": [
