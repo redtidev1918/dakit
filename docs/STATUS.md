@@ -16,7 +16,7 @@
 - 依赖策略：已忽略 `flutter_secure_storage` 的主版本升级，直到 Android 工具链支持 `compileSdk 37`（v11 与当前 Android API 36 / AGP 9.1.0 不兼容）；
 - 未完成：有效 Public OAuth 应用下的五类真实媒体矩阵。
 
-完整 CI 覆盖 Linux 质量门（analyze / format / test）与 Android APK、macOS app、Windows/MSIX 构建；CLI tag 流水线另行覆盖五种原生二进制。本地验证 117 项测试全部通过。
+完整 CI 覆盖 Linux 质量门（analyze / format / test）与 Android APK、macOS app、Windows/MSIX 构建；CLI tag 流水线另行覆盖五种原生二进制。本地验证 115 项测试全部通过。
 
 ## 已实现范围
 
