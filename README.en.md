@@ -34,8 +34,8 @@ the SDK connects to.
   text, home/search, daily deviations, and the watched feed;
 - Browse tags, tag autocomplete, topic navigation, and gallery/favourites folder
   listings and contents;
-- Read the "More Like This" preview without one malformed/deleted entry
-  discarding valid siblings;
+- Read the "More Like This" preview; one malformed or deleted entry does not
+  discard valid siblings;
 - Read/post artwork comments, favourite/unfavourite artworks, watch/unwatch
   users;
 - Read notifications, feedback, and mentions, and expand or delete message
