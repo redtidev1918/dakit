@@ -51,17 +51,29 @@ Thumbs.db
 # Secrets and local state
 .env
 .env.*
+*.env
 !.env.example
 *.key
 *.pem
 *.p12
+*.pfx
+*.p8
+*.cer
+*.crt
+*.jks
+*.keystore
+key.properties
+local.properties
+*.mobileprovision
 *.log
 *.session
 auth_tokens/
 secrets/
+credentials/
 private/
 session.json
 **/session.json
+*.git-credentials
 
 # Runtime output
 Downloads/
