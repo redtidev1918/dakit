@@ -61,6 +61,39 @@ void main() {
     expect(artwork.description, 'Formatted description.');
   });
 
+  test('loads omitted artwork tags from deviation metadata', () async {
+    final transport = FixtureTransport(<Map<String, Object?>>[
+      <String, Object?>{
+        'metadata': <Object?>[
+          <String, Object?>{
+            'deviationid': 'other',
+            'tags': <Object?>[
+              <String, Object?>{'tag_name': 'ignored'},
+            ],
+          },
+          <String, Object?>{
+            'deviationid': 'art-1',
+            'tags': <Object?>[
+              <String, Object?>{'tag_name': 'portrait'},
+              <String, Object?>{'tag_name': 'digitalart'},
+              <String, Object?>{'tag_name': 'portrait'},
+            ],
+          },
+        ],
+      },
+    ]);
+
+    final tags = await OfficialArtworkMetadataRepository(transport)
+        .tags('art-1');
+
+    expect(tags, const <String>['portrait', 'digitalart']);
+    expect(transport.requests.single.path, 'deviation/metadata');
+    expect(transport.requests.single.query, <String, Object?>{
+      'deviationids[]': <String>['art-1'],
+      'mature_content': true,
+    });
+  });
+
   test(
     'loads rendered literature without executing provider HTML or CSS',
     () async {

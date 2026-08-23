@@ -11,6 +11,7 @@ void main() {
 
     expect(ApiRoutes.browseHome, 'browse/home');
     expect(ApiRoutes.deviationContent, 'deviation/content');
+    expect(ApiRoutes.deviationMetadata, 'deviation/metadata');
     expect(ApiRoutes.dailyDeviations, 'browse/dailydeviations');
     expect(ApiRoutes.deviantsYouWatch, 'browse/deviantsyouwatch');
     expect(ApiRoutes.browseTags, 'browse/tags');

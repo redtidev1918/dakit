@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.17
+
+### Added
+
+- Added `OfficialArtworkMetadataRepository.tags`, backed by the official
+  `deviation/metadata` endpoint, so hosts can hydrate tags omitted from compact
+  browse responses and from `deviation/{id}`.
+
 ## 0.1.16
 
 ### Fixed

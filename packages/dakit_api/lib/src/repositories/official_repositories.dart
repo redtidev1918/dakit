@@ -204,6 +204,29 @@ final class OfficialArtworkRepository implements ArtworkRepository {
       _parsePage(json, (item) => _mapper.artwork(item));
 }
 
+/// Reads fields that DeviantArt exposes only through `deviation/metadata`.
+///
+/// Browse/list responses and even `deviation/{id}` may omit searchable tags,
+/// so hosts should use this repository when an [Artwork.tags] list is empty.
+final class OfficialArtworkMetadataRepository {
+  const OfficialArtworkMetadataRepository(this._transport);
+
+  final OfficialApiTransport _transport;
+
+  Future<List<String>> tags(String artworkId) async {
+    final normalized = artworkId.trim();
+    _validateIdentifier(normalized, 'artwork id');
+    final json = await _transport.getJson(
+      ApiRoutes.deviationMetadata,
+      query: <String, Object?>{
+        'deviationids[]': <String>[normalized],
+        'mature_content': true,
+      },
+    );
+    return _deviationMetadataTags(json, normalized);
+  }
+}
+
 final class OfficialArtworkContentRepository
     implements ArtworkContentRepository {
   const OfficialArtworkContentRepository(this._transport);
@@ -1207,6 +1230,36 @@ DAKitException _missingField(String field) => DAKitException(
   message: 'The official API response is missing a required field.',
   details: <String, Object?>{'field': field},
 );
+
+List<String> _deviationMetadataTags(
+  Map<String, Object?> json,
+  String artworkId,
+) {
+  final rawMetadata = json['metadata'];
+  if (rawMetadata is! List) throw _missingField('metadata');
+  for (final value in rawMetadata) {
+    final entry = value is Map ? _requiredItemMap(value) : null;
+    if (entry == null || entry['deviationid'] != artworkId) continue;
+    final rawTags = entry['tags'];
+    if (rawTags is! List) return const <String>[];
+    final tags = <String>[];
+    final seen = <String>{};
+    for (final value in rawTags) {
+      if (value is! Map) continue;
+      final name = value['tag_name'] ?? value['name'];
+      if (name is! String) continue;
+      final normalized = name.trim();
+      if (normalized.isNotEmpty && seen.add(normalized)) tags.add(normalized);
+    }
+    return List<String>.unmodifiable(tags);
+  }
+  throw DAKitException(
+    kind: DAKitFailureKind.parsing,
+    code: 'api.deviation.metadata.missing',
+    message: 'The official API did not return the requested metadata.',
+    details: <String, Object?>{'deviationid': artworkId},
+  );
+}
 
 void _requireSuccess(Map<String, Object?> json, String operation) {
   final success = json['success'];

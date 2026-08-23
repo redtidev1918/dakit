@@ -18,6 +18,7 @@ final class ApiRoutes {
   // Artwork / discovery.
   static const String browseHome = 'browse/home';
   static const String deviationContent = 'deviation/content';
+  static const String deviationMetadata = 'deviation/metadata';
   static const String dailyDeviations = 'browse/dailydeviations';
   static const String deviantsYouWatch = 'browse/deviantsyouwatch';
   static const String browseTags = 'browse/tags';
