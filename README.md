@@ -1,5 +1,9 @@
 # DAKit — DeviantArt 客户端 SDK
 
+<p align="center">
+  <img src="docs/icon.png" alt="DAKit" width="160" />
+</p>
+
 **语言 / Language:** 中文 · [English](README.en.md)
 
 [![GitHub stars](https://img.shields.io/github/stars/redtidev1918/dakit?style=flat&color=yellow)](https://github.com/redtidev1918/dakit/stargazers)

@@ -1,5 +1,9 @@
 # DAKit — DeviantArt Client SDK
 
+<p align="center">
+  <img src="docs/icon.png" alt="DAKit" width="160" />
+</p>
+
 [![GitHub stars](https://img.shields.io/github/stars/redtidev1918/dakit?style=flat&color=yellow)](https://github.com/redtidev1918/dakit/stargazers)
 [![GitHub license](https://img.shields.io/github/license/redtidev1918/dakit?style=flat)](LICENSE)
 [![pub.dev](https://img.shields.io/pub/v/dakit_flutter?label=dakit_flutter&style=flat)](https://pub.dev/packages/dakit_flutter)
