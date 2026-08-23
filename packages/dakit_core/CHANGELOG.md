@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.12
+
+### Added
+
+- `CollectionSummary.coverUri`: a nullable preview image for a collection, so
+  hosts can render a cover instead of a placeholder when the provider supplies
+  one.
+
 ## 0.1.11
 
 ### Changed

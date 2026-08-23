@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.19
+
+### Added
+
+- `DeviationMapper.collectionSummary` now maps a collection's `thumb` /
+  `preview` / `cover` image into `CollectionSummary.coverUri`.
+
 ## 0.1.18
 
 ### Fixed
