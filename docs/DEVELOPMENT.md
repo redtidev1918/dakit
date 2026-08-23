@@ -108,7 +108,7 @@ flutter pub publish --dry-run --directory packages/dakit_flutter
 ```
 
 发布顺序为 core → api → flutter。正式发布前还需确认 repository 链接、版本依赖和
-changelog 一致。当前版本分别为 core 0.1.11、api 0.1.18、flutter 0.1.8，完整
+changelog 一致。当前版本分别为 core 0.1.11、api 0.1.18、flutter 0.1.9，完整
 发布流程见 [RELEASING.md](RELEASING.md)。
 
 ## 提交纪律

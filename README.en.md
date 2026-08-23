@@ -90,7 +90,7 @@ The packages are published to pub.dev. A full Flutter integration only needs
 
 ```yaml
 dependencies:
-  dakit_flutter: ^0.1.8
+  dakit_flutter: ^0.1.9
 ```
 
 If you only need pure-Dart capabilities, declare them individually:

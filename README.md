@@ -64,7 +64,7 @@ DAKit 是面向 Dart 与 Flutter 的模块化 DeviantArt 客户端 SDK，为 And
 
 ```yaml
 dependencies:
-  dakit_flutter: ^0.1.8
+  dakit_flutter: ^0.1.9
 ```
 
 如果只需要纯 Dart 能力，也可以按需声明：
