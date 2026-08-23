@@ -82,7 +82,7 @@ dart run msix:create --build-windows false --install-certificate false
 
 `.github/workflows/ci.yml` 在 push、pull request 和手动触发时执行：
 
-- Ubuntu：格式、分析、123 个测试（含 CLI）；
+- Ubuntu：格式、分析、116 个测试（CLI 测试在 tag 流水线单独运行）；
 - Ubuntu：生成并上传 `coverage/lcov.info`；
 - Ubuntu/Android：debug APK；
 - macOS：debug `.app`；
@@ -107,7 +107,7 @@ flutter pub publish --dry-run --directory packages/dakit_flutter
 ```
 
 发布顺序为 core → api → flutter。正式发布前还需确认 repository 链接、版本依赖和
-changelog 一致。当前版本分别为 core 0.1.11、api 0.1.16、flutter 0.1.8，完整
+changelog 一致。当前版本分别为 core 0.1.11、api 0.1.18、flutter 0.1.8，完整
 发布流程见 [RELEASING.md](RELEASING.md)。
 
 ## 提交纪律
