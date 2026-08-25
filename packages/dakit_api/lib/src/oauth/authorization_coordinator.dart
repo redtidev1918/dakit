@@ -248,7 +248,19 @@ final class OAuthAuthorizationCoordinator {
         await _session.logout();
         throw _cancelledAuthorization();
       }
-      await _pendingStore.clear();
+      try {
+        await _pendingStore.clear();
+      } on Object {
+        // The token save above is the transaction commit point. Failure to
+        // delete obsolete PKCE recovery data must not roll back a completed
+        // login or force the user through the browser a second time.
+        _record(
+          DiagnosticStage.storage,
+          DiagnosticLevel.warning,
+          'oauth.pending_cleanup.deferred',
+          'The authorized session was saved; obsolete pending state could not be removed.',
+        );
+      }
       _record(
         DiagnosticStage.storage,
         DiagnosticLevel.info,

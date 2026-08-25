@@ -104,6 +104,45 @@ void main() {
     },
   );
 
+  test('pending cleanup failure cannot roll back a saved login', () async {
+    final callbacks = FakeCallbackSource();
+    final pendingStore = MemoryPendingStore(failClear: true);
+    final tokenStore = MemoryTokenStore();
+    final diagnostics = MemoryDiagnostics();
+    final coordinator = buildCoordinator(
+      config: config,
+      callbacks: callbacks,
+      pendingStore: pendingStore,
+      tokenStore: tokenStore,
+      endpoint: FakeOAuthEndpoint(),
+      launcher: FakeLauncher((authorizationUri) async {
+        callbacks.add(
+          config.redirectUri.replace(
+            queryParameters: <String, String>{
+              'code': 'authorization-code',
+              'state': authorizationUri.queryParameters['state']!,
+            },
+          ),
+        );
+      }),
+      diagnostics: diagnostics,
+      now: now,
+    );
+
+    final tokens = await coordinator.authorize();
+
+    expect(tokens.accessToken, 'access');
+    expect(tokenStore.value?.accessToken, 'access');
+    expect(pendingStore.value, isNotNull);
+    expect(
+      diagnostics.events.map((event) => event.code),
+      containsAll(<String>[
+        'oauth.pending_cleanup.deferred',
+        'oauth.session.saved',
+      ]),
+    );
+  });
+
   test('resumes a cold-start transaction from the initial callback', () async {
     final pending = PendingAuthorization(
       authorizationUri: Uri(
@@ -120,7 +159,7 @@ void main() {
         'dakit://oauth/callback?code=cold-code&state=persisted-state',
       ),
     );
-    final pendingStore = MemoryPendingStore(pending);
+    final pendingStore = MemoryPendingStore(value: pending);
     final tokenStore = MemoryTokenStore();
     final endpoint = FakeOAuthEndpoint();
     final coordinator = buildCoordinator(
@@ -212,7 +251,7 @@ void main() {
         codeVerifier: 'persisted-verifier',
         createdAt: DateTime.utc(2026, 8, 20, 11, 59),
       );
-      final pendingStore = MemoryPendingStore(pending);
+      final pendingStore = MemoryPendingStore(value: pending);
       final coordinator = buildCoordinator(
         config: config,
         callbacks: FakeCallbackSource(),
@@ -288,12 +327,22 @@ final class FakeLauncher implements ExternalUriLauncher {
 }
 
 final class MemoryPendingStore implements PendingAuthorizationStore {
-  MemoryPendingStore([this.value]);
+  MemoryPendingStore({this.value, this.failClear = false});
 
   PendingAuthorization? value;
+  final bool failClear;
 
   @override
-  Future<void> clear() async => value = null;
+  Future<void> clear() async {
+    if (failClear) {
+      throw const DAKitException(
+        kind: DAKitFailureKind.storage,
+        code: 'pending_authorization_store.clear_failed',
+        message: 'Unable to clear pending authorization.',
+      );
+    }
+    value = null;
+  }
 
   @override
   Future<PendingAuthorization?> read() async => value;

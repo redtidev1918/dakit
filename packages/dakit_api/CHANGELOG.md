@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.23
+
+### Fixed
+
+- Treat the saved OAuth token as the login commit point. Failure to remove an
+  obsolete pending-PKCE Keychain item is now a cleanup warning and can no
+  longer turn a successful token exchange into a failed login that users must
+  repeat.
+
 ## 0.1.22
 
 ### Fixed
