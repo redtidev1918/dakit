@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.24
+
+### Fixed
+
+- Skip the encrypted pending-authorization store during ordinary cold starts
+  that contain no OAuth callback. This prevents an unavailable or slow
+  platform key store from delaying startup when there is no login to resume.
+
 ## 0.1.23
 
 ### Fixed

@@ -266,6 +266,7 @@ void main() {
 
       expect(result, isNull);
       expect(pendingStore.value, same(pending));
+      expect(pendingStore.readCount, 0);
       expect(coordinator.isAuthorizing, isFalse);
     },
   );
@@ -331,6 +332,7 @@ final class MemoryPendingStore implements PendingAuthorizationStore {
 
   PendingAuthorization? value;
   final bool failClear;
+  int readCount = 0;
 
   @override
   Future<void> clear() async {
@@ -345,7 +347,10 @@ final class MemoryPendingStore implements PendingAuthorizationStore {
   }
 
   @override
-  Future<PendingAuthorization?> read() async => value;
+  Future<PendingAuthorization?> read() async {
+    readCount += 1;
+    return value;
+  }
 
   @override
   Future<void> write(PendingAuthorization pending) async => value = pending;

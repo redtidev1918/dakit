@@ -80,8 +80,6 @@ final class OAuthAuthorizationCoordinator {
   /// Returns `null` when there is nothing to resume. Hosts should call this as
   /// early as practical after constructing their callback source.
   Future<AuthTokens?> resumePending({bool waitForCallback = false}) async {
-    final pending = await _pendingStore.read();
-    if (pending == null) return null;
     Uri? initialCallback;
     if (_callbacks case final InitialCallbackUriSource initialSource) {
       final initial = await initialSource.initialUri();
@@ -89,7 +87,13 @@ final class OAuthAuthorizationCoordinator {
         initialCallback = initial;
       }
     }
+    // A normal cold start has no OAuth callback to resume. Avoid touching the
+    // encrypted pending store in that path: platform key stores may prompt,
+    // fail, or take seconds to become available even though no recovery work
+    // is needed.
     if (initialCallback == null && !waitForCallback) return null;
+    final pending = await _pendingStore.read();
+    if (pending == null) return null;
     return _singleFlight(
       () => _complete(pending, initialCallback: initialCallback),
     );
