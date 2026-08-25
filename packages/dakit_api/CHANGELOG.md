@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.25
+
+### Fixed
+
+- Treat persisted PKCE state as optional recovery support during a live OAuth
+  flow. A temporarily unavailable platform key store can no longer prevent the
+  browser from opening, turn cancellation into an error, or override the real
+  callback/timeout result.
+- If cold-start PKCE recovery storage is unreadable, return to a clean signed-
+  out state so the host can offer a fresh authorization instead of exposing a
+  secure-storage implementation error.
+
 ## 0.1.24
 
 ### Fixed

@@ -92,7 +92,18 @@ final class OAuthAuthorizationCoordinator {
     // fail, or take seconds to become available even though no recovery work
     // is needed.
     if (initialCallback == null && !waitForCallback) return null;
-    final pending = await _pendingStore.read();
+    PendingAuthorization? pending;
+    try {
+      pending = await _pendingStore.read();
+    } on Object catch (error) {
+      _recordDeferredStorageFailure(
+        code: 'oauth.pending_recovery.unavailable',
+        message:
+            'The callback cannot be resumed because persisted PKCE state is unavailable.',
+        error: error,
+      );
+      return null;
+    }
     if (pending == null) return null;
     return _singleFlight(
       () => _complete(pending, initialCallback: initialCallback),
@@ -105,7 +116,10 @@ final class OAuthAuthorizationCoordinator {
     if (cancellation != null && !cancellation.isCompleted) {
       cancellation.complete();
     }
-    await _pendingStore.clear();
+    await _clearPendingBestEffort(
+      code: 'oauth.pending_cleanup.deferred',
+      message: 'The cancelled PKCE transaction could not be removed.',
+    );
     _record(
       DiagnosticStage.oauthCallback,
       DiagnosticLevel.info,
@@ -138,7 +152,21 @@ final class OAuthAuthorizationCoordinator {
 
   Future<AuthTokens> _start() async {
     final pending = _flow.start(config, now: _now().toUtc());
-    await _pendingStore.write(pending);
+    try {
+      await _pendingStore.write(pending);
+    } on Object catch (error) {
+      // Persisting PKCE state is recovery support, not a prerequisite for the
+      // live browser flow: [pending] remains in memory until the callback is
+      // handled. Platform key stores can be temporarily unavailable (notably
+      // after an unsigned macOS app changes its code requirement), and that
+      // must not prevent an otherwise valid same-process login.
+      _recordDeferredStorageFailure(
+        code: 'oauth.pending_persistence.unavailable',
+        message:
+            'The PKCE transaction is continuing in memory because recovery storage is unavailable.',
+        error: error,
+      );
+    }
     _record(
       DiagnosticStage.oauthLaunch,
       DiagnosticLevel.info,
@@ -158,7 +186,11 @@ final class OAuthAuthorizationCoordinator {
             'The authorization request was handed to the system browser.',
           );
         } on Object catch (error) {
-          await _pendingStore.clear();
+          await _clearPendingBestEffort(
+            code: 'oauth.pending_cleanup.deferred',
+            message:
+                'The PKCE transaction could not be removed after the browser failed to open.',
+          );
           if (error is DAKitException) rethrow;
           throw DAKitException(
             kind: DAKitFailureKind.authentication,
@@ -178,7 +210,10 @@ final class OAuthAuthorizationCoordinator {
   }) async {
     final age = _now().toUtc().difference(pending.createdAt);
     if (age >= timeout) {
-      await _pendingStore.clear();
+      await _clearPendingBestEffort(
+        code: 'oauth.pending_cleanup.deferred',
+        message: 'The expired PKCE transaction could not be removed.',
+      );
       throw const DAKitException(
         kind: DAKitFailureKind.authentication,
         code: 'oauth.callback.expired',
@@ -252,19 +287,14 @@ final class OAuthAuthorizationCoordinator {
         await _session.logout();
         throw _cancelledAuthorization();
       }
-      try {
-        await _pendingStore.clear();
-      } on Object {
-        // The token save above is the transaction commit point. Failure to
-        // delete obsolete PKCE recovery data must not roll back a completed
-        // login or force the user through the browser a second time.
-        _record(
-          DiagnosticStage.storage,
-          DiagnosticLevel.warning,
-          'oauth.pending_cleanup.deferred',
-          'The authorized session was saved; obsolete pending state could not be removed.',
-        );
-      }
+      // The token save above is the transaction commit point. Failure to
+      // delete obsolete PKCE recovery data must not roll back a completed
+      // login or force the user through the browser a second time.
+      await _clearPendingBestEffort(
+        code: 'oauth.pending_cleanup.deferred',
+        message:
+            'The authorized session was saved; obsolete pending state could not be removed.',
+      );
       _record(
         DiagnosticStage.storage,
         DiagnosticLevel.info,
@@ -273,7 +303,10 @@ final class OAuthAuthorizationCoordinator {
       );
       return tokens;
     } on TimeoutException catch (error) {
-      await _pendingStore.clear();
+      await _clearPendingBestEffort(
+        code: 'oauth.pending_cleanup.deferred',
+        message: 'The timed-out PKCE transaction could not be removed.',
+      );
       final failure = DAKitException(
         kind: DAKitFailureKind.authentication,
         code: 'oauth.callback.timeout',
@@ -341,6 +374,38 @@ final class OAuthAuthorizationCoordinator {
     if (expectedGeneration != _authorizationGeneration) {
       throw _cancelledAuthorization();
     }
+  }
+
+  Future<void> _clearPendingBestEffort({
+    required String code,
+    required String message,
+  }) async {
+    try {
+      await _pendingStore.clear();
+    } on Object catch (error) {
+      _recordDeferredStorageFailure(
+        code: code,
+        message: message,
+        error: error,
+      );
+    }
+  }
+
+  void _recordDeferredStorageFailure({
+    required String code,
+    required String message,
+    required Object error,
+  }) {
+    _record(
+      DiagnosticStage.storage,
+      DiagnosticLevel.warning,
+      code,
+      message,
+      attributes: <String, Object?>{
+        'failure_code': error is DAKitException ? error.code : 'unexpected',
+        if (error is DAKitException) ...error.details,
+      },
+    );
   }
 
   static DAKitException _cancelledAuthorization() => const DAKitException(

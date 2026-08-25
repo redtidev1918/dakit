@@ -143,6 +143,92 @@ void main() {
     );
   });
 
+  test('pending persistence failure cannot block a live login', () async {
+    final callbacks = FakeCallbackSource();
+    final pendingStore = MemoryPendingStore(failWrite: true);
+    final tokenStore = MemoryTokenStore();
+    final diagnostics = MemoryDiagnostics();
+    final coordinator = buildCoordinator(
+      config: config,
+      callbacks: callbacks,
+      pendingStore: pendingStore,
+      tokenStore: tokenStore,
+      endpoint: FakeOAuthEndpoint(),
+      launcher: FakeLauncher((authorizationUri) async {
+        callbacks.add(
+          config.redirectUri.replace(
+            queryParameters: <String, String>{
+              'code': 'authorization-code',
+              'state': authorizationUri.queryParameters['state']!,
+            },
+          ),
+        );
+      }),
+      diagnostics: diagnostics,
+      now: now,
+    );
+
+    final tokens = await coordinator.authorize();
+
+    expect(tokens.accessToken, 'access');
+    expect(tokenStore.value?.accessToken, 'access');
+    expect(pendingStore.value, isNull);
+    expect(
+      diagnostics.events.map((event) => event.code),
+      contains('oauth.pending_persistence.unavailable'),
+    );
+  });
+
+  test('pending cleanup failure cannot block cancellation or retry', () async {
+    final callbacks = FakeCallbackSource();
+    final pendingStore = MemoryPendingStore(failClear: true);
+    final launched = Completer<void>();
+    var launches = 0;
+    final coordinator = buildCoordinator(
+      config: config,
+      callbacks: callbacks,
+      pendingStore: pendingStore,
+      tokenStore: MemoryTokenStore(),
+      endpoint: FakeOAuthEndpoint(),
+      launcher: FakeLauncher((authorizationUri) async {
+        launches += 1;
+        if (launches == 1) {
+          launched.complete();
+          return;
+        }
+        callbacks.add(
+          config.redirectUri.replace(
+            queryParameters: <String, String>{
+              'code': 'retry-code',
+              'state': authorizationUri.queryParameters['state']!,
+            },
+          ),
+        );
+      }),
+      now: now,
+    );
+
+    final authorization = coordinator.authorize();
+    await launched.future;
+    await coordinator.cancelPending();
+
+    await expectLater(
+      authorization,
+      throwsA(
+        isA<DAKitException>().having(
+          (error) => error.code,
+          'code',
+          'oauth.transaction.cancelled',
+        ),
+      ),
+    );
+    expect(coordinator.isAuthorizing, isFalse);
+
+    final retried = await coordinator.authorize();
+    expect(retried.accessToken, 'access');
+    expect(launches, 2);
+  });
+
   test('resumes a cold-start transaction from the initial callback', () async {
     final pending = PendingAuthorization(
       authorizationUri: Uri(
@@ -270,6 +356,32 @@ void main() {
       expect(coordinator.isAuthorizing, isFalse);
     },
   );
+
+  test('unreadable cold-start recovery returns to a clean retry state', () async {
+    final pendingStore = MemoryPendingStore(failRead: true);
+    final diagnostics = MemoryDiagnostics();
+    final coordinator = buildCoordinator(
+      config: config,
+      callbacks: FakeCallbackSource(
+        initial: Uri.parse(
+          'dakit://oauth/callback?code=cold-code&state=unknown',
+        ),
+      ),
+      pendingStore: pendingStore,
+      tokenStore: MemoryTokenStore(),
+      endpoint: FakeOAuthEndpoint(),
+      launcher: FakeLauncher((_) async {}),
+      diagnostics: diagnostics,
+      now: now,
+    );
+
+    expect(await coordinator.resumePending(), isNull);
+    expect(coordinator.isAuthorizing, isFalse);
+    expect(
+      diagnostics.events.map((event) => event.code),
+      contains('oauth.pending_recovery.unavailable'),
+    );
+  });
 }
 
 OAuthAuthorizationCoordinator buildCoordinator({
@@ -328,10 +440,17 @@ final class FakeLauncher implements ExternalUriLauncher {
 }
 
 final class MemoryPendingStore implements PendingAuthorizationStore {
-  MemoryPendingStore({this.value, this.failClear = false});
+  MemoryPendingStore({
+    this.value,
+    this.failClear = false,
+    this.failRead = false,
+    this.failWrite = false,
+  });
 
   PendingAuthorization? value;
   final bool failClear;
+  final bool failRead;
+  final bool failWrite;
   int readCount = 0;
 
   @override
@@ -349,11 +468,27 @@ final class MemoryPendingStore implements PendingAuthorizationStore {
   @override
   Future<PendingAuthorization?> read() async {
     readCount += 1;
+    if (failRead) {
+      throw const DAKitException(
+        kind: DAKitFailureKind.storage,
+        code: 'pending_authorization_store.read_failed',
+        message: 'Unable to read pending authorization.',
+      );
+    }
     return value;
   }
 
   @override
-  Future<void> write(PendingAuthorization pending) async => value = pending;
+  Future<void> write(PendingAuthorization pending) async {
+    if (failWrite) {
+      throw const DAKitException(
+        kind: DAKitFailureKind.storage,
+        code: 'pending_authorization_store.write_failed',
+        message: 'Unable to write pending authorization.',
+      );
+    }
+    value = pending;
+  }
 }
 
 final class MemoryTokenStore implements TokenStore {
