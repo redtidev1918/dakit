@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.10
+
+### Fixed
+
+- `clientSecureStorage` disables Android `resetOnError`: the plugin default
+  deletes a stored value on any decryption failure, which silently wiped the
+  OAuth token after a restart and forced a re-login. The token now survives a
+  transient Keystore/decrypt error and the next launch retries the read.
+
 ## 0.1.9
 
 ### Fixed

@@ -15,6 +15,13 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 /// profile or Keychain Sharing entitlement.
 FlutterSecureStorage clientSecureStorage({required String serviceName}) {
   return FlutterSecureStorage(
+    aOptions: AndroidOptions(
+      // A transient Keystore/decrypt failure must never wipe the session.
+      // The plugin default resetOnError=true deletes the stored value on any
+      // decryption error, which silently signs the user out after a restart.
+      // With false the token survives; the next launch retries the read.
+      resetOnError: false,
+    ),
     mOptions: MacOsOptions(
       accountName: serviceName,
       label: serviceName,
