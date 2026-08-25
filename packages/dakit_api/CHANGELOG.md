@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.22
+
+### Fixed
+
+- Always leave the internal logout state even when Keychain/token deletion
+  fails. A subsequent browser authorization can now save its replacement token
+  instead of being rejected as `oauth.session.changed` on every attempt.
+
 ## 0.1.21
 
 ### Fixed

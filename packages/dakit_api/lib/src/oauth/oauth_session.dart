@@ -93,8 +93,14 @@ final class OAuthSession implements AuthTokenProvider {
         await _tokenClient.revoke(config: config, current: current);
       }
     } finally {
-      await _store.clear();
-      _loggingOut = false;
+      try {
+        await _store.clear();
+      } finally {
+        // A Keychain/storage deletion error must not poison the session
+        // object forever. A later authorization still needs to save its new
+        // token even when cleanup of an old item was denied by the OS.
+        _loggingOut = false;
+      }
     }
   }
 

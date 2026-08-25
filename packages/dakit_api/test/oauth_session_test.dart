@@ -250,6 +250,36 @@ void main() {
     expect(endpoint.forms.single['token'], 'refresh');
     expect(endpoint.forms.single['revoke_refresh_only'], 'true');
   });
+
+  test('failed token deletion cannot poison the next authorization', () async {
+    final store = FailingClearTokenStore(
+      AuthTokens(
+        accessToken: 'old-access',
+        tokenType: 'Bearer',
+        expiresAt: now.add(const Duration(hours: 1)),
+      ),
+    );
+    final session = OAuthSession(
+      config: config,
+      store: store,
+      tokenClient: OAuthTokenClient(
+        endpoint: FakeOAuthEndpoint(const <Map<String, Object?>>[]),
+        now: () => now,
+      ),
+      now: () => now,
+    );
+
+    await expectLater(session.logout(revoke: false), throwsStateError);
+    final replacement = AuthTokens(
+      accessToken: 'replacement',
+      tokenType: 'Bearer',
+      expiresAt: now.add(const Duration(hours: 2)),
+    );
+    await session.save(replacement);
+
+    expect(store.value?.accessToken, 'replacement');
+    expect((await session.validTokens()).accessToken, 'replacement');
+  });
 }
 
 final class FakeOAuthEndpoint implements OAuthEndpoint {
@@ -319,4 +349,11 @@ final class MemoryTokenStore implements TokenStore {
 
   @override
   Future<void> write(AuthTokens tokens) async => value = tokens;
+}
+
+final class FailingClearTokenStore extends MemoryTokenStore {
+  FailingClearTokenStore(super.value);
+
+  @override
+  Future<void> clear() => throw StateError('keychain denied deletion');
 }
