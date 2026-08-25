@@ -103,6 +103,52 @@ void main() {
     expect(refreshed.scopes, const <String>{'basic', 'browse', 'user'});
   });
 
+  test('invalid refresh clears tokens and notifies the host', () async {
+    final store = MemoryTokenStore(
+      AuthTokens(
+        accessToken: 'old-access',
+        tokenType: 'Bearer',
+        refreshToken: 'invalid-refresh',
+        expiresAt: now.subtract(const Duration(minutes: 1)),
+      ),
+    );
+    final session = OAuthSession(
+      config: config,
+      store: store,
+      tokenClient: OAuthTokenClient(
+        endpoint: InvalidRefreshEndpoint(),
+        now: () => now,
+      ),
+      now: () => now,
+    );
+    final invalidation = session.invalidations.first;
+
+    await expectLater(
+      session.validTokens(),
+      throwsA(
+        isA<DAKitException>().having(
+          (error) => error.code,
+          'code',
+          'oauth.refresh.invalid',
+        ),
+      ),
+    );
+
+    expect((await invalidation).code, 'oauth.refresh.invalid');
+    expect(store.value, isNull);
+    expect(session.generation, 1);
+    await expectLater(
+      session.validTokens(),
+      throwsA(
+        isA<DAKitException>().having(
+          (error) => error.code,
+          'code',
+          'oauth.session.missing',
+        ),
+      ),
+    );
+  });
+
   test('logout cannot be undone by an in-flight refresh', () async {
     final endpoint = ControlledOAuthEndpoint();
     final store = MemoryTokenStore(
@@ -246,6 +292,18 @@ final class ControlledOAuthEndpoint implements OAuthEndpoint {
     }
     return <String, Object?>{'success': true};
   }
+}
+
+final class InvalidRefreshEndpoint implements OAuthEndpoint {
+  @override
+  Future<Map<String, Object?>> postForm(
+    Uri endpoint,
+    Map<String, String> form,
+  ) => throw const DAKitException(
+    kind: DAKitFailureKind.authentication,
+    code: 'oauth.refresh.invalid',
+    message: 'The refresh token is invalid.',
+  );
 }
 
 final class MemoryTokenStore implements TokenStore {

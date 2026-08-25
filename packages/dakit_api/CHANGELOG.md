@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.21
+
+### Fixed
+
+- `OAuthSession` now clears unusable local credentials after a definitive
+  refresh rejection and emits `invalidations`. Hosts can leave authenticated UI
+  immediately even when a slow refresh completed after their startup timeout.
+
 ## 0.1.20
 
 ### Fixed

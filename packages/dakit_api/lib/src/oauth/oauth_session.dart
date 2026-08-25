@@ -22,6 +22,8 @@ final class OAuthSession implements AuthTokenProvider {
   final DateTime Function() _now;
   Future<AuthTokens>? _activeRefresh;
   Future<void>? _activeLogout;
+  final StreamController<DAKitException> _invalidations =
+      StreamController<DAKitException>.broadcast();
   int _generation = 0;
   bool _loggingOut = false;
 
@@ -30,6 +32,11 @@ final class OAuthSession implements AuthTokenProvider {
   /// Authorization coordinators capture this value before opening a browser
   /// so a logout cannot be undone by a late token exchange.
   int get generation => _generation;
+
+  /// Emits when the provider definitively rejects the stored refresh token.
+  /// Hosts should leave authenticated UI immediately; the unusable local token
+  /// has already been cleared before this event is delivered.
+  Stream<DAKitException> get invalidations => _invalidations.stream;
 
   @override
   Future<AuthTokens> validTokens({bool forceRefresh = false}) async {
@@ -117,10 +124,15 @@ final class OAuthSession implements AuthTokenProvider {
     AuthTokens current,
     int expectedGeneration,
   ) async {
-    final updated = await _tokenClient.refresh(
-      config: config,
-      current: current,
-    );
+    late final AuthTokens updated;
+    try {
+      updated = await _tokenClient.refresh(config: config, current: current);
+    } on DAKitException catch (error) {
+      if (error.code == 'oauth.refresh.invalid') {
+        await _invalidateRefreshToken(error, expectedGeneration);
+      }
+      rethrow;
+    }
     _ensureUsable(expectedGeneration);
     await _store.write(updated);
     if (_loggingOut || expectedGeneration != _generation) {
@@ -128,6 +140,21 @@ final class OAuthSession implements AuthTokenProvider {
       throw _changedSession();
     }
     return updated;
+  }
+
+  Future<void> _invalidateRefreshToken(
+    DAKitException error,
+    int expectedGeneration,
+  ) async {
+    if (_loggingOut || expectedGeneration != _generation) return;
+    _generation += 1;
+    try {
+      await _store.clear();
+    } on Object {
+      // Keep the authoritative provider error. A host can still leave its
+      // authenticated UI, and the next storage read will retry the clear path.
+    }
+    _invalidations.add(error);
   }
 
   void _ensureUsable(int expectedGeneration) {
