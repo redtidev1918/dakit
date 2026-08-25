@@ -22,15 +22,16 @@ If the developer console gave you a `client_secret`, that app registration is Co
 ## Full Lifecycle
 
 1. Generate a random `state`, a PKCE verifier, and an S256 challenge;
-2. Write the pending transaction to platform secure storage;
+2. Try to persist the pending transaction for recovery after process death;
 3. Subscribe to deep links before opening the system browser;
 4. The OS hands the exact callback URI back to the app;
 5. Validate the scheme, host, path, expiry, and `state`;
 6. Exchange the authorization code using the original verifier, without sending a secret;
-7. Securely store the access/refresh tokens and delete the pending transaction;
+7. Securely store the access/refresh tokens (the login commit point), then
+   remove the pending transaction on a best-effort basis;
 8. Coordinate concurrent refreshes through a single session to avoid multiple simultaneous 401 refreshes.
 
-The app should create `DAKitOAuthClient` early in startup, call `resumePending()` first, then show the UI. Call `authorize()` when the user explicitly taps log in. Concurrent authorization calls are merged into a single operation.
+The app should create `DAKitOAuthClient` early in startup, call `resumePending()` first, then show the UI. Call `authorize()` when the user explicitly taps log in. Concurrent authorization calls are merged into a single operation. Pending-transaction persistence exists only for cold-start recovery: if the platform credential store is temporarily unavailable, the PKCE data held by the current process can still complete the login, and failure to remove stale recovery data cannot roll back saved tokens. If the process was terminated and recovery data is unreadable, `resumePending()` returns `null`; the host should return to signed-out state and offer a fresh authorization.
 
 ## Secure Storage
 
@@ -58,7 +59,8 @@ A custom scheme is easy to integrate, but any other app can try to initiate the 
 | callback state/redirect error | callback does not belong to the current transaction | do not reuse old links; clean up the old flow and retry |
 | `oauth.provider.invalid_client` | provider does not accept the app identity | Public type, correct client ID, exact redirect; do not use a Confidential secret |
 | token network/timeout/TLS | token endpoint not reachable | run the staged check and confirm the in-app network configuration |
-| storage failure | secure storage unavailable | system credential store permissions, device lock-screen settings, native state fields |
+| token storage failure | the session cannot be stored securely | system credential store permissions, device lock-screen settings, native state fields |
+| `oauth.pending_persistence.unavailable` | the current login continues but cannot survive process death | platform credential-store permissions; keep the app running |
 
 Authentication failures and network failures are not collapsed into a single vague "login failed" message. When custom presentation is needed, map to localized text using `DAKitException.kind` and the stable `code`; do not show the raw underlying exception text directly to users.
 

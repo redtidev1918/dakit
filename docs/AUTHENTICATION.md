@@ -22,15 +22,15 @@ Client type 取决于凭据保存位置，而不是功能多少：
 ## 完整生命周期
 
 1. 生成随机 `state`、PKCE verifier 和 S256 challenge；
-2. 将待完成事务写入平台安全存储；
+2. 尝试把待完成事务写入平台安全存储，用于进程被终止后的恢复；
 3. 先订阅深链，再打开系统浏览器；
 4. 操作系统把精确回调 URI 交还应用；
 5. 校验协议、主机、路径、有效期和 `state`；
 6. 使用原 verifier 交换授权码，不发送 secret；
-7. 安全保存 access/refresh token，并删除待完成事务；
+7. 安全保存 access/refresh token（登录提交点），再尽力删除待完成事务；
 8. 并发刷新通过单一会话协调，避免多个 401 同时刷新。
 
-应用应在启动早期创建 `DAKitOAuthClient`，先调用 `resumePending()`，再显示界面。用户主动点击登录时调用 `authorize()`。并发授权调用会合并为同一个操作。
+应用应在启动早期创建 `DAKitOAuthClient`，先调用 `resumePending()`，再显示界面。用户主动点击登录时调用 `authorize()`。并发授权调用会合并为同一个操作。待完成事务的持久化只负责冷启动恢复：如果平台凭据库暂时不可用，当前进程中的 PKCE 数据仍可完成这次登录；清理旧事务失败也不会推翻已经保存的 token。若进程已被终止且恢复数据不可读，`resumePending()` 返回 `null`，宿主应回到未登录状态并允许重新授权。
 
 ## 安全存储
 
@@ -58,7 +58,8 @@ macOS 会把 Keychain 条目的 `kSecAttrService` 名直接显示在「…想要
 | callback state/redirect 错误 | 回调不属于当前事务 | 不要复用旧链接；清理旧流程后重试 |
 | `oauth.provider.invalid_client` | provider 不接受应用身份 | Public 类型、正确 client ID、精确 redirect；不要使用 Confidential secret |
 | token network/timeout/TLS | token endpoint 未连通 | 运行分阶段检查，确认应用内网络配置 |
-| storage failure | 安全存储不可用 | 系统凭据库权限、设备锁屏设置、原生状态字段 |
+| token storage failure | 会话无法安全保存 | 系统凭据库权限、设备锁屏设置、原生状态字段 |
+| `oauth.pending_persistence.unavailable` | 当前登录继续，但无法在进程终止后恢复 | 平台凭据库权限；不要中途关闭应用 |
 
 认证故障和网络故障不会合并成“登录失败”一个模糊提示。需要自定义展示时，以 `DAKitException.kind` 与稳定 `code` 做本地化映射，不要向用户直接展示底层异常全文。
 
@@ -94,4 +95,3 @@ DeviantArt 的网页登录态和 OAuth 是两套凭据。若客户端内嵌了�
    ——不要用顺序 `yield*`，app-links 流永不关闭，会饿死 WebView 回调；
 4. 用户可能只在网页里登录而没有 OAuth token，或反之。宿主应把这两条状态向用户
    清晰呈现，或引导用户完成缺失的一步。
-
