@@ -357,31 +357,34 @@ void main() {
     },
   );
 
-  test('unreadable cold-start recovery returns to a clean retry state', () async {
-    final pendingStore = MemoryPendingStore(failRead: true);
-    final diagnostics = MemoryDiagnostics();
-    final coordinator = buildCoordinator(
-      config: config,
-      callbacks: FakeCallbackSource(
-        initial: Uri.parse(
-          'dakit://oauth/callback?code=cold-code&state=unknown',
+  test(
+    'unreadable cold-start recovery returns to a clean retry state',
+    () async {
+      final pendingStore = MemoryPendingStore(failRead: true);
+      final diagnostics = MemoryDiagnostics();
+      final coordinator = buildCoordinator(
+        config: config,
+        callbacks: FakeCallbackSource(
+          initial: Uri.parse(
+            'dakit://oauth/callback?code=cold-code&state=unknown',
+          ),
         ),
-      ),
-      pendingStore: pendingStore,
-      tokenStore: MemoryTokenStore(),
-      endpoint: FakeOAuthEndpoint(),
-      launcher: FakeLauncher((_) async {}),
-      diagnostics: diagnostics,
-      now: now,
-    );
+        pendingStore: pendingStore,
+        tokenStore: MemoryTokenStore(),
+        endpoint: FakeOAuthEndpoint(),
+        launcher: FakeLauncher((_) async {}),
+        diagnostics: diagnostics,
+        now: now,
+      );
 
-    expect(await coordinator.resumePending(), isNull);
-    expect(coordinator.isAuthorizing, isFalse);
-    expect(
-      diagnostics.events.map((event) => event.code),
-      contains('oauth.pending_recovery.unavailable'),
-    );
-  });
+      expect(await coordinator.resumePending(), isNull);
+      expect(coordinator.isAuthorizing, isFalse);
+      expect(
+        diagnostics.events.map((event) => event.code),
+        contains('oauth.pending_recovery.unavailable'),
+      );
+    },
+  );
 }
 
 OAuthAuthorizationCoordinator buildCoordinator({

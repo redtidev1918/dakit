@@ -98,15 +98,15 @@ final class OAuthAuthorizationCoordinator {
     } on Object catch (error) {
       _recordDeferredStorageFailure(
         code: 'oauth.pending_recovery.unavailable',
-        message:
-            'The callback cannot be resumed because persisted PKCE state is unavailable.',
+        message: 'The callback cannot be resumed because persisted PKCE state is unavailable.',
         error: error,
       );
       return null;
     }
-    if (pending == null) return null;
+    final recovered = pending;
+    if (recovered == null) return null;
     return _singleFlight(
-      () => _complete(pending, initialCallback: initialCallback),
+      () => _complete(recovered, initialCallback: initialCallback),
     );
   }
 
@@ -162,8 +162,7 @@ final class OAuthAuthorizationCoordinator {
       // must not prevent an otherwise valid same-process login.
       _recordDeferredStorageFailure(
         code: 'oauth.pending_persistence.unavailable',
-        message:
-            'The PKCE transaction is continuing in memory because recovery storage is unavailable.',
+        message: 'The PKCE transaction is continuing in memory because recovery storage is unavailable.',
         error: error,
       );
     }
@@ -188,8 +187,7 @@ final class OAuthAuthorizationCoordinator {
         } on Object catch (error) {
           await _clearPendingBestEffort(
             code: 'oauth.pending_cleanup.deferred',
-            message:
-                'The PKCE transaction could not be removed after the browser failed to open.',
+            message: 'The PKCE transaction could not be removed after the browser failed to open.',
           );
           if (error is DAKitException) rethrow;
           throw DAKitException(
@@ -292,8 +290,7 @@ final class OAuthAuthorizationCoordinator {
       // login or force the user through the browser a second time.
       await _clearPendingBestEffort(
         code: 'oauth.pending_cleanup.deferred',
-        message:
-            'The authorized session was saved; obsolete pending state could not be removed.',
+        message: 'The authorized session was saved; obsolete pending state could not be removed.',
       );
       _record(
         DiagnosticStage.storage,
@@ -383,11 +380,7 @@ final class OAuthAuthorizationCoordinator {
     try {
       await _pendingStore.clear();
     } on Object catch (error) {
-      _recordDeferredStorageFailure(
-        code: code,
-        message: message,
-        error: error,
-      );
+      _recordDeferredStorageFailure(code: code, message: message, error: error);
     }
   }
 
