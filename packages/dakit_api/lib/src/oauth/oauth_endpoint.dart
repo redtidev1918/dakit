@@ -95,9 +95,16 @@ final class DioOAuthEndpoint implements OAuthEndpoint {
           ? responseData['error_description']
           : null;
       final description = rawDescription is String ? rawDescription : null;
+      final invalidRefreshToken = _isInvalidRefreshTokenResponse(
+        form: form,
+        provider: provider,
+        description: description,
+      );
       final failure = DAKitException(
         kind: DAKitFailureKind.authentication,
-        code: provider == null
+        code: invalidRefreshToken
+            ? 'oauth.refresh.invalid'
+            : provider == null
             ? 'oauth.http.failed'
             : 'oauth.provider.$provider',
         message: description ?? 'The OAuth endpoint request failed.',
@@ -149,6 +156,26 @@ final class DioOAuthEndpoint implements OAuthEndpoint {
           error.type != DioExceptionType.cancel,
       cause: error,
     );
+  }
+
+  /// DeviantArt currently reports an expired/revoked refresh token as
+  /// `invalid_request` with "The refresh_token is invalid" instead of the
+  /// RFC-standard `invalid_grant`. Normalize both responses so hosts can clear
+  /// unusable credentials instead of treating them as a transient outage.
+  static bool _isInvalidRefreshTokenResponse({
+    required Map<String, String> form,
+    required String? provider,
+    required String? description,
+  }) {
+    if (form['grant_type'] != 'refresh_token') return false;
+    if (provider == 'invalid_grant') return true;
+    if (provider != 'invalid_request' || description == null) return false;
+    final normalized = description
+        .replaceAll('_', ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .toLowerCase();
+    return normalized.contains('refresh token') &&
+        (normalized.contains('invalid') || normalized.contains('revoked'));
   }
 
   static String _boundedDescription(String value) {

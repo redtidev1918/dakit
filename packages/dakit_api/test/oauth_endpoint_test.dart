@@ -118,6 +118,85 @@ void main() {
     );
   });
 
+  test('normalizes DeviantArt invalid_request for a bad refresh token', () {
+    final dio = Dio();
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) => handler.reject(
+          DioException.badResponse(
+            statusCode: 400,
+            requestOptions: options,
+            response: Response<Object?>(
+              requestOptions: options,
+              statusCode: 400,
+              data: <String, Object?>{
+                'error': 'invalid_request',
+                'error_description': 'The refresh_token is invalid.',
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      () => DioOAuthEndpoint(dio: dio).postForm(endpoint, const {
+        'grant_type': 'refresh_token',
+        'refresh_token': 'expired',
+      }),
+      throwsA(
+        isA<DAKitException>()
+            .having(
+              (error) => error.kind,
+              'kind',
+              DAKitFailureKind.authentication,
+            )
+            .having((error) => error.code, 'code', 'oauth.refresh.invalid')
+            .having(
+              (error) => error.details['provider_error'],
+              'original provider error',
+              'invalid_request',
+            ),
+      ),
+    );
+  });
+
+  test('does not normalize invalid_request during code exchange', () {
+    final dio = Dio();
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) => handler.reject(
+          DioException.badResponse(
+            statusCode: 400,
+            requestOptions: options,
+            response: Response<Object?>(
+              requestOptions: options,
+              statusCode: 400,
+              data: <String, Object?>{
+                'error': 'invalid_request',
+                'error_description': 'The authorization code is invalid.',
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      () => DioOAuthEndpoint(dio: dio).postForm(endpoint, const {
+        'grant_type': 'authorization_code',
+        'code': 'expired',
+      }),
+      throwsA(
+        isA<DAKitException>().having(
+          (error) => error.code,
+          'code',
+          'oauth.provider.invalid_request',
+        ),
+      ),
+    );
+  });
+
   test('rejects ambiguous custom Dio and profile configuration', () {
     expect(
       () =>

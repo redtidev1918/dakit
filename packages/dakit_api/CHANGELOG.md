@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.20
+
+### Fixed
+
+- Normalize DeviantArt's non-standard `invalid_request` response for an
+  invalid refresh token to `oauth.refresh.invalid`. Clients can now clear a
+  revoked session instead of misclassifying it as a temporary outage and
+  retrying authenticated endpoints indefinitely.
+
 ## 0.1.19
 
 ### Added
