@@ -1,6 +1,10 @@
 # dakit_cli
 
-A pure-Dart command-line client for DAKit: sign in with the official OAuth API and download single deviations, artist galleries, folders, favourites, or search results, plus account and connectivity diagnostics. It uses the official API (not web cookies/scraping), so it only exposes what the official API supports.
+A pure-Dart command-line client for [DAKit](https://github.com/redtidev1918/dakit):
+sign in with the official OAuth API and download single deviations, artist
+galleries, folders, favourites, or search results, plus account and
+connectivity diagnostics. It uses the official API (not web cookies/scraping),
+so it only exposes what the official API supports.
 
 ## Usage
 
@@ -12,7 +16,7 @@ for every CLI tag, with checksums. Dart and Flutter are not required at runtime.
 The macOS archives are unsigned previews without Apple Developer ID signing or
 notarization.
 
-From a source checkout, the short scripts remain available:
+From a source checkout, the root launcher scripts wrap the same entry point:
 
 ```shell
 ./dakit --help
@@ -26,14 +30,19 @@ dart run packages/dakit_cli/bin/dakit.dart login --client-id YOUR_PUBLIC_CLIENT_
 dart run packages/dakit_cli/bin/dakit.dart url ARTWORK_UUID --dest downloads
 ```
 
+`devart-dl` is a compatibility alias of the same CLI, kept for long-time
+`devart-dl` users; the standalone release binary is `dakit`.
+
 Whitelist `http://127.0.0.1:8765/callback` on a Public OAuth application.
 `login` opens the system browser and receives that local callback. Use
 `--manual --no-open` only for headless systems. Credentials refresh
-automatically and are stored under `~/.config/dakit/` (Windows: `%APPDATA%`).
-Downloads stream to a `.part` file and preserve existing destinations unless
-`--overwrite` is passed. Every network command accepts `--verbose` / `-v` for
-sanitized diagnostics.
+automatically and are stored under `~/.config/dakit/` (Windows:
+`%APPDATA%/dakit/`). Downloads stream to a `.part` file and preserve existing
+destinations unless `--overwrite` is passed. Every network command accepts
+`--verbose` / `-v` for sanitized diagnostics.
 
-For the full command list and proxy notes, see the [root README](../../README.md#command-line-client).
+For the full command list and proxy notes, see the
+[root README](../../README.md#command-line-client).
 
-DAKit is a community project and is not affiliated with or endorsed by DeviantArt.
+DAKit is a community project and is not affiliated with or endorsed by
+DeviantArt. [MIT licensed](https://github.com/redtidev1918/dakit/blob/main/LICENSE).
