@@ -26,6 +26,21 @@ the SDK connects to.
 > DeviantArt abandoned its official app — and is the best example of DAKit in
 > real use.
 
+## Contents
+
+- [What it can do](#what-it-can-do)
+- [Before you start](#before-you-start)
+- [Package layout](#package-layout)
+- [Install](#install)
+- [Command-line client](#command-line-client)
+- [Minimal example](#minimal-example)
+- [Documentation](#documentation)
+- [Development](#development)
+- [Design principles](#design-principles)
+- [License](#license)
+- [References & acknowledgements](#references--acknowledgements)
+- [Community](#community)
+
 ## What it can do
 
 - Sign in with Authorization Code + PKCE through the system browser;
@@ -180,16 +195,24 @@ startup and call `resumePending()` to receive cold-start deep links.
 
 ## Documentation
 
+Start with the docs overview: [English index](docs/en/README.md) ·
+[中文索引](docs/README.md).
+
+**User guide** (embedding DAKit in your own app):
+
 - [Getting started](docs/en/GETTING_STARTED.md): register an app, run the sample,
   embed the client;
-- [Architecture](docs/en/ARCHITECTURE.md): boundaries, extension points,
-  compatibility policy;
 - [Authentication](docs/en/AUTHENTICATION.md): PKCE, platform callbacks,
   security, troubleshooting;
 - [Networking](docs/en/NETWORKING.md): proxy model, mainland China networking,
   staged diagnostics;
 - [Media](docs/en/MEDIA.md): original files, text, background tasks, acceptance
-  boundaries;
+  boundaries.
+
+**Development & maintenance** (for contributors and maintainers):
+
+- [Architecture](docs/en/ARCHITECTURE.md): boundaries, extension points,
+  compatibility policy;
 - [Development](docs/en/DEVELOPMENT.md): toolchain, tests, three-platform builds,
   CI, releases;
 - [Releasing](docs/en/RELEASING.md): package versioning and pub.dev publishing;

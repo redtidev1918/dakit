@@ -18,6 +18,21 @@ DAKit 是面向 Dart 与 Flutter 的模块化 DeviantArt 客户端 SDK，为 And
 
 > **参考实现 / Reference app**：完整的第三方客户端 [DAViewer](https://github.com/redtidev1918/daviewer) 就是基于 DAKit 构建的 —— 因 DeviantArt 官方放弃其 App 而诞生，是查看 DAKit 实际用法的最佳范例。
 
+## 目录
+
+- [能做什么](#能做什么)
+- [开始前准备](#开始前准备)
+- [包结构](#包结构)
+- [安装](#安装)
+- [命令行客户端](#命令行客户端)
+- [最小示例](#最小示例)
+- [文档](#文档)
+- [开发](#开发)
+- [设计底线](#设计底线)
+- [许可证](#许可证)
+- [参考与致谢](#参考与致谢)
+- [社区 / Community](#社区--community)
+
 ## 能做什么
 
 - 使用系统浏览器完成 Authorization Code + PKCE 登录；
@@ -143,11 +158,18 @@ final account = await OfficialAccountRepository(transport).currentUser();
 
 ## 文档
 
+文档总览见 [docs/README.md](docs/README.md)（英文：[docs/en/README.md](docs/en/README.md)）。
+
+**用户指南**（把 DAKit 嵌入自己的应用）：
+
 - [开始使用](docs/GETTING_STARTED.md)：注册应用、运行示例、嵌入客户端；
-- [架构](docs/ARCHITECTURE.md)：边界、扩展点、兼容策略；
 - [认证](docs/AUTHENTICATION.md)：PKCE、平台回调、安全与排错；
 - [网络](docs/NETWORKING.md)：代理模型、国内网络、分阶段诊断；
-- [媒体](docs/MEDIA.md)：原文件、正文、后台任务与验收边界；
+- [媒体](docs/MEDIA.md)：原文件、正文、后台任务与验收边界。
+
+**开发与维护**（贡献者与维护者）：
+
+- [架构](docs/ARCHITECTURE.md)：边界、扩展点、兼容策略；
 - [开发](docs/DEVELOPMENT.md)：工具链、测试、三平台构建、CI、发布；
 - [发布](docs/RELEASING.md)：包版本更新与 pub.dev 发布流程；
 - [真实服务测试](docs/LIVE_TESTING.md)：需用户授权的完整媒体矩阵；

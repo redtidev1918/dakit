@@ -31,6 +31,9 @@ Business apps depend only on the layer they need.
 2. `dart pub get` in the workspace root.
 3. Run the quality gate: `./tool/verify.sh` (analyze + tests).
 
+Full documentation lives in [docs/](docs/README.md) (user guide and
+maintainer notes; Chinese primary, English in `docs/en/`).
+
 ## Workflow
 
 1. Fork and branch from `main`.
