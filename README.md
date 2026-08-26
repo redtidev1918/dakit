@@ -58,7 +58,8 @@ DAKit 是面向 Dart 与 Flutter 的模块化 DeviantArt 客户端 SDK，为 And
 - 回调地址必须精确写入应用的 OAuth2 Redirect URI Whitelist：
   - Flutter 示例客户端 / 桌面：`dakit://oauth/callback`
   - 命令行客户端：`http://127.0.0.1:8765/callback`
-- 登录需要 `client_id`；下载还需要一个作品 UUID（不是网页地址里的 slug/数字编号）。
+- 登录需要 `client_id`；下载可直接传作品网页链接、fav.me 短链或裸 UUID——
+  `dakit url` 会把网页链接里的数字编号自动解析为 UUID。
 
 ## 包结构
 
@@ -135,7 +136,7 @@ dakit logout
 `https_proxy` 或 HTTP 形式的 `all_proxy` 配置。`--verbose` / `-v` 会把脱敏诊断
 输出到 `stderr`。CLI 只支持 HTTP 代理，不把 SOCKS5 静默当作 HTTP 使用。
 
-下载与登录走官方 OAuth API（唯一的网页调用是用公开的 `dadeviation/init` 把网页链接里的数字编号解析成 UUID），因此不提供 `cookies.txt`、`SOCKS5` 代理、预览画质切换或“防封”策略。官方接口支持原文件下载，CLI 不会用 preview 冒充 original。
+下载与登录走官方 OAuth API（唯一的网页抓取是解析数字编号为 UUID：先读首页 CSRF 令牌，再调用公开的 `_puppy/dadeviation/init`），因此不提供 `cookies.txt`、`SOCKS5` 代理、预览画质切换或“防封”策略。官方接口支持原文件下载，CLI 不会用 preview 冒充 original。
 
 ## 最小示例
 

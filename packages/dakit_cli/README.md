@@ -5,7 +5,7 @@ sign in with the official OAuth API and download single deviations, artist
 galleries, folders, favourites, or search results, plus account and
 connectivity diagnostics. Downloads use the official API; the only web call is
 resolving numeric page ids to UUIDs through the website's public
-`dadeviation/init` endpoint, exactly as DAViewer does.
+`_puppy/dadeviation/init` endpoint, exactly as DAViewer does.
 
 ## Usage
 
@@ -52,7 +52,7 @@ destinations unless `--overwrite` is passed. Every network command accepts
 `--verbose` / `-v` for sanitized diagnostics.
 
 For the full command list and proxy notes, see the
-[root README](../../README.md#command-line-client).
+[root README](../../README.en.md#command-line-client).
 
 DAKit is a community project and is not affiliated with or endorsed by
 DeviantArt. [MIT licensed](https://github.com/redtidev1918/dakit/blob/main/LICENSE).

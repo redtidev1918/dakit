@@ -83,7 +83,7 @@ dart run msix:create --build-windows false --install-certificate false
 
 `.github/workflows/ci.yml` 在 push、pull request 和手动触发时执行：
 
-- Ubuntu：格式、分析、135 个测试；
+- Ubuntu：格式、分析、150 个测试；
 - Ubuntu：生成并上传 `coverage/lcov.info`；
 - Ubuntu/Android：debug APK；
 - macOS：debug `.app`；

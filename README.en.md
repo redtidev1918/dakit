@@ -169,8 +169,9 @@ Configure a proxy with `--proxy HOST:PORT`, `--proxy http://HOST:PORT`,
 writes redacted diagnostics to `stderr`. The CLI only supports HTTP proxies and
 does not silently treat SOCKS5 as HTTP.
 
-Downloads and sign-in use the official OAuth API (the only web call resolves
-numeric page ids to UUIDs via the public `dadeviation/init` endpoint), so the
+Downloads and sign-in use the official OAuth API (the only website scraping
+resolves numeric page ids to UUIDs: it reads the homepage CSRF token and calls
+the public `_puppy/dadeviation/init` endpoint), so the
 CLI offers no `cookies.txt`, SOCKS5 proxy, preview-quality switching, or
 "anti-ban" strategy. The official API supports original-file downloads; the
 CLI never passes a preview off as the original.

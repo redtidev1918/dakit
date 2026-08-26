@@ -69,7 +69,8 @@ DTO 不从顶层库导出。官方响应新增未知字段不应破坏解析；�
 - `cli_session.dart`：文件 token/config store、自动刷新会话、`CliContext`；
 - `cli_networking.dart`：代理解析、流式下载器、UUID/文件名工具；
 - `cli_platform.dart`：系统浏览器、loopback/粘贴回调；
-- `cli_diagnostics.dart`：`--verbose` 诊断输出。
+- `cli_diagnostics.dart`：`--verbose` 诊断输出；
+- `cli_url.dart`：DeviantArt 链接解析与目标自动识别（`parseCliUrl`）。
 
 CLI 不依赖 Flutter 插件，可编译成自包含原生二进制供终端用户直接下载。它与
 `dakit_flutter` 一样通过系统浏览器登录，不接触用户密码；macOS 二进制的签名状态

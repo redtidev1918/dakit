@@ -69,7 +69,9 @@ The command-line kit targets developer debugging, batch downloads, and scripted 
 - `cli_session.dart`: file token/config stores, refreshing sessions, `CliContext`;
 - `cli_networking.dart`: proxy parsing, streaming downloader, UUID/filename utilities;
 - `cli_platform.dart`: system browser, loopback/paste callback;
-- `cli_diagnostics.dart`: `--verbose` diagnostic output.
+- `cli_diagnostics.dart`: `--verbose` diagnostic output;
+- `cli_url.dart`: DeviantArt link parsing and target auto-detection
+  (`parseCliUrl`).
 
 The CLI uses no Flutter plugins and compiles to self-contained native binaries
 for direct end-user download. Like `dakit_flutter`, it signs in through the
