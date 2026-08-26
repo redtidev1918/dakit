@@ -169,6 +169,12 @@ final class OfficialArtworkRepository implements ArtworkRepository {
   Future<Page<Artwork>> browse(PageRequest request) =>
       _page(ApiRoutes.browseHome, request);
 
+  /// Coarse search fallback: the official API removed its dedicated search
+  /// endpoint (the legacy `browse/search` is gone), so this asks
+  /// `browse/home` with a `q` filter. It is not a full search surface — hosts
+  /// that need real results should prefer a web-session adapter (DAViewer
+  /// uses the website's own `_puppy/dabrowse/search/deviations`, as gallery-dl
+  /// does) and keep this only as the no-web-session fallback.
   @override
   Future<Page<Artwork>> search(String query, PageRequest request) {
     if (query.trim().isEmpty) {
