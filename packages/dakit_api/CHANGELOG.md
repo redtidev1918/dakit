@@ -1,6 +1,17 @@
 # Changelog
 
+## 0.1.30
+
+### Fixed
+
+- `OfficialApiClient` now applies the configured `receiveTimeout` to its Dio
+  (previously only `connectTimeout` was set, and dio's default receive
+  timeout is `null`). An API host that accepts the connection but never
+  replies — e.g. a blackholed route — previously hung the request forever;
+  it now fails with a typed, retryable timeout error.
+
 ## 0.1.29
+
 
 ### Docs
 

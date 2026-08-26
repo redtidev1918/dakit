@@ -67,7 +67,12 @@ final class OfficialApiClient implements OfficialApiMutationTransport {
     this._diagnostics,
     this._delay,
   ) {
+    // Both timeouts come from [ApiConfig]. dio's defaults are `null` (no
+    // timeout), so an API host that accepts the connection but never replies
+    // (e.g. a blackholed route) would otherwise spin forever. The receive
+    // timeout turns that into a typed, retryable failure.
     _dio.options.connectTimeout = config.connectTimeout;
+    _dio.options.receiveTimeout = config.receiveTimeout;
   }
 
   final AuthTokenProvider _session;

@@ -283,6 +283,28 @@ void main() {
       );
     },
   );
+
+  test('applies connect and receive timeouts from ApiConfig', () async {
+    final dio = Dio();
+    OfficialApiClient(
+      session: StaticTokenProvider(
+        AuthTokens(
+          accessToken: 'a',
+          tokenType: 'Bearer',
+          expiresAt: DateTime.now().add(const Duration(hours: 1)),
+        ),
+      ),
+      dio: dio,
+      config: ApiConfig(
+        connectTimeout: const Duration(seconds: 7),
+        receiveTimeout: const Duration(seconds: 11),
+      ),
+    );
+    addTearDown(dio.close);
+
+    expect(dio.options.connectTimeout, const Duration(seconds: 7));
+    expect(dio.options.receiveTimeout, const Duration(seconds: 11));
+  });
 }
 
 final class ApiHarness {

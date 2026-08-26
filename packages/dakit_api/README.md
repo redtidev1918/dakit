@@ -13,7 +13,7 @@ responses into `dakit_core` models and does **not** depend on Flutter.
 ```yaml
 dependencies:
   dakit_core: ^0.1.15
-  dakit_api: ^0.1.29
+  dakit_api: ^0.1.30
 ```
 
 ## What it covers
