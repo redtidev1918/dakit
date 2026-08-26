@@ -1,6 +1,14 @@
 # Changelog
 
+## 0.1.12
+
+### Docs
+
+- Publish pub.dev topics (`deviantart`, `deviantart-api`, `oauth`, `pkce`,
+  `downloader`, …) so the package is discoverable in pub.dev search.
+
 ## 0.1.11
+
 
 ### Docs
 
