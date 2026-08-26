@@ -106,13 +106,21 @@ dakit --help
 dakit status --proxy 127.0.0.1:7892
 dakit login --client-id 你的_PUBLIC_CLIENT_ID
 dakit whoami
-dakit url 作品UUID --dest downloads
+dakit url https://www.deviantart.com/loish/art/underwater-913624585 --dest downloads
+dakit url https://fav.me/df3y58p --dest downloads
+dakit url https://www.deviantart.com/loish/gallery --limit 50 --archive done.txt
 dakit artist 用户名 --limit 24 --delay 0
 dakit gallery 用户名 [gallery_id]
 dakit fav 用户名 [folder_id]
 dakit search "digital art" --limit 24
 dakit logout
 ```
+
+`url` 接受任意 DeviantArt 链接并自动识别目标：作品/日志页、fav.me 短链、
+用户画廊、画廊/收藏夹、标签页和搜索链接都会路由到对应的下载逻辑（网页链接里的
+数字编号会自动解析为 UUID）。批量下载还支持 `--archive 文件`（已下载 ID 跳过）、
+`--filename 模板`（`{id}` `{title}` `{username}` `{published}` `{filename}` `{ext}`）
+和 `--write-info-json`（每个作品旁写一份元数据 `.json`）。
 
 登录前在 DeviantArt 注册 **Public** OAuth 应用，把
 `http://127.0.0.1:8765/callback` 精确加入白名单。`login` 会打开系统浏览器并在
@@ -127,7 +135,7 @@ dakit logout
 `https_proxy` 或 HTTP 形式的 `all_proxy` 配置。`--verbose` / `-v` 会把脱敏诊断
 输出到 `stderr`。CLI 只支持 HTTP 代理，不把 SOCKS5 静默当作 HTTP 使用。
 
-CLI 使用官方 OAuth API，而不是网页 Cookie / 抓取，因此不提供 `cookies.txt`、`SOCKS5` 代理、预览画质切换或“防封”策略。官方接口支持原文件下载，CLI 不会用 preview 冒充 original。
+下载与登录走官方 OAuth API（唯一的网页调用是用公开的 `dadeviation/init` 把网页链接里的数字编号解析成 UUID），因此不提供 `cookies.txt`、`SOCKS5` 代理、预览画质切换或“防封”策略。官方接口支持原文件下载，CLI 不会用 preview 冒充 original。
 
 ## 最小示例
 

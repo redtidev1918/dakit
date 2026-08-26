@@ -9,6 +9,7 @@ import 'cli_diagnostics.dart';
 import 'cli_networking.dart';
 import 'cli_platform.dart';
 import 'cli_session.dart';
+import 'cli_url.dart';
 
 const _defaultScopes = 'basic,browse';
 const cliVersion = String.fromEnvironment(
@@ -20,11 +21,12 @@ DAKit command-line client
 
 Usage:
   dakit --help
-  dakit url UUID_OR_URL [--dest DIR] [--proxy HOST:PORT]
-  dakit artist USERNAME [--limit N] [--delay S] [--dest DIR]
-  dakit gallery USERNAME [GALLERY_ID] [--limit N] [--delay S]
-  dakit fav USERNAME [FOLDER_ID] [--limit N] [--delay S]
-  dakit search QUERY [--limit N] [--delay S]
+  dakit url URL_OR_UUID [--dest DIR] [--archive FILE] [--filename TEMPLATE]
+                       [--write-info-json] [--proxy HOST:PORT]
+  dakit artist USERNAME [--limit N] [--delay S] [--dest DIR] [--archive FILE]
+  dakit gallery USERNAME [GALLERY_ID] [--limit N] [--delay S] [--archive FILE]
+  dakit fav USERNAME [FOLDER_ID] [--limit N] [--delay S] [--archive FILE]
+  dakit search QUERY [--limit N] [--delay S] [--archive FILE]
   dakit home [--limit N]
   dakit recommended [--limit N]
   dakit login --client-id ID [--scopes basic,browse] [--proxy HOST:PORT]
@@ -33,6 +35,11 @@ Usage:
   dakit whoami [--proxy HOST:PORT]
   dakit status [--proxy HOST:PORT]
   dakit version
+
+`url` accepts any DeviantArt link: artwork/journal pages, fav.me short links,
+user galleries, gallery/favourites folders, tag pages, and search URLs. Batch
+commands additionally accept --filename (tokens {id} {title} {username}
+{published} {filename} {ext}) and --write-info-json (metadata sidecar).
 
 Environment:
   DAKIT_CLIENT_ID      Public OAuth client ID (login only)
@@ -154,14 +161,28 @@ ArgParser _logoutParser() => _proxyParser()
   );
 
 ArgParser _downloadParser() {
-  final parser = ArgParser()
+  return ArgParser()
     ..addFlag('help', abbr: 'h', negatable: false)
     ..addFlag('verbose', abbr: 'v', negatable: false)
     ..addOption('proxy', help: 'HTTP proxy as HOST:PORT.')
     ..addOption('dest', defaultsTo: 'downloads', help: 'Output directory.')
     ..addOption('output', help: 'Alias for --dest.')
+    ..addOption(
+      'archive',
+      help: 'File of already-downloaded IDs; re-runs skip them.',
+    )
+    ..addOption(
+      'filename',
+      help:
+          'Filename template: {id} {title} {username} {published} '
+          '{filename} {ext}.',
+    )
+    ..addFlag(
+      'write-info-json',
+      negatable: false,
+      help: 'Write a metadata .json sidecar per artwork.',
+    )
     ..addFlag('overwrite', negatable: false, help: 'Replace existing files.');
-  return parser;
 }
 
 ArgParser _batchParser() {
@@ -181,6 +202,21 @@ ArgParser _batchParser() {
       defaultsTo: 'by_author',
       allowed: <String>['by_author', 'flat'],
       help: 'File layout: by_author or flat.',
+    )
+    ..addOption(
+      'archive',
+      help: 'File of already-downloaded IDs; re-runs skip them.',
+    )
+    ..addOption(
+      'filename',
+      help:
+          'Filename template: {id} {title} {username} {published} '
+          '{filename} {ext}.',
+    )
+    ..addFlag(
+      'write-info-json',
+      negatable: false,
+      help: 'Write a metadata .json sidecar per artwork.',
     )
     ..addFlag('overwrite', negatable: false, help: 'Replace existing files.');
 }
@@ -339,13 +375,106 @@ Future<int> _whoami(ArgResults arguments) async {
 }
 
 Future<int> _url(ArgResults arguments) async {
-  final uuid = extractUuid(arguments.rest.firstOrNull);
-  if (uuid == null) {
-    stderr.writeln('Provide an artwork UUID or a URL ending in a UUID.');
+  final target = parseCliUrl(arguments.rest.firstOrNull ?? '');
+  if (target == null) {
+    stderr.writeln(
+      'Provide a DeviantArt URL or an artwork UUID.\n'
+      'Accepts artwork/journal pages, fav.me links, user galleries, gallery\n'
+      'and favourites folders, tag pages, and search URLs.',
+    );
     return 64;
   }
   final context = await _session(arguments);
   if (context == null) return 64;
+  switch (target.kind) {
+    case CliUrlKind.artwork:
+      return _urlArtwork(arguments, context, target);
+    case CliUrlKind.gallery:
+      return _downloadBatch(
+        arguments,
+        context,
+        target.username ?? 'gallery',
+        (request) =>
+            OfficialGalleryRepository(context.transport)
+                .gallery(target.username!, request),
+      );
+    case CliUrlKind.galleryFolder:
+      return _downloadBatch(
+        arguments,
+        context,
+        target.folderId ?? 'gallery',
+        (request) => OfficialFolderRepository(context.transport)
+            .galleryContents(
+              target.folderId!,
+              username: target.username!,
+              request: request,
+            ),
+      );
+    case CliUrlKind.favourites:
+      return _downloadBatch(
+        arguments,
+        context,
+        target.username ?? 'favourites',
+        (request) =>
+            OfficialGalleryRepository(context.transport)
+                .favourites(target.username!, request),
+      );
+    case CliUrlKind.collectionFolder:
+      return _downloadBatch(
+        arguments,
+        context,
+        target.folderId ?? 'collection',
+        (request) => OfficialFolderRepository(context.transport)
+            .collectionContents(
+              target.folderId!,
+              username: target.username!,
+              request: request,
+            ),
+      );
+    case CliUrlKind.tag:
+      return _downloadBatch(
+        arguments,
+        context,
+        target.query ?? 'tag',
+        (request) =>
+            OfficialDiscoveryRepository(context.transport)
+                .tag(target.query!, request, sort: BrowseSort.popular),
+      );
+    case CliUrlKind.search:
+      return _downloadBatch(
+        arguments,
+        context,
+        target.query ?? 'search',
+        (request) =>
+            OfficialArtworkRepository(context.transport)
+                .search(target.query!, request),
+      );
+  }
+}
+
+Future<int> _urlArtwork(
+  ArgResults arguments,
+  CliContext context,
+  CliUrlTarget target,
+) async {
+  final rawId = target.artworkId;
+  if (rawId == null || rawId.isEmpty) {
+    stderr.writeln('The artwork URL does not contain an id.');
+    return 64;
+  }
+  final archive = await DownloadArchive.open(arguments['archive'] as String?);
+  // Numeric ids from web URLs (including fav.me) resolve to a UUID through the
+  // website's public `dadeviation/init` endpoint, since the official API
+  // rejects numeric ids.
+  final uuid = await resolveArtworkUuid(
+    id: rawId,
+    username: target.username,
+    profile: context.profile,
+  );
+  if (archive.contains(uuid)) {
+    stdout.writeln('archived=$uuid (already downloaded)');
+    return 0;
+  }
 
   final mediaRepository = OfficialMediaRepository(context.transport);
   final asset = await mediaRepository.originalFile(uuid);
@@ -363,14 +492,51 @@ Future<int> _url(ArgResults arguments) async {
         'downloads',
   );
   await outputDirectory.create(recursive: true);
-  stdout.writeln(
-    await downloadAsset(
-      asset: asset,
-      profile: context.profile,
-      outputDirectory: outputDirectory,
-      overwrite: arguments['overwrite'] as bool,
-    ),
+
+  // The filename template and info-json sidecar need artwork metadata.
+  Artwork? artwork;
+  if ((arguments['write-info-json'] as bool) ||
+      (arguments['filename'] as String?) != null) {
+    try {
+      artwork = await OfficialArtworkRepository(context.transport)
+          .getById(uuid);
+    } on Object {
+      // Metadata is best-effort; the download itself still proceeds.
+    }
+  }
+  final template = arguments['filename'] as String?;
+  final message = await downloadAsset(
+    asset: asset,
+    profile: context.profile,
+    outputDirectory: outputDirectory,
+    overwrite: arguments['overwrite'] as bool,
+    filename: template == null
+        ? null
+        : resolveFilenameTemplate(
+            template,
+            asset,
+            artworkId: uuid,
+            title: artwork?.title,
+            username: artwork?.author.username,
+            published: artwork?.publishedAt,
+          ),
+    onSaved: (path) async {
+      await archive.add(uuid);
+      if (arguments['write-info-json'] as bool) {
+        await writeInfoJson(path, <String, Object?>{
+          'id': uuid,
+          'title': artwork?.title,
+          'username': artwork?.author.username,
+          'url': artwork?.pageUri.toString(),
+          'published': artwork?.publishedAt?.toIso8601String(),
+          'filename': asset.filename,
+          'bytes': asset.byteLength,
+          'mime': asset.mimeType,
+        });
+      }
+    },
   );
+  stdout.writeln(message);
   return 0;
 }
 
@@ -502,6 +668,9 @@ Future<int> _downloadBatch(
   final limit = positiveInt(arguments['limit'] as String, 24, '--limit');
   final delay = nonNegativeInt(arguments['delay'] as String, 1, '--delay');
   final organize = (arguments['organize'] as String).trim();
+  final archive = await DownloadArchive.open(arguments['archive'] as String?);
+  final template = arguments['filename'] as String?;
+  final writeInfo = arguments['write-info-json'] as bool;
   final root = Directory(arguments['dest'] as String);
   final outputDirectory = organize == 'flat'
       ? root
@@ -521,6 +690,10 @@ Future<int> _downloadBatch(
     );
     for (final artwork in page.items) {
       if (count >= limit) break;
+      if (archive.contains(artwork.id)) {
+        stdout.writeln('archived=${artwork.id} (already downloaded)');
+        continue;
+      }
       try {
         final asset = await mediaRepository.originalFile(artwork.id);
         if (!asset.canTransfer) {
@@ -535,6 +708,31 @@ Future<int> _downloadBatch(
               profile: context.profile,
               outputDirectory: outputDirectory,
               overwrite: arguments['overwrite'] as bool,
+              filename: template == null
+                  ? null
+                  : resolveFilenameTemplate(
+                      template,
+                      asset,
+                      artworkId: artwork.id,
+                      title: artwork.title,
+                      username: artwork.author.username,
+                      published: artwork.publishedAt,
+                    ),
+              onSaved: (path) async {
+                await archive.add(artwork.id);
+                if (writeInfo) {
+                  await writeInfoJson(path, <String, Object?>{
+                    'id': artwork.id,
+                    'title': artwork.title,
+                    'username': artwork.author.username,
+                    'url': artwork.pageUri.toString(),
+                    'published': artwork.publishedAt?.toIso8601String(),
+                    'filename': asset.filename,
+                    'bytes': asset.byteLength,
+                    'mime': asset.mimeType,
+                  });
+                }
+              },
             ),
           );
         }

@@ -3,8 +3,9 @@
 A pure-Dart command-line client for [DAKit](https://github.com/redtidev1918/dakit):
 sign in with the official OAuth API and download single deviations, artist
 galleries, folders, favourites, or search results, plus account and
-connectivity diagnostics. It uses the official API (not web cookies/scraping),
-so it only exposes what the official API supports.
+connectivity diagnostics. Downloads use the official API; the only web call is
+resolving numeric page ids to UUIDs through the website's public
+`dadeviation/init` endpoint, exactly as DAViewer does.
 
 ## Usage
 
@@ -27,11 +28,20 @@ Or run the Dart entry point directly:
 
 ```shell
 dart run packages/dakit_cli/bin/dakit.dart login --client-id YOUR_PUBLIC_CLIENT_ID
-dart run packages/dakit_cli/bin/dakit.dart url ARTWORK_UUID --dest downloads
+dart run packages/dakit_cli/bin/dakit.dart url https://fav.me/df3y58p --dest downloads
+dart run packages/dakit_cli/bin/dakit.dart url https://www.deviantart.com/loish/gallery --limit 50
 ```
 
 `devart-dl` is a compatibility alias of the same CLI, kept for long-time
 `devart-dl` users; the standalone release binary is `dakit`.
+
+`url` accepts any DeviantArt link — artwork/journal pages, fav.me short links,
+user galleries, gallery/favourites folders, tag pages, and search URLs — and
+auto-detects the download target (numeric web ids resolve to UUIDs
+automatically). Batch commands add `--archive FILE` (skip already-downloaded
+ids), `--filename TEMPLATE` (`{id}` `{title}` `{username}` `{published}`
+`{filename}` `{ext}`), and `--write-info-json` (a metadata `.json` sidecar per
+artwork).
 
 Whitelist `http://127.0.0.1:8765/callback` on a Public OAuth application.
 `login` opens the system browser and receives that local callback. Use

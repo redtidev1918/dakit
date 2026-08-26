@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.2.2
+
+### Added
+
+- `dakit url` accepts any DeviantArt link and auto-detects the target
+  (artwork/journal pages, fav.me short links, user galleries,
+  gallery/favourites folders, tag pages, search URLs), routing to the right
+  downloader like gallery-dl. Numeric artwork ids from web URLs are resolved to
+  UUIDs through the website's public `dadeviation/init` endpoint.
+- `--archive FILE`: an id-per-line archive of already-downloaded deviations;
+  re-runs skip archived items and append new ones after a successful download.
+- `--filename TEMPLATE`: filename template with `{id}`, `{title}`,
+  `{username}`, `{published}`, `{filename}`, `{ext}` tokens.
+- `--write-info-json`: writes a metadata `.json` sidecar next to each download.
+
 ## 0.2.1
 
 ### Fixed

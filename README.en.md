@@ -135,13 +135,23 @@ dakit --help
 dakit status --proxy 127.0.0.1:7892
 dakit login --client-id YOUR_PUBLIC_CLIENT_ID
 dakit whoami
-dakit url ARTWORK_UUID --dest downloads
+dakit url https://www.deviantart.com/loish/art/underwater-913624585 --dest downloads
+dakit url https://fav.me/df3y58p --dest downloads
+dakit url https://www.deviantart.com/loish/gallery --limit 50 --archive done.txt
 dakit artist USERNAME --limit 24 --delay 0
 dakit gallery USERNAME [GALLERY_ID]
 dakit fav USERNAME [FOLDER_ID]
 dakit search "digital art" --limit 24
 dakit logout
 ```
+
+`url` accepts any DeviantArt link and auto-detects the target: artwork/journal
+pages, fav.me short links, user galleries, gallery/favourites folders, tag
+pages, and search URLs all route to the matching downloader (numeric web ids
+are resolved to UUIDs automatically). Batch downloads also support
+`--archive FILE` (skip already-downloaded ids), `--filename TEMPLATE`
+(`{id}` `{title}` `{username}` `{published}` `{filename}` `{ext}`), and
+`--write-info-json` (a metadata `.json` sidecar next to each artwork).
 
 Before login, register a **Public** DeviantArt OAuth app and whitelist
 `http://127.0.0.1:8765/callback` exactly. `login` opens the system browser and
@@ -159,10 +169,11 @@ Configure a proxy with `--proxy HOST:PORT`, `--proxy http://HOST:PORT`,
 writes redacted diagnostics to `stderr`. The CLI only supports HTTP proxies and
 does not silently treat SOCKS5 as HTTP.
 
-The CLI uses the official OAuth API, not web cookies/scraping, so it offers no
-`cookies.txt`, SOCKS5 proxy, preview-quality switching, or "anti-ban" strategy.
-The official API supports original-file downloads; the CLI never passes a
-preview off as the original.
+Downloads and sign-in use the official OAuth API (the only web call resolves
+numeric page ids to UUIDs via the public `dadeviation/init` endpoint), so the
+CLI offers no `cookies.txt`, SOCKS5 proxy, preview-quality switching, or
+"anti-ban" strategy. The official API supports original-file downloads; the
+CLI never passes a preview off as the original.
 
 
 ## Minimal example
