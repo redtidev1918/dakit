@@ -105,15 +105,15 @@ The packages are published to pub.dev. A full Flutter integration only needs
 
 ```yaml
 dependencies:
-  dakit_flutter: ^0.1.10
+  dakit_flutter: ^0.1.11
 ```
 
 If you only need pure-Dart capabilities, declare them individually:
 
 ```yaml
 dependencies:
-  dakit_core: ^0.1.13
-  dakit_api: ^0.1.27
+  dakit_core: ^0.1.14
+  dakit_api: ^0.1.28
 ```
 
 Then read [Getting started](docs/en/GETTING_STARTED.md). To run the built-in

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.14
+
+### Docs
+
+- Modernized the package README: pub.dev badges, install snippet, and
+  documentation links.
+
 ## 0.1.13
 
 ### Added

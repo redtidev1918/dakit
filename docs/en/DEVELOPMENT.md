@@ -109,7 +109,7 @@ flutter pub publish --dry-run --directory packages/dakit_flutter
 
 The publish order is core → api → flutter. Before a formal release, confirm the
 repository links, version dependencies, and changelogs. Current versions are
-core 0.1.13, api 0.1.27, and flutter 0.1.10; see
+core 0.1.14, api 0.1.28, and flutter 0.1.11; see
 [RELEASING.md](RELEASING.md) for the full workflow.
 
 ## Commit Discipline
