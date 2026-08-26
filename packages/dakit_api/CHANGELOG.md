@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.27
+
+### Fixed
+
+- Tag sort now sends the correct `browse/tags` mode values (`newest` / `popular`)
+  instead of `recent`, which DeviantArt ignores — so "Newest" and "Popular"
+  previously returned identical results.
+
 ## 0.1.26
 
 ### Added

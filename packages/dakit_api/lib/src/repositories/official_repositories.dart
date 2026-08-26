@@ -350,7 +350,8 @@ final class OfficialDiscoveryRepository implements DiscoveryRepository {
       ApiRoutes.browseTags,
       query: <String, Object?>{
         'tag': normalized,
-        'mode': sort.name,
+        // DeviantArt's browse/tags accepts mode=newest|popular.
+        'mode': sort == BrowseSort.popular ? 'popular' : 'newest',
         ..._hybridPageQuery(request.cursor),
         'limit': request.limit,
         'mature_content': true,
