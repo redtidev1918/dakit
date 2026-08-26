@@ -1,6 +1,12 @@
 name: dakit_core
 description: Platform-neutral domain contracts for DeviantArt client applications.
 version: 0.1.14
+topics:
+  - deviantart
+  - sdk
+  - api-client
+  - dart
+  - domain-models
 repository: https://github.com/redtidev1918/dakit/tree/main/packages/dakit_core
 resolution: workspace
 
