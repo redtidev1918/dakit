@@ -81,7 +81,7 @@ These are all integration smoke builds, not store release packages. For formal d
 
 `.github/workflows/ci.yml` runs on push, pull request, and manual triggers:
 
-- Ubuntu: formatting, analysis, 117 tests (CLI tests run separately in the tag pipeline);
+- Ubuntu: formatting, analysis, 135 tests;
 - Ubuntu: generate and upload `coverage/lcov.info`;
 - Ubuntu/Android: debug APK;
 - macOS: debug `.app`;
@@ -109,7 +109,7 @@ flutter pub publish --dry-run --directory packages/dakit_flutter
 
 The publish order is core → api → flutter. Before a formal release, confirm the
 repository links, version dependencies, and changelogs. Current versions are
-core 0.1.11, api 0.1.18, and flutter 0.1.9; see
+core 0.1.13, api 0.1.27, and flutter 0.1.10; see
 [RELEASING.md](RELEASING.md) for the full workflow.
 
 ## Commit Discipline
