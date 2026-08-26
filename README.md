@@ -175,6 +175,28 @@ final account = await OfficialAccountRepository(transport).currentUser();
 
 [MIT](LICENSE)
 
+## 参考与致谢
+
+DAKit 建立在以下开源项目之上：
+
+- **[DeviantArt API](https://www.deviantart.com/developers/)** —— 所连接的官方服务与接口文档
+- **[Flutter](https://flutter.dev)** / **[Dart](https://dart.dev)** —— 跨平台框架与语言
+- **[dio](https://pub.dev/packages/dio)** —— HTTP 客户端（`dakit_api`、`dakit_cli`）
+- **[crypto](https://pub.dev/packages/crypto)** —— PKCE 摘要（`dakit_api`、`dakit_cli`）
+- **[flutter_secure_storage](https://pub.dev/packages/flutter_secure_storage)** —— 安全存储（OAuth 令牌）
+- **[app_links](https://pub.dev/packages/app_links)** —— 深链回调
+- **[url_launcher](https://pub.dev/packages/url_launcher)** —— 打开系统浏览器
+- **[path_provider](https://pub.dev/packages/path_provider)** —— 本地路径
+- **[background_downloader](https://pub.dev/packages/background_downloader)** —— 后台传输
+- **[args](https://pub.dev/packages/args)** —— 命令行参数解析（`dakit_cli`）
+
+接口映射与排错时参考的开源项目：
+
+- **[gallery-dl](https://github.com/mikf/gallery-dl)** —— 记录了 DeviantArt 数据提取方式的下载器项目
+- **[deviantart.ts](https://www.npmjs.com/package/deviantart.ts)** —— DeviantArt API 的 TypeScript 封装，用于核对接口参数
+
+基于 DAKit 构建的完整客户端：[DAViewer](https://github.com/redtidev1918/daviewer)。
+
 ## 社区 / Community
 
 - [贡献指南](CONTRIBUTING.md)

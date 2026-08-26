@@ -90,15 +90,15 @@ The packages are published to pub.dev. A full Flutter integration only needs
 
 ```yaml
 dependencies:
-  dakit_flutter: ^0.1.9
+  dakit_flutter: ^0.1.10
 ```
 
 If you only need pure-Dart capabilities, declare them individually:
 
 ```yaml
 dependencies:
-  dakit_core: ^0.1.11
-  dakit_api: ^0.1.18
+  dakit_core: ^0.1.13
+  dakit_api: ^0.1.27
 ```
 
 Then read [Getting started](docs/en/GETTING_STARTED.md). To run the built-in
@@ -223,6 +223,34 @@ matrix still needs a valid Public OAuth app and test material.
 ## License
 
 [MIT](LICENSE)
+
+## References & acknowledgements
+
+DAKit is built on these open-source projects:
+
+- **[DeviantArt API](https://www.deviantart.com/developers/)** — the official service
+  and API documentation DAKit connects to
+- **[Flutter](https://flutter.dev)** / **[Dart](https://dart.dev)** — the cross-platform
+  framework and language
+- **[dio](https://pub.dev/packages/dio)** — HTTP client (`dakit_api`, `dakit_cli`)
+- **[crypto](https://pub.dev/packages/crypto)** — PKCE digests (`dakit_api`, `dakit_cli`)
+- **[flutter_secure_storage](https://pub.dev/packages/flutter_secure_storage)** — secure
+  storage for OAuth tokens
+- **[app_links](https://pub.dev/packages/app_links)** — deep-link callbacks
+- **[url_launcher](https://pub.dev/packages/url_launcher)** — opening the system browser
+- **[path_provider](https://pub.dev/packages/path_provider)** — local paths
+- **[background_downloader](https://pub.dev/packages/background_downloader)** — background
+  transfers
+- **[args](https://pub.dev/packages/args)** — CLI argument parsing (`dakit_cli`)
+
+Open-source projects referenced for API mapping and troubleshooting:
+
+- **[gallery-dl](https://github.com/mikf/gallery-dl)** — a downloader that documents how
+  DeviantArt data is fetched
+- **[deviantart.ts](https://www.npmjs.com/package/deviantart.ts)** — a TypeScript
+  DeviantArt API wrapper, used to cross-check endpoint parameters
+
+A complete client built on DAKit: [DAViewer](https://github.com/redtidev1918/daviewer).
 
 ## Community
 
