@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.13
+
+### Added
+
+- `BrowseSort` enum (`recent` / `popular`) and an optional `sort` parameter on
+  `DiscoveryRepository.tag`, so hosts can switch tag feeds between newest and
+  most-popular order.
+
 ## 0.1.12
 
 ### Added

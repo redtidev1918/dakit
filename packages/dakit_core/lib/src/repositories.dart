@@ -44,13 +44,21 @@ abstract interface class GalleryRepository {
   Future<Page<Artwork>> favourites(String username, PageRequest request);
 }
 
+/// Sort order for browse/tag feeds. DeviantArt's `browse/tags` endpoint
+/// accepts `mode=recent|popular`; other feeds fall back to the provider order.
+enum BrowseSort { recent, popular }
+
 /// Read-only feeds used by home, discovery, and tag screens.
 abstract interface class DiscoveryRepository {
   Future<List<Artwork>> dailyDeviations({DateTime? date});
 
   Future<Page<Artwork>> watched(PageRequest request);
 
-  Future<Page<Artwork>> tag(String tag, PageRequest request);
+  Future<Page<Artwork>> tag(
+    String tag,
+    PageRequest request, {
+    BrowseSort sort = BrowseSort.recent,
+  });
 
   Future<List<String>> suggestTags(String partialTag);
 

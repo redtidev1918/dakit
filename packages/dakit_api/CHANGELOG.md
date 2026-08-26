@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.26
+
+### Added
+
+- `OfficialDiscoveryRepository.tag` accepts a `BrowseSort` (`recent` / `popular`)
+  and sends it as the `mode` query parameter, so tag feeds can be ordered by
+  newest or most popular.
+
 ## 0.1.25
 
 ### Fixed

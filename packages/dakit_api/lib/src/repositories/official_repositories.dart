@@ -332,7 +332,11 @@ final class OfficialDiscoveryRepository implements DiscoveryRepository {
   }
 
   @override
-  Future<Page<Artwork>> tag(String tag, PageRequest request) async {
+  Future<Page<Artwork>> tag(
+    String tag,
+    PageRequest request, {
+    BrowseSort sort = BrowseSort.recent,
+  }) async {
     final normalized = tag.trim();
     if (normalized.isEmpty) {
       throw const DAKitException(
@@ -346,6 +350,7 @@ final class OfficialDiscoveryRepository implements DiscoveryRepository {
       ApiRoutes.browseTags,
       query: <String, Object?>{
         'tag': normalized,
+        'mode': sort.name,
         ..._hybridPageQuery(request.cursor),
         'limit': request.limit,
         'mature_content': true,
