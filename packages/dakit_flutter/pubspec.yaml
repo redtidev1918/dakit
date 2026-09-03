@@ -18,7 +18,7 @@ dependencies:
   app_links: ^7.2.1
   dakit_api: ^0.1.0
   dakit_core: ^0.1.0
-  background_downloader: ^9.5.8
+  background_downloader: ^9.5.9
   flutter:
     sdk: flutter
   flutter_secure_storage: ^10.0.0
