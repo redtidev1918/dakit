@@ -61,4 +61,4 @@ flutter --version
 ./tool/verify.sh
 ```
 
-先阅读根 [README](../README.md) 和本文。不要恢复旧 Python 实现；历史预览只保留在 Git tag `python-preview-1.0.0a1`。不要在普通 CI 或仓库中加入真实账户凭据。
+先阅读根 [README](https://github.com/redtidev1918/dakit/blob/main/README.md) 和本文。不要恢复旧 Python 实现；历史预览只保留在 Git tag `python-preview-1.0.0a1`。不要在普通 CI 或仓库中加入真实账户凭据。

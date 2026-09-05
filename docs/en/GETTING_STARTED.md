@@ -93,7 +93,7 @@ artwork/journal pages, fav.me short links, galleries/folders, tag pages, and
 search URLs all route to the matching downloader, and numeric web ids resolve
 to UUIDs automatically; batch commands also accept `--archive` (skip already
 downloaded), `--filename` templates, and `--write-info-json`. See the root
-[README](../../README.en.md#command-line-client) for all commands, proxy modes,
+[README](https://github.com/redtidev1918/dakit/blob/main/README.en.md#command-line-client) for all commands, proxy modes,
 headless login, overwrite behavior, and security notes.
 
 ## 3. Embed in a Flutter App

@@ -61,4 +61,4 @@ flutter --version
 ./tool/verify.sh
 ```
 
-First read the root [README](../../README.md) and this document. Do not restore the old Python implementation; the historical preview is kept only in the Git tag `python-preview-1.0.0a1`. Do not add real account credentials to the regular CI or the repository.
+First read the root [README](https://github.com/redtidev1918/dakit/blob/main/README.md) and this document. Do not restore the old Python implementation; the historical preview is kept only in the Git tag `python-preview-1.0.0a1`. Do not add real account credentials to the regular CI or the repository.

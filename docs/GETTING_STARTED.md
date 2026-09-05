@@ -90,7 +90,7 @@ CLI 会通过系统浏览器登录、自动刷新会话，并用临时文件流�
 自动识别：作品/日志页、fav.me 短链、画廊/收藏夹、标签和搜索链接都会路由到对应的
 下载逻辑，网页链接里的数字编号会自动解析为 UUID；批量命令还支持 `--archive`
 （跳过已下载）、`--filename` 模板与 `--write-info-json`。完整的命令、代理、
-无界面登录、覆盖策略和安全说明见根 [README](../README.md#命令行客户端)。
+无界面登录、覆盖策略和安全说明见根 [README](https://github.com/redtidev1918/dakit/blob/main/README.md#命令行客户端)。
 
 ## 3. 嵌入 Flutter 应用
 

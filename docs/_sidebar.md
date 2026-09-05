@@ -1,0 +1,24 @@
+- 开始使用
+  - [文档中心](/)
+  - [开始使用](GETTING_STARTED.md)
+  - [认证与会话](AUTHENTICATION.md)
+- 使用手册
+  - [网络、代理与国内开发环境](NETWORKING.md)
+  - [媒体、正文与后台传输](MEDIA.md)
+- 开发与维护
+  - [架构与扩展边界](ARCHITECTURE.md)
+  - [开发、构建与发布](DEVELOPMENT.md)
+  - [发布 DAKit 包](RELEASING.md)
+  - [真实服务验收](LIVE_TESTING.md)
+  - [项目状态与续接说明](STATUS.md)
+- English
+  - [DAKit Documentation](en/README.md)
+  - [Getting Started](en/GETTING_STARTED.md)
+  - [Authentication and Sessions](en/AUTHENTICATION.md)
+  - [Networking, Proxies, and the China Development Environment](en/NETWORKING.md)
+  - [Media, Text Content, and Background Transfer](en/MEDIA.md)
+  - [Architecture and Extension Boundaries](en/ARCHITECTURE.md)
+  - [Development, Building, and Releasing](en/DEVELOPMENT.md)
+  - [Releasing DAKit Packages](en/RELEASING.md)
+  - [Live Service Acceptance](en/LIVE_TESTING.md)
+  - [Project Status and Continuation Notes](en/STATUS.md)

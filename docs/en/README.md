@@ -1,7 +1,7 @@
 # DAKit Documentation
 
 This is the documentation index for DAKit. The user-facing overview, install,
-and command-line usage live in the root [README](../../README.en.md); the files
+and command-line usage live in the root [README](https://github.com/redtidev1918/dakit/blob/main/README.en.md); the files
 in this directory go deeper by topic. The primary-language version is
 [中文索引](../README.md).
 

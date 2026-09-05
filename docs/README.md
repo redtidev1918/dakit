@@ -1,7 +1,7 @@
 # DAKit 文档
 
 这是 DAKit 的文档目录。面向用户的项目概览、安装与命令行用法见根
-[README](../README.md)；本目录按主题提供深入说明。英文版见
+[README](https://github.com/redtidev1918/dakit/blob/main/README.md)；本目录按主题提供深入说明。英文版见
 [English index](en/README.md)。
 
 ## 用户指南
