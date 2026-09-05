@@ -238,6 +238,8 @@ Future<String> resolveArtworkUuid({
       queryParameters: <String, Object?>{
         'deviationid': id,
         if (username != null && username.isNotEmpty) 'username': username,
+        // 该接口自 2026 年起把 type 列为必填枚举（art/journal），缺失返回 400。
+        'type': 'art',
         'include_session': 'false',
         'csrf_token': csrf,
         'mature_content': true,
