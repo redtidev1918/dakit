@@ -1,5 +1,6 @@
 - 开始使用
   - [文档中心](/)
+  - [📥 下载](download.md)
   - [开始使用](GETTING_STARTED.md)
   - [认证与会话](AUTHENTICATION.md)
 - 使用手册
