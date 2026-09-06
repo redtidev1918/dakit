@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.13
+
+- Update DAKit API and Core dependencies to the released 0.2.x series.
+
 ## 0.1.12
 
 ### Docs
