@@ -169,12 +169,32 @@ Configure a proxy with `--proxy HOST:PORT`, `--proxy http://HOST:PORT`,
 writes redacted diagnostics to `stderr`. The CLI only supports HTTP proxies and
 does not silently treat SOCKS5 as HTTP.
 
-Downloads and sign-in use the official OAuth API (the only website scraping
-resolves numeric page ids to UUIDs: it reads the homepage CSRF token and calls
-the public `_puppy/dadeviation/init` endpoint), so the
-CLI offers no `cookies.txt`, SOCKS5 proxy, preview-quality switching, or
-"anti-ban" strategy. The official API supports original-file downloads; the
-CLI never passes a preview off as the original.
+Downloads and sign-in prefer the official OAuth API. Numeric page ids are
+resolved through the website's public `_puppy/dadeviation/init` endpoint (it
+reads the homepage CSRF token). The CLI supports HTTP proxies only (it does not
+silently treat SOCKS5 as HTTP), `--verbose` / `-v` writes redacted diagnostics
+to `stderr`, and it never passes a preview off as the original.
+
+### Mature (age-restricted) multi-image works
+
+The official OAuth API **cannot** see mature multi-image deviations:
+`deviation/{uuid}` returns 404 for them and never returns their additional
+pages. The website's own `_puppy/dadeviation/init` endpoint, called with a
+logged-in **web cookie**, does return every page (main file plus attachments).
+Pass that cookie to `url` and mature multi-image works download in full:
+
+```bash
+dakit url <work-url> --cookies 'auth=…; auth_secure=…; userinfo=…'
+dakit url <work-url> --cookies @~/da-cookies.txt          # read from a file
+DAKIT_COOKIES='auth=…; auth_secure=…' dakit url <work-url>  # env var
+```
+
+Copy the `auth` / `auth_secure` / `userinfo` cookies from a logged-in browser
+(DevTools → Application → Cookies). The cookie is a secret: it is never logged
+(diagnostics redact `cookie`/`set-cookie`, and the session's `toString` shows
+only `present`/`authenticated` flags). Without a cookie, non-mature works still
+download via OAuth; a mature multi-image failure prints a hint to pass
+`--cookies`. See `packages/dakit_cli/README.md`.
 
 
 ## Minimal example

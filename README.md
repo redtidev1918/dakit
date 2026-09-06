@@ -137,7 +137,19 @@ dakit logout
 `https_proxy` 或 HTTP 形式的 `all_proxy` 配置。`--verbose` / `-v` 会把脱敏诊断
 输出到 `stderr`。CLI 只支持 HTTP 代理，不把 SOCKS5 静默当作 HTTP 使用。
 
-下载与登录走官方 OAuth API（唯一的网页抓取是解析数字编号为 UUID：先读首页 CSRF 令牌，再调用公开的 `_puppy/dadeviation/init`），因此不提供 `cookies.txt`、`SOCKS5` 代理、预览画质切换或“防封”策略。官方接口支持原文件下载，CLI 不会用 preview 冒充 original。
+下载与登录优先走官方 OAuth API；数字编号经网站公开的 `_puppy/dadeviation/init` 端点解析为 UUID（先读首页 CSRF 令牌）。CLI 只支持 HTTP 代理（不把 SOCKS5 静默当作 HTTP），不做预览画质切换或“防封”策略，官方接口支持原文件下载，CLI 不会用 preview 冒充 original。
+
+### 成熟（年龄限制）多图作品
+
+官方 OAuth API **看不到**成熟多图作品：`deviation/{uuid}` 会 404，也不返回附加页。但网站自己的 `_puppy/dadeviation/init` 端点在带上**登录网页 Cookie** 时会返回全部画面（主图 + 各附加页）。给 `url` 命令传 Cookie 即可完整下载：
+
+```bash
+dakit url <作品链接> --cookies 'auth=…; auth_secure=…; userinfo=…'
+dakit url <作品链接> --cookies @~/da-cookies.txt       # 从文件读取
+DAKIT_COOKIES='auth=…; auth_secure=…' dakit url <作品链接>  # 环境变量
+```
+
+在已登录的浏览器 DevTools（Application → Cookies）里复制 `auth` / `auth_secure` / `userinfo`。Cookie 属于敏感信息：绝不会写入日志（诊断对 `cookie`/`set-cookie` 脱敏，会话 `toString` 只显示是否存在/已登录标志）。不带 Cookie 时非成熟作品仍走 OAuth；成熟多图下载失败会提示加 `--cookies`。详见 `packages/dakit_cli/README.md`。
 
 ## 最小示例
 
