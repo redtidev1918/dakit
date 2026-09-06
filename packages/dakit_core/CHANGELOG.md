@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.0
+
+### Added
+
+- `WebSession`: a DeviantArt website (cookie) session used by the private
+  `_puppy` endpoints for mature multi-image works. `toString` is redacted (it
+  exposes only `present` / `authenticated` flags, never the cookie value).
+
 ## 0.1.15
 
 ### Docs

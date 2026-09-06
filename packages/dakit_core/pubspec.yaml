@@ -1,6 +1,6 @@
 name: dakit_core
 description: Platform-neutral domain contracts for DeviantArt client applications.
-version: 0.1.15
+version: 0.2.0
 topics:
   - deviantart
   - sdk

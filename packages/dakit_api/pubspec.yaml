@@ -1,6 +1,6 @@
 name: dakit_api
 description: DeviantArt HTTP API and OAuth adapter for the DAKit client SDK.
-version: 0.1.30
+version: 0.2.0
 topics:
   - deviantart
   - deviantart-api
@@ -14,7 +14,7 @@ environment:
   sdk: ^3.13.1
 
 dependencies:
-  dakit_core: ^0.1.0
+  dakit_core: ^0.2.0
   crypto: ^3.0.7
   dio: ^5.11.0
 

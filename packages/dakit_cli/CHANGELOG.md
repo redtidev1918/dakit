@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.3.0
+
+### Added
+
+- Mature multi-image downloads: the `url` command now accepts a web cookie via
+  `--cookies '<name>=value; …'`, `--cookies @path/to/file`, or the
+  `DAKIT_COOKIES` environment variable. With a cookie, mature (age-restricted)
+  multi-image works download every page via the website's `_puppy` endpoint
+  (the OAuth API 404s them and omits attachments). Multi-page files are
+  disambiguated with a `-pN` suffix; without a cookie the OAuth single-file
+  path remains the fallback and a 404 points users to `--cookies`. Requires
+  dakit_api >=0.2.0.
+
 ## 0.2.2
 
 ### Added

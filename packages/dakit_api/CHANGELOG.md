@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.2.0
+
+### Added
+
+- `WebDeviationClient`: resolves a numeric deviation id through the website's
+  `_puppy/dadeviation/init` endpoint (browser UA + CSRF) with a web cookie,
+  returning **every** media asset for mature multi-image works (main file plus
+  each additional page) as transferable signed-CDN `MediaAsset`s. Requires
+  dakit_core >=0.2.0.
+- `CookieProvider` with `StaticCookieProvider` and `EnvironmentCookieProvider`
+  (`DAKIT_COOKIES`). Diagnostics route the cookie through the existing
+  `Redactor`, so `cookie`/`set-cookie` are never logged.
+
+### Fixed
+
+- Web request headers always send the `Cookie` value; the cookie never appears
+  in diagnostic attributes.
+
 ## 0.1.30
 
 ### Fixed
