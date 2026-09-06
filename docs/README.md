@@ -4,6 +4,17 @@
 [README](https://github.com/redtidev1918/dakit/blob/main/README.md)；本目录按主题提供深入说明。英文版见
 [English index](en/README.md)。
 
+## 📥 下载
+
+- **SDK（推荐，嵌入自己应用）**：`dakit_flutter` / `dakit_api`，见 [pub.dev](https://pub.dev/packages/dakit_flutter)
+- **dakit CLI（命令行工具）**：单二进制，见 [GitHub Releases](https://github.com/redtidev1918/dakit/releases/latest)
+
+| 平台 | CLI 文件 |
+|---|---|
+| Linux x64 / arm64 | `dakit-cli-<version>-linux-x64.tar.gz` / `-linux-arm64.tar.gz` |
+| macOS | `dakit-cli-<version>-macos-x64|arm64-unsigned-preview.tar.gz` |
+| Windows x64 | `dakit-cli-<version>-windows-x64.zip` |
+
 ## 用户指南
 
 面向把 DAKit 嵌入自己应用的开发者：
