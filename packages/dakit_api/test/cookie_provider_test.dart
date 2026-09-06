@@ -1,5 +1,4 @@
 import 'package:dakit_api/dakit_api.dart';
-import 'package:dakit_core/dakit_core.dart';
 import 'package:test/test.dart';
 
 void main() {

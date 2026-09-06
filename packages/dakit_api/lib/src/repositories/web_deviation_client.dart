@@ -44,12 +44,11 @@ final class WebMediaResult {
 final class WebDeviationClient {
   WebDeviationClient({
     required NetworkProfile networkProfile,
-    WebSession? session,
+    this._session,
     Dio? dio,
-    DiagnosticSink diagnostics = const NoopDiagnosticSink(),
-    String userAgent = _defaultUserAgent,
-  }) : _session = session,
-       _dio =
+    this._diagnostics = const NoopDiagnosticSink(),
+    this._userAgent = _defaultUserAgent,
+  }) : _dio =
            dio ??
            createNetworkDio(
              profile: networkProfile,
@@ -57,9 +56,7 @@ final class WebDeviationClient {
                connectTimeout: const Duration(seconds: 20),
                receiveTimeout: const Duration(seconds: 30),
              ),
-           ),
-       _diagnostics = diagnostics,
-       _userAgent = userAgent;
+           );
 
   static const String _defaultUserAgent =
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
@@ -392,8 +389,9 @@ final class WebDeviationClient {
         path.endsWith('.webm')) {
       return MediaKind.video;
     }
-    if (mime.contains('gif') || path.endsWith('.gif'))
+    if (mime.contains('gif') || path.endsWith('.gif')) {
       return MediaKind.animation;
+    }
     if (mime.startsWith('image/') ||
         path.endsWith('.png') ||
         path.endsWith('.jpg') ||
