@@ -35,10 +35,7 @@ void main() {
     });
 
     test('equality by cookie value', () {
-      expect(
-        WebSession.parse('auth=a'),
-        equals(WebSession.parse('auth=a')),
-      );
+      expect(WebSession.parse('auth=a'), equals(WebSession.parse('auth=a')));
       expect(
         WebSession.parse('auth=a'),
         isNot(equals(WebSession.parse('auth=b'))),

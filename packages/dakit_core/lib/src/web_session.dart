@@ -67,6 +67,7 @@ final class WebSession {
 
   /// Deliberately redacted: logs/`toString` must never leak the cookie.
   @override
-  String toString() => 'WebSession(present: $isPresent, '
+  String toString() =>
+      'WebSession(present: $isPresent, '
       'authenticated: $looksAuthenticated)';
 }

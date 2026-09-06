@@ -380,7 +380,9 @@ String resolveFilenameTemplate(
       .replaceAll('{published}', publishedDay);
   // Multi-page works: disambiguate each page so files don't overwrite each
   // other when the template does not already include a per-page token.
-  final finalName = suffix != null && suffix.isNotEmpty ? '$rendered-$suffix' : rendered;
+  final finalName = suffix != null && suffix.isNotEmpty
+      ? '$rendered-$suffix'
+      : rendered;
   return safeFilename(finalName);
 }
 

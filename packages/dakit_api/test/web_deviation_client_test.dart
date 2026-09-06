@@ -28,56 +28,56 @@ class _StubAdapter implements HttpClientAdapter {
 }
 
 ResponseBody _html(String body) => ResponseBody.fromString(
-      body,
-      200,
-      headers: <String, List<String>>{
-        Headers.contentTypeHeader: <String>['text/html'],
-      },
-    );
+  body,
+  200,
+  headers: <String, List<String>>{
+    Headers.contentTypeHeader: <String>['text/html'],
+  },
+);
 
 ResponseBody _json(Object body) => ResponseBody.fromBytes(
-      utf8.encode(jsonEncode(body)),
-      200,
-      headers: <String, List<String>>{
-        Headers.contentTypeHeader: <String>['application/json'],
-      },
-    );
+  utf8.encode(jsonEncode(body)),
+  200,
+  headers: <String, List<String>>{
+    Headers.contentTypeHeader: <String>['application/json'],
+  },
+);
 
 /// Mature multi-image `_puppy/init` payload: main + one additional page.
 Map<String, Object?> _initPayload() => <String, Object?>{
-      'deviation': <String, Object?>{
-        'isMature': true,
-        'media': <String, Object?>{
-          'baseUri': 'https://images-wixmp.example.test/signed-main/full.png',
-          'prettyName': 'main.png',
-          'token': 'tok',
-          'types': <Map<String, Object?>>[
-            <String, Object?>{'t': '.png', 'c': 'image/png', 'h': 1200, 'w': 900},
-          ],
-        },
-        'extended': <String, Object?>{
-          'deviationUuid': '11111111-2222-3333-4444-555555555555',
-          'additionalMedia': <Map<String, Object?>>[
-            <String, Object?>{
-              'media': <String, Object?>{
-                'baseUri':
-                    'https://images-wixmp.example.test/signed-extra/full2.png',
-                'prettyName': 'page2.png',
-                'token': 'tok',
-                'types': <Map<String, Object?>>[
-                  <String, Object?>{
-                    't': '.png',
-                    'c': 'image/png',
-                    'h': 1000,
-                    'w': 800,
-                  },
-                ],
+  'deviation': <String, Object?>{
+    'isMature': true,
+    'media': <String, Object?>{
+      'baseUri': 'https://images-wixmp.example.test/signed-main/full.png',
+      'prettyName': 'main.png',
+      'token': 'tok',
+      'types': <Map<String, Object?>>[
+        <String, Object?>{'t': '.png', 'c': 'image/png', 'h': 1200, 'w': 900},
+      ],
+    },
+    'extended': <String, Object?>{
+      'deviationUuid': '11111111-2222-3333-4444-555555555555',
+      'additionalMedia': <Map<String, Object?>>[
+        <String, Object?>{
+          'media': <String, Object?>{
+            'baseUri':
+                'https://images-wixmp.example.test/signed-extra/full2.png',
+            'prettyName': 'page2.png',
+            'token': 'tok',
+            'types': <Map<String, Object?>>[
+              <String, Object?>{
+                't': '.png',
+                'c': 'image/png',
+                'h': 1000,
+                'w': 800,
               },
-            },
-          ],
+            ],
+          },
         },
-      },
-    };
+      ],
+    },
+  },
+};
 
 WebDeviationClient _client(ResponseBody Function(RequestOptions) handler) {
   final dio = Dio(BaseOptions())..httpClientAdapter = _StubAdapter(handler);
@@ -107,10 +107,7 @@ void main() {
       // Main first, additional page second.
       expect(result.assets[0].role, MediaRole.original);
       expect(result.assets[1].role, MediaRole.attachment);
-      expect(
-        result.assets[0].uri.toString(),
-        contains('signed-main/full.png'),
-      );
+      expect(result.assets[0].uri.toString(), contains('signed-main/full.png'));
       expect(
         result.assets[1].uri.toString(),
         contains('signed-extra/full2.png'),

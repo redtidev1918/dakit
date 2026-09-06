@@ -167,7 +167,8 @@ ArgParser _downloadParser() {
     ..addOption('proxy', help: 'HTTP proxy as HOST:PORT.')
     ..addOption(
       'cookies',
-      help: 'DeviantArt web cookie (or @path/to/file) for mature '
+      help:
+          'DeviantArt web cookie (or @path/to/file) for mature '
           'multi-image works. Falls back to DAKIT_COOKIES.',
     )
     ..addOption('dest', defaultsTo: 'downloads', help: 'Output directory.')

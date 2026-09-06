@@ -49,7 +49,8 @@ final class WebDeviationClient {
     DiagnosticSink diagnostics = const NoopDiagnosticSink(),
     String userAgent = _defaultUserAgent,
   }) : _session = session,
-       _dio = dio ??
+       _dio =
+           dio ??
            createNetworkDio(
              profile: networkProfile,
              options: BaseOptions(
@@ -86,7 +87,11 @@ final class WebDeviationClient {
   }) async {
     final started = DateTime.now();
     try {
-      final data = await _init(id, username: username, cancelToken: cancelToken);
+      final data = await _init(
+        id,
+        username: username,
+        cancelToken: cancelToken,
+      );
 
       final deviation = data['deviation'];
       if (deviation is! Map<String, Object?>) {
@@ -130,7 +135,9 @@ final class WebDeviationClient {
           final itemMedia = item['media'];
           final asset = _mediaAsset(
             itemMedia is Map<String, Object?> ? itemMedia : item,
-            baseUri: _baseUri(itemMedia is Map<String, Object?> ? itemMedia : media),
+            baseUri: _baseUri(
+              itemMedia is Map<String, Object?> ? itemMedia : media,
+            ),
             id: '$id:page$page',
             role: MediaRole.attachment,
             index: page,
@@ -156,11 +163,17 @@ final class WebDeviationClient {
         _ => false,
       };
 
-      _record(DiagnosticLevel.info, 'web.init.ok', id, started, <String, Object?>{
-        'assets': assets.length,
-        'mature': mature,
-        'pages': additional is List ? additional.length : 0,
-      });
+      _record(
+        DiagnosticLevel.info,
+        'web.init.ok',
+        id,
+        started,
+        <String, Object?>{
+          'assets': assets.length,
+          'mature': mature,
+          'pages': additional is List ? additional.length : 0,
+        },
+      );
 
       return WebMediaResult(
         deviationId: id,
@@ -173,7 +186,13 @@ final class WebDeviationClient {
       rethrow;
     } on DioException catch (error) {
       final failure = _dioFailure(error);
-      _record(DiagnosticLevel.error, failure.code, id, started, const <String, Object?>{});
+      _record(
+        DiagnosticLevel.error,
+        failure.code,
+        id,
+        started,
+        const <String, Object?>{},
+      );
       throw failure;
     }
   }
@@ -338,7 +357,9 @@ final class WebDeviationClient {
 
   static Uri? _pickUri(Map<String, Object?> media, {required String? baseUri}) {
     // Prefer a fully-qualified baseUri (the modern signed original).
-    final base = media['baseUri'] is String ? media['baseUri'] as String : baseUri;
+    final base = media['baseUri'] is String
+        ? media['baseUri'] as String
+        : baseUri;
     if (base != null && base.isNotEmpty) {
       final uri = Uri.tryParse(base);
       if (uri != null && uri.hasScheme && uri.host.isNotEmpty) return uri;
@@ -366,10 +387,13 @@ final class WebDeviationClient {
   static MediaKind _guessKind(String? mimeType, Uri uri) {
     final mime = (mimeType ?? '').toLowerCase();
     final path = uri.path.toLowerCase();
-    if (mime.startsWith('video/') || path.endsWith('.mp4') || path.endsWith('.webm')) {
+    if (mime.startsWith('video/') ||
+        path.endsWith('.mp4') ||
+        path.endsWith('.webm')) {
       return MediaKind.video;
     }
-    if (mime.contains('gif') || path.endsWith('.gif')) return MediaKind.animation;
+    if (mime.contains('gif') || path.endsWith('.gif'))
+      return MediaKind.animation;
     if (mime.startsWith('image/') ||
         path.endsWith('.png') ||
         path.endsWith('.jpg') ||

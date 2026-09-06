@@ -5,7 +5,9 @@ import 'package:test/test.dart';
 void main() {
   group('StaticCookieProvider', () {
     test('returns parsed session or null', () async {
-      final withCookie = StaticCookieProvider.fromCookie('auth=a; auth_secure=b');
+      final withCookie = StaticCookieProvider.fromCookie(
+        'auth=a; auth_secure=b',
+      );
       final s = await withCookie.session();
       expect(s, isNotNull);
       expect(s!.looksAuthenticated, isTrue);
