@@ -277,6 +277,48 @@ Future<String> resolveArtworkUuid({
   }
 }
 
+/// Browser UA used for website (`_puppy`) requests — the WAF expects a real
+/// browser user agent (the API-style `dakit/...` UA is fine for the OAuth API
+/// but is rejected by the website).
+const String _webUserAgent =
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+    '(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+
+/// Resolves a numeric artwork id (from a web URL or fav.me link) to its full
+/// media set through the website's `_puppy/dadeviation/init` endpoint.
+///
+/// When [webSession] carries a logged-in DeviantArt cookie, the website returns
+/// **every** asset for mature multi-image works (main file + additional pages),
+/// which the official OAuth API cannot see (it 404s them). The returned assets
+/// are already-transferable signed CDN URLs. Returns `null` when the website is
+/// unreachable / not usable so callers can fall back to the official API.
+///
+/// UUIDs (as opposed to numeric ids) are left for the official API path; this
+/// resolver is meant for numeric web ids.
+Future<WebMediaResult?> resolveWebMedia({
+  required String id,
+  String? username,
+  required NetworkProfile profile,
+  WebSession? webSession,
+  DiagnosticSink diagnostics = const NoopDiagnosticSink(),
+}) async {
+  if (id.isEmpty || _uuidPattern.hasMatch(id)) return null;
+  final client = WebDeviationClient(
+    networkProfile: profile,
+    session: webSession,
+    diagnostics: diagnostics,
+    userAgent: _webUserAgent,
+  );
+  try {
+    return await client.deviationMedia(id, username: username);
+  } on Object {
+    // Web resolution is best-effort; the caller falls back to the official API.
+    return null;
+  } finally {
+    client.close();
+  }
+}
+
 /// A simple archive of already-downloaded deviation IDs (one per line),
 /// mirroring gallery-dl's `--download-archive`. Records are appended after a
 /// successful download so re-runs skip work already done.
@@ -321,6 +363,7 @@ String resolveFilenameTemplate(
   String? title,
   String? username,
   DateTime? published,
+  String? suffix,
 }) {
   final current =
       asset.filename ?? asset.uri?.pathSegments.lastOrNull ?? 'original.bin';
@@ -335,7 +378,10 @@ String resolveFilenameTemplate(
       .replaceAll('{title}', title ?? stem)
       .replaceAll('{username}', username ?? '')
       .replaceAll('{published}', publishedDay);
-  return safeFilename(rendered);
+  // Multi-page works: disambiguate each page so files don't overwrite each
+  // other when the template does not already include a per-page token.
+  final finalName = suffix != null && suffix.isNotEmpty ? '$rendered-$suffix' : rendered;
+  return safeFilename(finalName);
 }
 
 /// Writes a `--write-info-json` metadata sidecar next to a downloaded file

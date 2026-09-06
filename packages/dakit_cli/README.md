@@ -51,6 +51,35 @@ automatically and are stored under `~/.config/dakit/` (Windows:
 destinations unless `--overwrite` is passed. Every network command accepts
 `--verbose` / `-v` for sanitized diagnostics.
 
+### Mature (age-restricted) multi-image works
+
+The official OAuth API **cannot** see mature multi-image deviations —
+`deviation/{uuid}` returns 404 for them and never returns their additional
+pages. The website's own `_puppy/dadeviation/init` endpoint, called with a
+logged-in **web cookie**, does return every page (main + attachments).
+
+Provide that cookie to the `url` command and mature multi-image works download
+in full:
+
+```bash
+# inline (a "name=value; name2=value2" Cookie header)
+dakit url https://www.deviantart.com/<artist>/art/<slug>-<id> \
+  --cookies 'auth=…; auth_secure=…; userinfo=…'
+
+# or read from a file
+dakit url <url> --cookies @~/da-cookies.txt
+
+# or via environment
+DAKIT_COOKIES='auth=…; auth_secure=…' dakit url <url>
+```
+
+Get the cookie by logging into deviantart.com in your browser and copying the
+`auth` / `auth_secure` / `userinfo` cookies (DevTools → Application → Cookies).
+The cookie is a secret: it is never logged (diagnostics redact `cookie` /
+`set-cookie`, and the session's `toString` exposes only `present` /
+`authenticated` flags). Without a cookie, non-mature works still download via
+the OAuth API; a mature multi-image failure prints a hint to pass `--cookies`.
+
 For the full command list and proxy notes, see the
 [root README](../../README.en.md#command-line-client).
 

@@ -165,6 +165,11 @@ ArgParser _downloadParser() {
     ..addFlag('help', abbr: 'h', negatable: false)
     ..addFlag('verbose', abbr: 'v', negatable: false)
     ..addOption('proxy', help: 'HTTP proxy as HOST:PORT.')
+    ..addOption(
+      'cookies',
+      help: 'DeviantArt web cookie (or @path/to/file) for mature '
+          'multi-image works. Falls back to DAKIT_COOKIES.',
+    )
     ..addOption('dest', defaultsTo: 'downloads', help: 'Output directory.')
     ..addOption('output', help: 'Alias for --dest.')
     ..addOption(
@@ -463,9 +468,89 @@ Future<int> _urlArtwork(
     return 64;
   }
   final archive = await DownloadArchive.open(arguments['archive'] as String?);
-  // Numeric ids from web URLs (including fav.me) resolve to a UUID through the
-  // website's public `dadeviation/init` endpoint, since the official API
-  // rejects numeric ids.
+
+  final outputDirectory = Directory(
+    arguments['dest'] as String? ??
+        arguments['output'] as String? ??
+        'downloads',
+  );
+  await outputDirectory.create(recursive: true);
+
+  final webSession = resolveWebSession(arguments);
+  if (webSession != null && context.diagnostics is! NoopDiagnosticSink) {
+    stdout.writeln('web-cookie=$webSession');
+  }
+
+  // Mature multi-image works are invisible to the OAuth API (404), but the
+  // website's `_puppy` endpoint returns every page when sent a logged-in web
+  // cookie. Prefer that path for numeric web ids whenever a cookie is set.
+  final web = await resolveWebMedia(
+    id: rawId,
+    username: target.username,
+    profile: context.profile,
+    webSession: webSession,
+    diagnostics: context.diagnostics,
+  );
+  if (web != null && web.assets.isNotEmpty) {
+    final uuid = web.uuid;
+    if (archive.contains(uuid)) {
+      stdout.writeln('archived=$uuid (already downloaded)');
+      return 0;
+    }
+    final artwork = await _bestEffortArtwork(context, uuid);
+    final template = arguments['filename'] as String?;
+    var index = 0;
+    for (final asset in web.assets) {
+      index += 1;
+      final suffix = web.assets.length > 1 ? 'p$index' : null;
+      final message = await downloadAsset(
+        asset: asset,
+        profile: context.profile,
+        outputDirectory: outputDirectory,
+        overwrite: arguments['overwrite'] as bool,
+        filename: template == null
+            ? null
+            : resolveFilenameTemplate(
+                template,
+                asset,
+                artworkId: uuid,
+                title: artwork?.title,
+                username: artwork?.author.username,
+                published: artwork?.publishedAt,
+                suffix: suffix,
+              ),
+        onSaved: (path) async {
+          if (arguments['write-info-json'] as bool) {
+            await writeInfoJson(path, <String, Object?>{
+              'id': uuid,
+              'title': artwork?.title,
+              'username': artwork?.author.username,
+              'url': artwork?.pageUri.toString(),
+              'published': artwork?.publishedAt?.toIso8601String(),
+              'filename': asset.filename,
+              'bytes': asset.byteLength,
+              'mime': asset.mimeType,
+              'mature': web.isMature,
+              'page': index,
+              'pages': web.assets.length,
+              'source': 'web',
+            });
+          }
+        },
+      );
+      stdout.writeln(message);
+    }
+    await archive.add(uuid);
+    if (web.isMature || web.assets.length > 1) {
+      stdout.writeln(
+        'web-source assets=${web.assets.length} mature=${web.isMature} '
+        'multi=${web.isMultiMedia}',
+      );
+    }
+    return 0;
+  }
+
+  // Fallback: official OAuth API (single original file).
   final uuid = await resolveArtworkUuid(
     id: rawId,
     username: target.username,
@@ -481,30 +566,15 @@ Future<int> _urlArtwork(
   if (!asset.canTransfer) {
     stderr.writeln(
       'Not downloadable: availability=${asset.availability.name}'
-      '${asset.availabilityReason == null ? '' : ' reason=${terminalText(asset.availabilityReason)}'}',
+      '${asset.availabilityReason == null ? '' : ' reason=${terminalText(asset.availabilityReason)}'}\n'
+      'Mature multi-image works need a web cookie: pass --cookies or set '
+      'DAKIT_COOKIES (the OAuth API returns 404 for them).',
     );
     return 1;
   }
 
-  final outputDirectory = Directory(
-    arguments['dest'] as String? ??
-        arguments['output'] as String? ??
-        'downloads',
-  );
-  await outputDirectory.create(recursive: true);
-
-  // The filename template and info-json sidecar need artwork metadata.
-  Artwork? artwork;
-  if ((arguments['write-info-json'] as bool) ||
-      (arguments['filename'] as String?) != null) {
-    try {
-      artwork = await OfficialArtworkRepository(context.transport)
-          .getById(uuid);
-    } on Object {
-      // Metadata is best-effort; the download itself still proceeds.
-    }
-  }
   final template = arguments['filename'] as String?;
+  final artwork = await _bestEffortArtwork(context, uuid);
   final message = await downloadAsset(
     asset: asset,
     profile: context.profile,
@@ -538,6 +608,15 @@ Future<int> _urlArtwork(
   );
   stdout.writeln(message);
   return 0;
+}
+
+/// Metadata is best-effort; download proceeds even if it fails.
+Future<Artwork?> _bestEffortArtwork(CliContext context, String uuid) async {
+  try {
+    return await OfficialArtworkRepository(context.transport).getById(uuid);
+  } on Object {
+    return null;
+  }
 }
 
 Future<int> _artist(ArgResults arguments) async {
@@ -830,3 +909,32 @@ DiagnosticSink _diagnostics(ArgResults arguments) =>
     arguments['verbose'] as bool
     ? const CliDiagnostics()
     : const NoopDiagnosticSink();
+
+/// Resolves the DeviantArt web (cookie) session for website endpoints.
+///
+/// Sources, in order: the `--cookies` option (a raw cookie string, or `@path`
+/// to read from a file), then the `DAKIT_COOKIES` environment variable. The
+/// value is a `name=value; name2=value2` cookie header (e.g. `auth=…;
+/// auth_secure=…; userinfo=…`). Returns `null` when none configured. The cookie
+/// is never logged; [WebSession.toString] is redacted.
+WebSession? resolveWebSession(ArgResults arguments) {
+  var raw = (arguments['cookies'] as String?)?.trim();
+  if (raw != null && raw.startsWith('@')) {
+    final file = File(raw.substring(1).trim());
+    if (file.existsSync()) {
+      raw = file.readAsStringSync().trim();
+    } else {
+      stderr.writeln('warning: cookie file not found: ${file.path}');
+      raw = null;
+    }
+  }
+  raw ??= Platform.environment['DAKIT_COOKIES']?.trim();
+  final session = WebSession.parse(raw);
+  if (session != null && !session.looksAuthenticated) {
+    stderr.writeln(
+      'warning: cookies provided but no auth/auth_secure marker found; '
+      'mature works may still be blocked.',
+    );
+  }
+  return session;
+}

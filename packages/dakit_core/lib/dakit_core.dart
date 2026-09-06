@@ -9,3 +9,4 @@ export 'src/models.dart';
 export 'src/pagination.dart';
 export 'src/repositories.dart';
 export 'src/transfer.dart';
+export 'src/web_session.dart';
