@@ -1,0 +1,37 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "packages": {
+    "packages/dakit_core": {
+      "release-type": "dart",
+      "package-name": "dakit_core",
+      "component": "dakit_core",
+      "include-v-in-tag": true,
+      "include-component-in-tag": true,
+      "tag-separator": "-v"
+    },
+    "packages/dakit_api": {
+      "release-type": "dart",
+      "package-name": "dakit_api",
+      "component": "dakit_api",
+      "include-v-in-tag": true,
+      "include-component-in-tag": true,
+      "tag-separator": "-v"
+    },
+    "packages/dakit_flutter": {
+      "release-type": "dart",
+      "package-name": "dakit_flutter",
+      "component": "dakit_flutter",
+      "include-v-in-tag": true,
+      "include-component-in-tag": true,
+      "tag-separator": "-v"
+    },
+    "packages/dakit_cli": {
+      "release-type": "dart",
+      "package-name": "dakit_cli",
+      "component": "dakit_cli",
+      "include-v-in-tag": true,
+      "include-component-in-tag": true,
+      "tag-separator": "-v"
+    }
+  }
+}

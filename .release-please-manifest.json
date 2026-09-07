@@ -1,0 +1,6 @@
+{
+  "packages/dakit_core": "0.2.0",
+  "packages/dakit_api": "0.2.0",
+  "packages/dakit_flutter": "0.1.13",
+  "packages/dakit_cli": "0.3.0"
+}
