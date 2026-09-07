@@ -17,7 +17,7 @@ dependencies:
   crypto: ^3.0.7
   dakit_api: ^0.2.0
   dakit_core: ^0.2.0
-  dio: ^5.11.0
+  dio: ^5.11.1
 
 dev_dependencies:
   lints: ^6.0.0
