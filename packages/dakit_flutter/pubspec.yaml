@@ -16,8 +16,8 @@ environment:
 
 dependencies:
   app_links: ^7.2.1
-  dakit_api: ^0.2.0
-  dakit_core: ^0.2.0
+  dakit_api: any
+  dakit_core: any
   background_downloader: ^9.5.9
   flutter:
     sdk: flutter
