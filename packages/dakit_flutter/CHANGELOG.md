@@ -1,5 +1,40 @@
 # Changelog
 
+## [1.0.0](https://github.com/redtidev1918/dakit/compare/dakit_flutter-vv0.1.13...dakit_flutter-vv1.0.0) (2026-09-07)
+
+
+### ⚠ BREAKING CHANGES
+
+* rename the SDK to DAKit
+
+### Features
+
+* add comments and social API mutations ([daf5cdf](https://github.com/redtidev1918/dakit/commit/daf5cdfd1ba29c411038267d568c922bf14df145))
+* add pub.dev topics for search discoverability ([b882632](https://github.com/redtidev1918/dakit/commit/b882632816322f287e4a0767de1b76ca7f8c374c))
+* **flutter:** add clientSecureStorage() for friendly macOS keychain naming ([b9bcff9](https://github.com/redtidev1918/dakit/commit/b9bcff9d4a6e4c2bf01f1aff240b5acc5b0e8369))
+* **transfer:** add TransferManager.remove to clear finished records ([9e596dd](https://github.com/redtidev1918/dakit/commit/9e596ddf16cb0a9d44e3c05efb5a9f895ecba078))
+* **transfer:** move completed downloads into shared storage ([602f0f6](https://github.com/redtidev1918/dakit/commit/602f0f6aa5eb4d450baee42b037e48619876935b))
+* **widgets:** add MasonryGridView / SliverMasonryGrid (waterfall layout) ([874f7df](https://github.com/redtidev1918/dakit/commit/874f7dfa6632c6a55a6f626c4ac612a4685f24c1))
+
+
+### Bug Fixes
+
+* **deps:** release Flutter adapter for DAKit 0.2 ([60ec841](https://github.com/redtidev1918/dakit/commit/60ec841094979eb94b6af7f88aee869945904aae))
+* **flutter:** keep app-readable copy when moving to shared storage on Android ([cb2ccf8](https://github.com/redtidev1918/dakit/commit/cb2ccf828aec0e5b50a4e2a78603663ee538f5cf))
+* **flutter:** logout continues past pending-store clear failure ([d6a8d88](https://github.com/redtidev1918/dakit/commit/d6a8d886135bba25c54549ed0659c9f3e048b58f))
+* **flutter:** never auto-delete the OAuth token on Android ([ccf95a0](https://github.com/redtidev1918/dakit/commit/ccf95a071f1d3b1cf5897faf51b0528826f7fe16))
+* **flutter:** persist moved shared-storage paths across restarts ([8e00235](https://github.com/redtidev1918/dakit/commit/8e00235157e73ca029d348928ae65df2fe8a6e2c))
+* harden related results and destructive transfer removal ([7567ea6](https://github.com/redtidev1918/dakit/commit/7567ea639096543983601afc3fd42adba33eed5b))
+* make OAuth logout and cancellation race-safe ([6c0ce55](https://github.com/redtidev1918/dakit/commit/6c0ce5525a2945b93e090eea15e40048108e1fab))
+* **release:** align dakit_flutter constraints to ^0.2.0 for workspace publish ([b93927c](https://github.com/redtidev1918/dakit/commit/b93927cb208d388ecdf3198a5f00e8994f3dfff8))
+* satisfy formatter and typed task paths ([244e00e](https://github.com/redtidev1918/dakit/commit/244e00e31d25bfc9b16e74c6fa05fcaead7f4885))
+* **transfer:** remove() deletes the downloaded file ([c8eded5](https://github.com/redtidev1918/dakit/commit/c8eded56accb641953f6625b20def38de5742e95))
+
+
+### Code Refactoring
+
+* rename the SDK to DAKit ([a9f0837](https://github.com/redtidev1918/dakit/commit/a9f0837f22ad1128c4587998ba0c0d11103462f0))
+
 ## 0.1.13
 
 - Update DAKit API and Core dependencies to the released 0.2.x series.
