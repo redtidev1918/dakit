@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/redtidev1918/dakit/compare/dakit_cli-v0.4.0...dakit_cli-v0.4.1) (2026-09-07)
+
+
+### Bug Fixes
+
+* **release:** use version constraints on internal deps (pub.dev rejects 'any') ([6828bbc](https://github.com/redtidev1918/dakit/commit/6828bbca3bbe8655c7ed6de6d5bd9ecbb894e9da))
+
 ## [0.4.0](https://github.com/redtidev1918/dakit/compare/dakit_cli-v0.3.0...dakit_cli-vv0.4.0) (2026-09-07)
 
 
