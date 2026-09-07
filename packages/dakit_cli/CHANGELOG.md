@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.4.0](https://github.com/redtidev1918/dakit/compare/dakit_cli-v0.3.0...dakit_cli-vv0.4.0) (2026-09-07)
+
+
+### Features
+
+* add CLI home and recommended browse commands ([30f464a](https://github.com/redtidev1918/dakit/commit/30f464a73b231b9774495bb34dd924a1a200cd2f))
+* add CLI verbose diagnostics and in-app debug console ([c10e617](https://github.com/redtidev1918/dakit/commit/c10e617a869b9f2a5426e69ac244af99480f124f))
+* add pure Dart CLI client ([128e9be](https://github.com/redtidev1918/dakit/commit/128e9be290dbec6a910d12f34d8d4a4b74cb9c2e))
+* **cli:** publish standalone DAKit binaries ([31873a8](https://github.com/redtidev1918/dakit/commit/31873a80865b4134c80b33e1d4ce822b5eda791b))
+* **cli:** URL auto-detection, archive, filename templates, info-json sidecars ([aa4499c](https://github.com/redtidev1918/dakit/commit/aa4499ce59192cdb7023074db765d1aebc4545fa))
+* expand CLI with artist/gallery/fav/search downloads ([b6d505e](https://github.com/redtidev1918/dakit/commit/b6d505e571ce3c7119bc1c38116edcb2cd976bfe))
+* **web:** support DeviantArt web cookies for mature multi-image works ([5231553](https://github.com/redtidev1918/dakit/commit/52315530da445148d637aba80e96f1f6403088df))
+
+
+### Bug Fixes
+
+* _puppy/dadeviation/init requires type=art since 2026 ([8f1845f](https://github.com/redtidev1918/dakit/commit/8f1845faa565d2e8c833b18d35af1e4f059e98e5))
+* **cli:** cross-compile Linux ARM64 release ([4772723](https://github.com/redtidev1918/dakit/commit/4772723931553c3fc1bfbe59348aed2a9c678b66))
+* **test:** implement moveToSharedStorage in example_client fakes ([de96905](https://github.com/redtidev1918/dakit/commit/de9690521e72fadfe50e16e20d76abb83fd7d303))
+* use whitelisted custom-scheme callback for CLI login ([1ce8c46](https://github.com/redtidev1918/dakit/commit/1ce8c4617877f3eb695bd977053a51e82e472017))
+
 ## 0.3.0
 
 ### Added

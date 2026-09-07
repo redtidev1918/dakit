@@ -1,5 +1,61 @@
 # Changelog
 
+## [1.0.0](https://github.com/redtidev1918/dakit/compare/dakit_api-vv0.2.0...dakit_api-vv1.0.0) (2026-09-07)
+
+
+### ⚠ BREAKING CHANGES
+
+* rename the SDK to DAKit
+
+### Features
+
+* add comments and social API mutations ([daf5cdf](https://github.com/redtidev1918/dakit/commit/daf5cdfd1ba29c411038267d568c922bf14df145))
+* add notification and feedback message APIs ([ba92841](https://github.com/redtidev1918/dakit/commit/ba92841516d7b51eca6340de420f31d39c73afb4))
+* add profile discovery and folder APIs ([2dff62a](https://github.com/redtidev1918/dakit/commit/2dff62ad6a8d960c3dcca8dcc26116b0f3572de2))
+* add pub.dev topics for search discoverability ([b882632](https://github.com/redtidev1918/dakit/commit/b882632816322f287e4a0767de1b76ca7f8c374c))
+* add topics and folder content browsing ([5f28f47](https://github.com/redtidev1918/dakit/commit/5f28f47e2d7ce5cce190ab9401cd0e9a0c299f61))
+* add user relationship and lookup APIs ([89350f9](https://github.com/redtidev1918/dakit/commit/89350f9da9c479f428b5582e6e5e500fd685f67a))
+* **api:** add moreLikeThis to discovery repositories ([0bdf150](https://github.com/redtidev1918/dakit/commit/0bdf15061294d2287f68286d19890f46699a3eaf))
+* **api:** export DeviationMapper for raw JSON mapping ([0943d41](https://github.com/redtidev1918/dakit/commit/0943d413bad9de9a50d1c073dd6573b47d626c1b))
+* **api:** sort tag feeds by recent or popular ([1209d3a](https://github.com/redtidev1918/dakit/commit/1209d3a897db1a2f7a5ee5bacfe1c49ce21db6e0))
+* **core,api:** expose a collection cover image on CollectionSummary ([05eb721](https://github.com/redtidev1918/dakit/commit/05eb7215169acdc95a1a41036e2d6f81b445e013))
+* **core,api:** expose collection groups in More Like This result ([243bfa0](https://github.com/redtidev1918/dakit/commit/243bfa05a0eba44f73e333d50ebec89372c843a4))
+* map deviation tags into Artwork.tags ([2dc6271](https://github.com/redtidev1918/dakit/commit/2dc6271ee055b6499b84e0012681aa6b913b95bd))
+* map is_favourited and is_multi_media into Artwork ([c78cfbf](https://github.com/redtidev1918/dakit/commit/c78cfbff7abb51bde09b8c2bed842a840fb5904b))
+* **media:** expose download denial reason and document removed fields ([#4](https://github.com/redtidev1918/dakit/issues/4)) ([bf32c60](https://github.com/redtidev1918/dakit/commit/bf32c601f5b32394e1972ec04781d09cf6a705f6))
+* **web:** support DeviantArt web cookies for mature multi-image works ([5231553](https://github.com/redtidev1918/dakit/commit/52315530da445148d637aba80e96f1f6403088df))
+
+
+### Bug Fixes
+
+* **api:** apply receiveTimeout so hung API requests fail instead of spinning forever ([0765cbb](https://github.com/redtidev1918/dakit/commit/0765cbb4b838e0bdc5b28e2016bb670a81d6df7a))
+* **api:** classify invalid refresh credentials ([c31414c](https://github.com/redtidev1918/dakit/commit/c31414cb6bb40ac751f9029c41ab153f980b22ce))
+* **api:** commit login before pending cleanup ([4b1567e](https://github.com/redtidev1918/dakit/commit/4b1567e9a3de9a26e9f11f2b1b83fb1b8656189a))
+* **api:** decouple live OAuth from recovery storage ([383651d](https://github.com/redtidev1918/dakit/commit/383651d9b052319616385b2083008e261bdb934b))
+* **api:** degrade collection groups gracefully on shape drift ([bcf677e](https://github.com/redtidev1918/dakit/commit/bcf677eb707356fb25cb9473ee8a3777980b506c))
+* **api:** hydrate sparse related artwork previews ([4390935](https://github.com/redtidev1918/dakit/commit/43909357dbe7cba23db1f1b6538bb829b7ab01aa))
+* **api:** invalidate rejected refresh sessions ([a442d73](https://github.com/redtidev1918/dakit/commit/a442d7307a9b7bfec7a4310a09a065816619cb04))
+* **api:** load artwork tags from metadata ([8b81129](https://github.com/redtidev1918/dakit/commit/8b811295e3f7da215182d7ac4f45d0e1cb40f392))
+* **api:** map download 4xx to unavailable instead of rethrowing ([d1df323](https://github.com/redtidev1918/dakit/commit/d1df323270242ad262589118aecc8012ad128ef6))
+* **api:** mark premium/paid content image availability ([2c9de59](https://github.com/redtidev1918/dakit/commit/2c9de59512e52b8d6c783862710912be71d11323))
+* **api:** read the correct formatted_excerpt field ([bd2984b](https://github.com/redtidev1918/dakit/commit/bd2984b3d9b2860aca67bfba75705565f8e48240))
+* **api:** recover from token deletion failure ([cade2c7](https://github.com/redtidev1918/dakit/commit/cade2c75271223b60b184034de7f86aea9a60d6b))
+* **api:** send mature_content on all read endpoints ([5c357d9](https://github.com/redtidev1918/dakit/commit/5c357d9b4e643a1e51dafa417ea9abd0bf756441))
+* **api:** show mature gallery/folder content and map journal thumbs ([b0fbfbb](https://github.com/redtidev1918/dakit/commit/b0fbfbbd57468836e165da927640c53faf7737dc))
+* **api:** skip idle authorization recovery ([7ddd9e1](https://github.com/redtidev1918/dakit/commit/7ddd9e1b96836bc800fa37c34d7e4c269e6f1b48))
+* **api:** tag sort mode values are newest|popular not recent ([da94dc5](https://github.com/redtidev1918/dakit/commit/da94dc5bbc5444b21224dfde378c44cecf2f3fed))
+* **api:** treat empty watched feed as valid ([50f9530](https://github.com/redtidev1918/dakit/commit/50f95308fdc69a2199706d4969a0d87e360809e9))
+* **api:** use browse/morelikethis/preview for More Like This ([b535604](https://github.com/redtidev1918/dakit/commit/b535604ea6e87610ea62d66f5b14e833a74461c8))
+* **ci:** resolve web client analyzer findings ([6646ffd](https://github.com/redtidev1918/dakit/commit/6646ffd23bd578064d32cedb86436d08c2030712))
+* harden related results and destructive transfer removal ([7567ea6](https://github.com/redtidev1918/dakit/commit/7567ea639096543983601afc3fd42adba33eed5b))
+* make OAuth logout and cancellation race-safe ([6c0ce55](https://github.com/redtidev1918/dakit/commit/6c0ce5525a2945b93e090eea15e40048108e1fab))
+* satisfy formatter and typed task paths ([244e00e](https://github.com/redtidev1918/dakit/commit/244e00e31d25bfc9b16e74c6fa05fcaead7f4885))
+
+
+### Code Refactoring
+
+* rename the SDK to DAKit ([a9f0837](https://github.com/redtidev1918/dakit/commit/a9f0837f22ad1128c4587998ba0c0d11103462f0))
+
 ## 0.2.0
 
 ### Added

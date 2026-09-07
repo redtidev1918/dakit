@@ -1,6 +1,6 @@
 name: dakit_flutter
 description: Flutter platform integrations for the DAKit DeviantArt client SDK.
-version: 0.1.13
+version: 1.0.0
 topics:
   - deviantart
   - deviantart-api
