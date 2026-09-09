@@ -33,7 +33,7 @@ jobs:
   pub-core:
     needs: release
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && contains(needs.release.outputs.paths_released, 'dakit_core')
-    uses: dart-lang/setup-dart/.github/workflows/publish.yml@0ffa2339374b3492d7d820e24104a445c232c9b2 # v1
+    uses: dart-lang/setup-dart/.github/workflows/publish.yml@6afc89df92d6eb3834022f73cd65adc8cdfcb92d # v1.8.1
     with:
       working-directory: packages/dakit_core
     permissions:
@@ -42,7 +42,7 @@ jobs:
   pub-api:
     needs: release
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && contains(needs.release.outputs.paths_released, 'dakit_api')
-    uses: dart-lang/setup-dart/.github/workflows/publish.yml@0ffa2339374b3492d7d820e24104a445c232c9b2 # v1
+    uses: dart-lang/setup-dart/.github/workflows/publish.yml@6afc89df92d6eb3834022f73cd65adc8cdfcb92d # v1.8.1
     with:
       working-directory: packages/dakit_api
     permissions:
@@ -51,7 +51,7 @@ jobs:
   pub-flutter:
     needs: release
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && contains(needs.release.outputs.paths_released, 'dakit_flutter')
-    uses: dart-lang/setup-dart/.github/workflows/publish.yml@0ffa2339374b3492d7d820e24104a445c232c9b2 # v1
+    uses: dart-lang/setup-dart/.github/workflows/publish.yml@6afc89df92d6eb3834022f73cd65adc8cdfcb92d # v1.8.1
     with:
       working-directory: packages/dakit_flutter
     permissions:
