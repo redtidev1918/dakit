@@ -7,7 +7,8 @@
       "component": "dakit_core",
       "include-v-in-tag": true,
       "include-component-in-tag": true,
-      "tag-separator": "-"
+      "tag-separator": "-",
+      "skip-github-release": true
     },
     "packages/dakit_api": {
       "release-type": "dart",
@@ -15,7 +16,8 @@
       "component": "dakit_api",
       "include-v-in-tag": true,
       "include-component-in-tag": true,
-      "tag-separator": "-"
+      "tag-separator": "-",
+      "skip-github-release": true
     },
     "packages/dakit_flutter": {
       "release-type": "dart",
@@ -23,7 +25,8 @@
       "component": "dakit_flutter",
       "include-v-in-tag": true,
       "include-component-in-tag": true,
-      "tag-separator": "-"
+      "tag-separator": "-",
+      "skip-github-release": true
     },
     "packages/dakit_cli": {
       "release-type": "dart",
@@ -31,7 +34,8 @@
       "component": "dakit_cli",
       "include-v-in-tag": true,
       "include-component-in-tag": true,
-      "tag-separator": "-"
+      "tag-separator": "-",
+      "skip-github-release": true
     }
   }
 }

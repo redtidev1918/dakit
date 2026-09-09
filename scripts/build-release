@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+: "${TARGET:?TARGET is required}"
+rm -rf dist/release dist/staging
+mkdir -p dist/release dist/staging
+flutter pub get
+
+if [ "$TARGET" = linux-arm64 ]; then
+  dart compile exe --target-os=linux --target-arch=arm64 \
+    --define="DAKIT_CLI_VERSION=$RELEASE_VERSION" packages/dakit_cli/bin/dakit.dart -o dist/staging/dakit
+elif [ "$TARGET" = windows-x64 ]; then
+  dart compile exe --define="DAKIT_CLI_VERSION=$RELEASE_VERSION" packages/dakit_cli/bin/dakit.dart -o dist/staging/dakit.exe
+else
+  dart compile exe --define="DAKIT_CLI_VERSION=$RELEASE_VERSION" packages/dakit_cli/bin/dakit.dart -o dist/staging/dakit
+fi
+cp LICENSE packages/dakit_cli/DISTRIBUTION.md dist/staging/
+
+case "$TARGET" in
+  windows-x64)
+    powershell -NoProfile -Command "Compress-Archive -Path dist/staging/* -DestinationPath dist/release/dakit-cli-$RELEASE_VERSION-windows-x64.zip"
+    ;;
+  *)
+    tar -C dist/staging -czf "dist/release/dakit-cli-$RELEASE_VERSION-$TARGET.tar.gz" .
+    ;;
+esac

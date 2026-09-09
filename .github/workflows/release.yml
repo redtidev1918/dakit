@@ -1,243 +1,60 @@
 name: Release
 
-# 全自动发版（Dart monorepo，无需 PAT）。release-please 按包维护发版 PR；合并后同一 run 内：
-#   - dakit_core/api/flutter 包 → pub.dev（Trusted Publishing/OIDC）
-#   - dakit_cli               → 多平台独立二进制 + GitHub Release
-# release-please 用 paths_released 告诉本 run 这次发了哪些包，对应 job 才执行。
-# 仍支持手动推 <component>-v* tag 或 workflow_dispatch（填组件）重跑。
-#
-# ⚠️ pub.dev Trusted Publishing：因发版 tag 在同一 run 内由 GITHUB_TOKEN 创建（触发于 main），
-# pub.dev 若配置了 tag pattern 校验会匹配不到。需在 pub.dev 各包 Automated Publishing 里
-# 不强制 tag pattern（只校验 owner redtidev1918 / repo dakit / workflow release.yml）。
 on:
+  pull_request:
   push:
     branches: [main]
-    tags:
-      - 'dakit_core-v*'
-      - 'dakit_api-v*'
-      - 'dakit_flutter-v*'
-      - 'dakit_cli-v*'
+  schedule:
+    - cron: "41 * * * *"
   workflow_dispatch:
     inputs:
-      component:
-        description: '要重发布的包（仅在对应 tag 已存在时用）'
-        required: true
-        type: choice
-        options: [dakit_core, dakit_api, dakit_flutter, dakit_cli]
-      ref:
-        description: '对应 tag（如 dakit_cli-v0.3.1）'
-        required: true
-        type: string
+      version: {description: "Existing dakit_cli version; blank reads the manifest", required: false, type: string}
+      dry_run: {description: "Build and validate without publishing", required: false, default: false, type: boolean}
+      force: {description: "Rerun a healthy version", required: false, default: false, type: boolean}
+      repair: {description: "Repair the current incomplete version", required: false, default: false, type: boolean}
+      stage: {description: "Recovery stage label", required: false, default: all, type: string}
 
 permissions:
   contents: write
   pull-requests: write
+  packages: write
   id-token: write
 
-env:
-  FLUTTER_VERSION: 3.47.1
-
 jobs:
-  release-please:
-    runs-on: ubuntu-latest
-    outputs:
-      paths: ${{ steps.rp.outputs.paths_released }}
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-      - name: Release Please
-        id: rp
-        uses: googleapis/release-please-action@v4
-        with:
-          config-file: release-please-config.json
-          manifest-file: .release-please-manifest.json
+  # Central workflow emits Release Please component paths for pub.dev OIDC jobs (v1.0.24).
+  release:
+    uses: redtidev1918/release-infra/.github/workflows/reusable-release.yml@v1
+    with:
+      version: ${{ inputs.version || '' }}
+      dry_run: ${{ github.event_name == 'pull_request' || inputs.dry_run || false }}
+      force: ${{ github.event_name == 'pull_request' || inputs.force || false }}
+      repair: ${{ github.event_name == 'pull_request' || inputs.repair || false }}
+      stage: ${{ inputs.stage || 'all' }}
+    secrets: inherit
 
   pub-core:
-    if: >-
-      contains(github.ref, 'dakit_core-v') ||
-      (github.event_name == 'workflow_dispatch' && inputs.component == 'dakit_core') ||
-      (github.event_name == 'push' && github.ref == 'refs/heads/main' && contains(needs.release-please.outputs.paths, 'dakit_core'))
-    needs: release-please
-    uses: dart-lang/setup-dart/.github/workflows/publish.yml@v1
+    needs: release
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && contains(needs.release.outputs.paths_released, 'dakit_core')
+    uses: dart-lang/setup-dart/.github/workflows/publish.yml@6afc89df92d6eb3834022f73cd65adc8cdfcb92d # v1.8.1
     with:
       working-directory: packages/dakit_core
+    permissions:
+      id-token: write
 
   pub-api:
-    if: >-
-      contains(github.ref, 'dakit_api-v') ||
-      (github.event_name == 'workflow_dispatch' && inputs.component == 'dakit_api') ||
-      (github.event_name == 'push' && github.ref == 'refs/heads/main' && contains(needs.release-please.outputs.paths, 'dakit_api'))
-    needs: release-please
-    uses: dart-lang/setup-dart/.github/workflows/publish.yml@v1
+    needs: release
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && contains(needs.release.outputs.paths_released, 'dakit_api')
+    uses: dart-lang/setup-dart/.github/workflows/publish.yml@6afc89df92d6eb3834022f73cd65adc8cdfcb92d # v1.8.1
     with:
       working-directory: packages/dakit_api
+    permissions:
+      id-token: write
 
   pub-flutter:
-    if: >-
-      contains(github.ref, 'dakit_flutter-v') ||
-      (github.event_name == 'workflow_dispatch' && inputs.component == 'dakit_flutter') ||
-      (github.event_name == 'push' && github.ref == 'refs/heads/main' && contains(needs.release-please.outputs.paths, 'dakit_flutter'))
-    needs: release-please
-    uses: dart-lang/setup-dart/.github/workflows/publish.yml@v1
+    needs: release
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && contains(needs.release.outputs.paths_released, 'dakit_flutter')
+    uses: dart-lang/setup-dart/.github/workflows/publish.yml@6afc89df92d6eb3834022f73cd65adc8cdfcb92d # v1.8.1
     with:
       working-directory: packages/dakit_flutter
-
-  # ---- dakit_cli 多平台二进制（同 run 内构建并发 GitHub Release）----
-  cli-unix:
-    name: CLI ${{ matrix.asset }}
-    if: >-
-      contains(github.ref, 'dakit_cli-v') ||
-      (github.event_name == 'workflow_dispatch' && inputs.component == 'dakit_cli') ||
-      (github.event_name == 'push' && github.ref == 'refs/heads/main' && contains(needs.release-please.outputs.paths, 'dakit_cli'))
-    needs: release-please
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - runner: ubuntu-24.04
-            asset: linux-x64
-            expected_arch: x86_64
-          - runner: ubuntu-24.04
-            asset: linux-arm64
-            expected_arch: x86_64
-          - runner: macos-15-intel
-            asset: macos-x64-unsigned-preview
-            expected_arch: x86_64
-          - runner: macos-15
-            asset: macos-arm64-unsigned-preview
-            expected_arch: arm64
-    runs-on: ${{ matrix.runner }}
-    timeout-minutes: 20
-    steps:
-      - name: Check out source
-        uses: actions/checkout@v7
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          channel: stable
-          cache: true
-      - name: Resolve dependencies
-        run: dart pub get
-      - name: Validate runner arch
-        run: test "$(uname -m)" = "${{ matrix.expected_arch }}"
-      - name: Compile standalone executable
-        run: |
-          VERSION="$(sed -n 's/^version: //p' packages/dakit_cli/pubspec.yaml)"
-          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
-          mkdir -p dist/staging
-          if [ "${{ matrix.asset }}" = "linux-arm64" ]; then
-            dart compile exe --target-os=linux --target-arch=arm64 \
-              --define="DAKIT_CLI_VERSION=$VERSION" \
-              packages/dakit_cli/bin/dakit.dart -o dist/staging/dakit
-          else
-            dart compile exe --define="DAKIT_CLI_VERSION=$VERSION" \
-              packages/dakit_cli/bin/dakit.dart -o dist/staging/dakit
-          fi
-          chmod +x dist/staging/dakit
-          if [ "${{ matrix.asset }}" = "linux-arm64" ]; then
-            file dist/staging/dakit | grep -E 'ELF 64-bit.*ARM aarch64'
-          else
-            dist/staging/dakit --version | grep "dakit_cli $VERSION"
-          fi
-          cp LICENSE packages/dakit_cli/DISTRIBUTION.md dist/staging/
-      - name: Package archive
-        run: tar -C dist/staging -czf "dist/dakit-cli-$VERSION-${{ matrix.asset }}.tar.gz" .
-      - name: Upload binary archive
-        uses: actions/upload-artifact@v7
-        with:
-          name: dakit-cli-${{ matrix.asset }}
-          path: dist/dakit-cli-*.tar.gz
-          if-no-files-found: error
-
-  cli-windows:
-    name: CLI windows-x64
-    if: >-
-      contains(github.ref, 'dakit_cli-v') ||
-      (github.event_name == 'workflow_dispatch' && inputs.component == 'dakit_cli') ||
-      (github.event_name == 'push' && github.ref == 'refs/heads/main' && contains(needs.release-please.outputs.paths, 'dakit_cli'))
-    needs: release-please
-    runs-on: windows-2025
-    timeout-minutes: 20
-    steps:
-      - name: Check out source
-        uses: actions/checkout@v7
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          channel: stable
-          cache: true
-      - name: Resolve dependencies
-        run: dart pub get
-      - name: Compile standalone executable
-        shell: pwsh
-        run: |
-          $version = (Select-String '^version: ' packages/dakit_cli/pubspec.yaml).Line -replace '^version: ', ''
-          New-Item -ItemType Directory -Force dist/staging | Out-Null
-          dart compile exe --define="DAKIT_CLI_VERSION=$version" packages/dakit_cli/bin/dakit.dart -o dist/staging/dakit.exe
-          $actual = & dist/staging/dakit.exe --version
-          if ($actual -ne "dakit_cli $version") { throw "Unexpected version: $actual" }
-          Copy-Item LICENSE, packages/dakit_cli/DISTRIBUTION.md dist/staging/
-      - name: Package archive
-        shell: pwsh
-        run: |
-          $version = (Select-String '^version: ' packages/dakit_cli/pubspec.yaml).Line -replace '^version: ', ''
-          Compress-Archive -Path dist/staging/* -DestinationPath "dist/dakit-cli-$version-windows-x64.zip"
-      - name: Upload binary archive
-        uses: actions/upload-artifact@v7
-        with:
-          name: dakit-cli-windows-x64
-          path: dist/dakit-cli-*.zip
-          if-no-files-found: error
-
-  cli-release:
-    name: Publish CLI GitHub Release
-    needs: [release-please, cli-unix, cli-windows]
-    if: >-
-      contains(github.ref, 'dakit_cli-v') ||
-      (github.event_name == 'workflow_dispatch' && inputs.component == 'dakit_cli') ||
-      (github.event_name == 'push' && github.ref == 'refs/heads/main' && contains(needs.release-please.outputs.paths, 'dakit_cli'))
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
     permissions:
-      contents: write
-    steps:
-      - name: Check out source
-        uses: actions/checkout@v7
-      - name: Download binary archives
-        uses: actions/download-artifact@v8
-        with:
-          pattern: dakit-cli-*
-          path: dist
-          merge-multiple: true
-      - name: Verify assets, checksums, notes; create release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          VERSION="$(sed -n 's/^version: //p' packages/dakit_cli/pubspec.yaml)"
-          TAG="dakit_cli-v$VERSION"
-          test -f "dist/dakit-cli-$VERSION-linux-x64.tar.gz"
-          test -f "dist/dakit-cli-$VERSION-linux-arm64.tar.gz"
-          test -f "dist/dakit-cli-$VERSION-macos-x64-unsigned-preview.tar.gz"
-          test -f "dist/dakit-cli-$VERSION-macos-arm64-unsigned-preview.tar.gz"
-          test -f "dist/dakit-cli-$VERSION-windows-x64.zip"
-          cd dist && sha256sum dakit-cli-* > SHA256SUMS && cd ..
-          {
-            echo '> [!WARNING]'
-            echo '> The macOS CLI archives are unsigned previews: no Apple Developer ID signature and no notarization.'
-            echo
-            awk -v version="$VERSION" '
-              $0 == "## " version { found=1; next }
-              found && /^## / { exit }
-              found { print }
-            ' packages/dakit_cli/CHANGELOG.md
-          } > release-notes.md
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release upload "$TAG" dist/dakit-cli-* dist/SHA256SUMS --clobber
-            gh release edit "$TAG" --title "DAKit CLI $VERSION" --notes-file release-notes.md
-          else
-            gh release create "$TAG" dist/dakit-cli-* dist/SHA256SUMS \
-              --latest=false --title "DAKit CLI $VERSION" --notes-file release-notes.md
-          fi
+      id-token: write
