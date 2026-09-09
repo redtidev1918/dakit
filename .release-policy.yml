@@ -1,0 +1,58 @@
+{
+  "kind": "binary",
+  "versioning": {
+    "mode": "release-please",
+    "package": "packages/dakit_cli"
+  },
+  "tag": {
+    "template": "dakit_cli-v{version}"
+  },
+  "build": {
+    "test": "flutter analyze && flutter test packages/dakit_cli/test",
+    "flutter_version": "3.47.1",
+    "matrix": [
+      {
+        "runner": "ubuntu-24.04",
+        "command": "TARGET=linux-x64 scripts/build-release"
+      },
+      {
+        "runner": "ubuntu-24.04",
+        "command": "TARGET=linux-arm64 scripts/build-release"
+      },
+      {
+        "runner": "macos-15",
+        "command": "TARGET=macos-arm64-unsigned-preview scripts/build-release"
+      },
+      {
+        "runner": "macos-15-intel",
+        "command": "TARGET=macos-x64-unsigned-preview scripts/build-release"
+      },
+      {
+        "runner": "windows-2025",
+        "command": "TARGET=windows-x64 scripts/build-release"
+      }
+    ]
+  },
+  "assets": {
+    "required": [
+      "dakit-cli-*-linux-x64.tar.gz",
+      "dakit-cli-*-linux-arm64.tar.gz",
+      "dakit-cli-*-macos-arm64-unsigned-preview.tar.gz",
+      "dakit-cli-*-macos-x64-unsigned-preview.tar.gz",
+      "dakit-cli-*-windows-x64.zip"
+    ],
+    "optional": []
+  },
+  "registries": {
+    "github": {
+      "required": true
+    }
+  },
+  "retention": {
+    "stable": 5,
+    "prerelease": 1,
+    "failed_draft": 2
+  },
+  "checksums": true,
+  "sbom": false
+}
