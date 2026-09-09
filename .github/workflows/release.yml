@@ -17,11 +17,10 @@ on:
 permissions:
   contents: write
   pull-requests: write
-  packages: write
   id-token: write
 
 jobs:
-  # Central workflow emits Release Please component paths for pub.dev OIDC jobs.
+  # Central workflow emits Release Please component paths for this OIDC publisher.
   release:
     uses: redtidev1918/release-infra/.github/workflows/reusable-release.yml@v1
     with:
@@ -32,29 +31,29 @@ jobs:
       stage: ${{ inputs.stage || 'all' }}
     secrets: inherit
 
-  pub-core:
+  publish-pub:
     needs: release
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && contains(needs.release.outputs.paths_released, 'dakit_core')
-    uses: dart-lang/setup-dart/.github/workflows/publish.yml@6afc89df92d6eb3834022f73cd65adc8cdfcb92d # v1.8.1
-    with:
-      working-directory: packages/dakit_core
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.release.outputs.paths_released != ''
+    runs-on: ubuntu-latest
     permissions:
       id-token: write
-
-  pub-api:
-    needs: release
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && contains(needs.release.outputs.paths_released, 'dakit_api')
-    uses: dart-lang/setup-dart/.github/workflows/publish.yml@6afc89df92d6eb3834022f73cd65adc8cdfcb92d # v1.8.1
-    with:
-      working-directory: packages/dakit_api
-    permissions:
-      id-token: write
-
-  pub-flutter:
-    needs: release
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && contains(needs.release.outputs.paths_released, 'dakit_flutter')
-    uses: dart-lang/setup-dart/.github/workflows/publish.yml@6afc89df92d6eb3834022f73cd65adc8cdfcb92d # v1.8.1
-    with:
-      working-directory: packages/dakit_flutter
-    permissions:
-      id-token: write
+    env:
+      PATHS_RELEASED: ${{ needs.release.outputs.paths_released }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: 3.47.1
+          channel: stable
+      - name: Publish released packages with OIDC
+        run: |
+          set -euo pipefail
+          for package in packages/dakit_core packages/dakit_api packages/dakit_flutter; do
+            if [[ "$PATHS_RELEASED" =~ (\"|\[|,)\"?${package//\//\\/}\"?(\"|\]|,) ]]; then
+              cd "$package"
+              dart pub get
+              dart pub publish --dry-run
+              dart pub publish -f
+              cd - >/dev/null
+            fi
+          done
