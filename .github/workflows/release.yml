@@ -21,7 +21,7 @@ permissions:
   id-token: write
 
 jobs:
-  # Central workflow emits Release Please component paths for pub.dev OIDC jobs.
+  # Central workflow emits Release Please component paths for pub.dev OIDC jobs (v1.0.24).
   release:
     uses: redtidev1918/release-infra/.github/workflows/reusable-release.yml@v1
     with:
