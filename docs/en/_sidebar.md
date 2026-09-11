@@ -1,0 +1,14 @@
+- Getting Started
+  - [Overview](/en/README.md)
+  - [📥 Download](/en/download.md)
+  - [Getting Started](/en/GETTING_STARTED.md)
+  - [Authentication and Sessions](/en/AUTHENTICATION.md)
+- Usage & Configuration
+  - [Networking, Proxies, and the China Development Environment](/en/NETWORKING.md)
+  - [Media, Text Content, and Background Transfer](/en/MEDIA.md)
+- Development
+  - [Architecture and Extension Boundaries](/en/ARCHITECTURE.md)
+  - [Development, Building, and Releasing](/en/DEVELOPMENT.md)
+  - [Releasing DAKit Packages](/en/RELEASING.md)
+  - [Live Service Acceptance](/en/LIVE_TESTING.md)
+  - [Project Status and Continuation Notes](/en/STATUS.md)
