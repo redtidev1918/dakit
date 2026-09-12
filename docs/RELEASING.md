@@ -57,7 +57,7 @@ pub.dev 公开包与 CLI 都遵循语义化版本。正式发布前需要：
 4. 提交消息使用 conventional commit，例如：
 
    ```text
-   chore(release): dakit_core 0.1.15
+   chore(release): dakit_core 1.0.0
    ```
 
 ## 发布前 dry-run
@@ -81,7 +81,7 @@ OIDC** 认证：由 GitHub 签发临时身份令牌，**无需保存长期 token
 发布由推送 git tag 触发，按依赖顺序分别打 tag：
 
 ```text
-dakit_core-v0.1.15  ->   dakit_api-v0.1.30   ->   dakit_flutter-v0.1.12
+dakit_core-v1.0.0  ->   dakit_api-v1.0.0   ->   dakit_flutter-v1.0.0
 ```
 
 ### 一次性配置
@@ -110,9 +110,9 @@ publisher 的 admin）：
 3. 按依赖顺序推送 tag：
 
    ```shell
-   git tag dakit_core-v0.1.15    && git push origin dakit_core-v0.1.15
-   git tag dakit_api-v0.1.30     && git push origin dakit_api-v0.1.30
-   git tag dakit_flutter-v0.1.12 && git push origin dakit_flutter-v0.1.12
+   git tag dakit_core-v1.0.0    && git push origin dakit_core-v1.0.0
+   git tag dakit_api-v1.0.0     && git push origin dakit_api-v1.0.0
+   git tag dakit_flutter-v1.0.0 && git push origin dakit_flutter-v1.0.0
    ```
 
 4. 在 Actions 页观察对应的 publish job 完成。

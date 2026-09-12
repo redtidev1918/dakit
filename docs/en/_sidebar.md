@@ -1,6 +1,6 @@
 - Getting Started
   - [Overview](/en/README.md)
-  - [📥 Download](/en/download.md)
+  - [Download](/en/download.md)
   - [Getting Started](/en/GETTING_STARTED.md)
   - [Authentication and Sessions](/en/AUTHENTICATION.md)
 - Usage & Configuration

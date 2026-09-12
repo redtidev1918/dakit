@@ -1,6 +1,6 @@
 - 开始使用
   - [概览](/)
-  - [📥 下载](/download.md)
+  - [下载](/download.md)
   - [开始使用](/GETTING_STARTED.md)
   - [认证与会话](/AUTHENTICATION.md)
 - 使用与配置

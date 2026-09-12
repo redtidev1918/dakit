@@ -57,7 +57,7 @@ The pub.dev packages and CLI follow semantic versioning. Before a formal release
 4. Use a conventional commit message, for example:
 
    ```text
-   chore(release): dakit_core 0.1.15
+   chore(release): dakit_core 1.0.0
    ```
 
 ## Pre-release Dry-run
@@ -81,7 +81,7 @@ OIDC** authentication: GitHub issues a temporary identity token, so **no long-li
 Publishing is triggered by pushing git tags, tagged one at a time in dependency order:
 
 ```text
-dakit_core-v0.1.15  ->   dakit_api-v0.1.30   ->   dakit_flutter-v0.1.12
+dakit_core-v1.0.0  ->   dakit_api-v1.0.0   ->   dakit_flutter-v1.0.0
 ```
 
 ### One-time Setup
@@ -108,9 +108,9 @@ For each public package, enable automated publishing on pub.dev's Admin page (yo
 3. Push the tags in dependency order:
 
    ```shell
-   git tag dakit_core-v0.1.15    && git push origin dakit_core-v0.1.15
-   git tag dakit_api-v0.1.30     && git push origin dakit_api-v0.1.30
-   git tag dakit_flutter-v0.1.12 && git push origin dakit_flutter-v0.1.12
+   git tag dakit_core-v1.0.0    && git push origin dakit_core-v1.0.0
+   git tag dakit_api-v1.0.0     && git push origin dakit_api-v1.0.0
+   git tag dakit_flutter-v1.0.0 && git push origin dakit_flutter-v1.0.0
    ```
 
 4. Watch the corresponding publish job complete on the Actions page.

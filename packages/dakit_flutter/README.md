@@ -15,7 +15,7 @@ integration depends on this one package only.
 
 ```yaml
 dependencies:
-  dakit_flutter: ^0.1.12
+  dakit_flutter: ^1.0.0
 ```
 
 ## Example

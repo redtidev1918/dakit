@@ -103,7 +103,7 @@ The packages are available on pub.dev. A full Flutter integration only needs
 
 ```yaml
 dependencies:
-  dakit_flutter: ^0.1.12
+  dakit_flutter: ^1.0.0
 ```
 
 Then create the OAuth client before `runApp`:

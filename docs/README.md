@@ -4,10 +4,10 @@
 [README](https://github.com/redtidev1918/dakit/blob/main/README.md)；本目录按主题提供深入说明。英文版见
 [English index](en/README.md)。
 
-## 📥 下载
+## 下载
 
 - SDK：`dakit_flutter` / `dakit_api`（[pub.dev](https://pub.dev/packages/dakit_flutter)）
-- `dakit` CLI 二进制：见 [📥 下载页](download.md)（自动指向最新 Release）
+- `dakit` CLI 二进制：见 [下载页](download.md)（自动指向最新 Release）
 
 ## 用户指南
 

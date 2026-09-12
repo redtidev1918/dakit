@@ -81,15 +81,15 @@ DAKit 是面向 Dart 与 Flutter 的模块化 DeviantArt 客户端 SDK，为 And
 
 ```yaml
 dependencies:
-  dakit_flutter: ^0.1.12
+  dakit_flutter: ^1.0.0
 ```
 
 如果只需要纯 Dart 能力，也可以按需声明：
 
 ```yaml
 dependencies:
-  dakit_core: ^0.1.15
-  dakit_api: ^0.1.30
+  dakit_core: ^1.0.0
+  dakit_api: ^1.0.0
 ```
 
 随后阅读[开始使用](docs/GETTING_STARTED.md)。直接在移动端或桌面端运行内置登录流程时，需要注册 **Public** OAuth 应用，并配置精确回调地址 `dakit://oauth/callback`。
@@ -256,4 +256,4 @@ DeviantArt 会封锁「数据中心出口 IP」的网页与部分接口（WAF �
 - [安全策略](SECURITY.md)
 - [行为准则](CODE_OF_CONDUCT.md)
 
-如果 DAKit 帮到了你，**点个 ⭐ Star** 能让更多需要它的人看到。
+如果 DAKit 帮到了你，点个 Star 能让更多需要它的人看到。

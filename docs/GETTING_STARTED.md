@@ -99,7 +99,7 @@ CLI 会通过系统浏览器登录、自动刷新会话，并用临时文件流�
 
 ```yaml
 dependencies:
-  dakit_flutter: ^0.1.12
+  dakit_flutter: ^1.0.0
 ```
 
 随后在 `runApp` 前创建 OAuth 客户端：

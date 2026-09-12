@@ -13,7 +13,7 @@ and `dakit_flutter` build on.
 
 ```yaml
 dependencies:
-  dakit_core: ^0.1.15
+  dakit_core: ^1.0.0
 ```
 
 ## What it exports
